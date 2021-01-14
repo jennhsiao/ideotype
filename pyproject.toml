@@ -1,0 +1,7 @@
+# .toml files includes info for packages you need to build your package
+# this differs from "install_requires" argument in the setup.py files
+# there actually isn't an option to specify what packages are needed to build 
+# your Python project within setup.py, hence the pyproject.toml file
+
+[build-system]
+requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]

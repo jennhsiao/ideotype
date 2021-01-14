@@ -12,8 +12,9 @@ setup_args = {
     "package_dir": {"ideotype": "ideotype"},
     "packages": ["ideotype"],
     "scripts": glob.glob("scripts/*"),
+    "use_scm_version": True,
     "include_package_data": True,
-    "install_requires": ["pandas"],    
+    "install_requires": ["pandas", "pyyaml", "setuptools_scm"]  # need to add more requires here
 }
 
 if __name__ == "__main__":
