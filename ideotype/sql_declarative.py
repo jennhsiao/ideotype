@@ -60,12 +60,11 @@ class Sims(Base):
     run_name = Column(String(), primary_key=True)
     site = Column(String(6), primary_key=True)
     year = Column(Integer, primary_key=True)
-    cvar = Column(String(10), primary_key=True)
+    cvar = Integer(String(10), primary_key=True)
     date = Column(DateTime, primary_key=True)
     time = Column(Integer, primary_key=True)
 
     # other columns
-    # TODO: check that you have everything you want but no more!
     leaves = Column(Float)
     leaves_mature = Column(Float)
     leaves_dropped = Column(Float)
@@ -109,14 +108,6 @@ class Sims(Base):
     Pheno = Column(String)
 
 
-# TODO: add column - params
-# instead of having one parameter per column,
-# have a column that logs what parameter is perturbed
-# this will make table much longer than wide
-# TODO: need to think if this makes sens.
-# I think so, since you probably don't want entire columns to be NULL
-# while maybe having to create new columns if you end up
-# sampling some new parameters.
 class Params(Base):
     """
     DB table for sampled parameter combinations.
@@ -127,26 +118,10 @@ class Params(Base):
         Run name for bath of simulation experiments. Part of primary_key.
     cvar: Integer Column
         Cultivar number that represents specific param combinations.
-    juv_leaves: Integer Column
-        Max juvenile leaf number.
-    stayGreen: Float Column
-        Longevity of matured leaves.
-    rmax_ltir: Float Column
-        Max leaf tip appearance rate (cm/day).
-    phyllo:
-        Phyllochron from tassel initiation to 75% silking.
-    LM_min:
-        Length characteristic of longest leaf.
-    Vcmax: Float Column
-        Max Rubisco capacity.
-    Vpmax: Float Column
-        Max PEPC capacity.
-    g1: Float Column
-        Ball Berry gs model slope - efficiency of water/carbon exchange.
-    ref_potential: Float Column
-        Threshold predawn leaf water potential that triggers water stress.
-    rmax_ltar: Float Column
-        Max leaf tip appearance rate (leaves/day).
+    param: String Column
+        Perturbed parameter.
+    value: Float Column
+        Parameter value.
 
     """
 
@@ -154,23 +129,13 @@ class Params(Base):
     # primary keys
     run_name = Column(String(20), primary_key=True)
     cvar = Column(Integer, primary_key=True)
+    param = Column(String, primary_key=True)
+    value = Column(Float)
 
     # foreign keys
     __table_args__ = ForeignKeyConstraint(
         ['run_name', 'cvar'],  # binding these two keys to make up foreign key
         ['sims.run_name', 'sims_cvar'])  # point to sims table
-
-    # the rest of the columns
-    juv_leaves = Column(Integer)
-    stayGreen = Column(Float)
-    rmax_ltir = Column(Float)
-    phyllo = Column(Float)
-    LM_min = Column(Float)
-    Vcmax = Column(Float)
-    Vpmax = Column(Float)
-    g1 = Column(Float)
-    ref_potential = Column(Float)
-    rmax_ltar = Column(Float)
 
 
 class SiteInfo(Base):
