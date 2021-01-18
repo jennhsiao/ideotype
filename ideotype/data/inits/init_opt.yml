@@ -10,12 +10,14 @@ setup:
   params: 
     juv_leaves: [15,25]
     stayGreen: [3,8]
-    rmax_ltar: []
+    rmax_ltir: [0.5,1.5]
+    phyllo: [2,4]
     LM_min: [80, 120]
     Vcmax: [60,80]
     Vpmax: [60,120]
     g1: [1,10]
     ref_potential: [-4,-1]
+    rmax_ltar: [] # rmax_ltar = rmax_ltir/2
 
 init:
   poprow: 7.5 # plants/meter of row
@@ -29,7 +31,7 @@ init:
   co2: -1
   soil: False
   start_date: 03/01/
-  plant_date: dynamic_gdd
+  plant_date: 04/01/
   end_date: 12/31/
   timestep: 60
   alt: 0
