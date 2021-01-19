@@ -115,7 +115,7 @@ class Params(Base):
     Attributes
     ----------
     run_name: String Column
-        Run name for bath of simulation experiments. Part of primary_key.
+        Run name of simulation experiments. Part of primary key.
     cvar: Integer Column
         Cultivar number that represents specific param combinations.
     param: String Column
@@ -145,12 +145,18 @@ class SiteInfo(Base):
     Attributes
     ----------
     site: String Column
+        Simulation site. Primary key.
     state: String Column
     lat: Float Column
     lon: Float Column
     years: Integer Column
+        Years of weather data available at simulation site.
     area: Float Column
+        Area maize planted (#TODO: find unit).
+        Average value from nearby NASS sites (#TODO: find how many site).
     perct_irri: Float Column
+        Percent irrigated for simulation site.
+        Average value from nearby NASS sites.
 
     """
 
@@ -167,13 +173,59 @@ class SiteInfo(Base):
 
 
 class LogInit(Base):
-    # TODO: not sure how to grab logs for the maizsim githash
-    # TODO: should be it's own table
+    """
+    DB table for log files.
+
+    Attributes
+    ----------
+    run_name: String Column
+        Run name of simulation experiments.
+        Primary key.
+        Foreign key link to Sims and Params table.
+    init_yml: String Column
+        init yaml file used for experiment.
+    path_inits: String Column
+        Path where inits are stored for experiment.
+    path_params: String Column
+        Path where inits are stored for experiment.
+    path_jobs: String Column
+        Path where jobs are stored for experiment.
+    path_sims: String Column
+        Path where sims are stroed for experiment.
+    path_maizsim: String Column
+        Path pointing to maizsim directory used.
+    siteyears: String Column
+        Path pointing to siteyears file used.
+    site_info: String Column
+        Path pointing to site_info file used.
+    pdate: String Column
+        Planting date set for simualtions.
+    version: String Column
+        ideotype version - git hash.
+
+    """
+
     __tablename__ = 'log_init'
-    run_name = Column(String, ForeignKey(''))
+    run_name = Column(String,
+                      ForeignKey('Sims.run_name'),
+                      ForeignKey('Params.run_name'),
+                      primary_key=True)
+    init_yml = Column(String),
+    path_inits = Column(String),
+    path_params = Column(String),
+    path_jobs = Column(String),
+    path_sims = Column(String),
+    path_maizsim = Column(String),
+    siteyears = Column(String),
+    site_info = Column(String),
+    pdate = Column(String),
+    version = Column(String)
 
 
 class LogMAIZSIM(Base):
+    """
+    """
+    # TODO: not sure how to capture this yet
     __tablename__ = 'log_maizsim'
 
 
