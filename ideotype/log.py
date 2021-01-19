@@ -47,6 +47,9 @@ def log_fetchinfo(run_name):
     for key, value in dict_init['setup'].items():
         dict_log[key] = value
 
+    for key, value in dict_init['params'].items():
+        dict_log[key] = value
+
     # add yaml file name to log
     dict_log['pdate'] = dict_init['init']['plant_date']
     dict_log['init_yml'] = 'init_' + run_name + '.yml'
