@@ -1,11 +1,19 @@
-# TODO: save logfile as yaml file to data/logs/
-# TODO: add param.csv file as part of log
+"""
+Generate log file for batch of simulation experiments.
 
+Info include:
+- Run setups fetched from setup yaml file.
+- ideotype package git hash.
+
+"""
 import os
 import yaml
 
 from ideotype.data import DATA_PATH
 from . import __version__
+
+# TODO: save logfile as yaml file to data/logs/
+# TODO: add param.csv file as part of log
 
 
 def log_fetchinfo(run_name):
