@@ -195,9 +195,11 @@ class LogInit(Base):
     path_maizsim: String Column
         Path pointing to maizsim directory used.
     siteyears: String Column
-        Path pointing to siteyears file used.
+        Path pointing to siteyears efile used.
     site_info: String Column
         Path pointing to site_info file used.
+    site_summary: String Column
+        Path pointing to site_summary file used.
     pdate: String Column
         Planting date set for simualtions.
     version: String Column
@@ -218,6 +220,7 @@ class LogInit(Base):
     path_maizsim = Column(String),
     siteyears = Column(String),
     site_info = Column(String),
+    site_summary = Column(String),
     pdate = Column(String),
     version = Column(String)
 

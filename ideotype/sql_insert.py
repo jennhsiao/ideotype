@@ -39,6 +39,8 @@ def insert_weadata(dirct_weadata, session=None):
         session = DBSession()
 
     # fetch all weather files in directory
+    # TODO: code up something that will work regardless of
+    # directory input format to function
     weafiles = glob.glob(dirct_weadata)
 
     for weafile in weafiles:
@@ -47,7 +49,7 @@ def insert_weadata(dirct_weadata, session=None):
         data = genfromtxt(weafile,
                           delimiter='\t',
                           skip_header=1,
-                          dtype=(int, object, int, float,
+                          dtype=(int, 'U12', int, float,
                                  float, float, float, int))
 
         for row in data:
@@ -80,7 +82,7 @@ def insert_sims(dirct_sims, session=None):
     dirct_sims: str
         Upper most directory where sim files are stroed.
     session: str
-        Database session, default to None and generates new session.        
+        Database session, default to None and generates new session.
 
     """
     if session is None:
@@ -102,7 +104,7 @@ def insert_sims(dirct_sims, session=None):
             sim,
             delimiter=',',
             skip_header=1,
-            dtype=tuple([object] + [float]*48 + [object]),
+            dtype=tuple(['U10'] + [float]*48 + ['<U50']),
             encoding='latin_1'
             )
 
@@ -155,7 +157,7 @@ def insert_sims(dirct_sims, session=None):
                 DM_root=row[44],
                 AvailW=row[47],
                 solubleC=row[48],
-                Pheno=row[49]
+                Pheno=row[49].srip()  # remove leading whitespace in output
             )
 
             # add row data to record
@@ -165,7 +167,6 @@ def insert_sims(dirct_sims, session=None):
         session.commit()
 
 
-# TODO: add column - params
 def insert_params(fpath_params, session=None):
     """
     Propagate values to DB table - Params.
@@ -189,7 +190,9 @@ def insert_params(fpath_params, session=None):
         dtype=(float)
         )
 
-    # determine run_name based on sims directory name
+    # parse out run_name from parameter file name
+    # TODO: need to make sure parameter file name is generated systematically
+    # TODO: is there a way to write a test to always check for this?
     runame = fpath_params.split('/')[-1].split('.')[0].split('_')[1]
     # fetch parameters
     params = data.dtype.names
@@ -221,8 +224,6 @@ def insert_sitinfo(fpath_siteinfo, session=None):
     ----------
     fpath_siteinfo : str
         Path to site_info file.
-        Make sure to include /* at the end in order to fetch
-        all files stored in directory.
     session: str
         Database session, default to None and generates new session.
 
@@ -235,7 +236,8 @@ def insert_sitinfo(fpath_siteinfo, session=None):
         fpath_siteinfo,
         delimiter=',',
         skip_header=1,
-        dtype=(str, )  # TODO: finish this
+        dtype=(int, 'U6', int, '<U40', 'U2',
+               int, float, float, int, float, float),
         )
 
     for row in data:
@@ -257,10 +259,50 @@ def insert_sitinfo(fpath_siteinfo, session=None):
     session.commit()
 
 
-def insert_loginit():
+def insert_loginit(fpath_log, session=None):
     """
+    Propagate values to DB table - LogInit.
+
+    Parameters
+    ----------
+    fpath_log: str
+        File path for experiment log file.
+    session:
+        Database session, default to None and generates new session.
+
     """
-    pass
+    if session is None:
+        DBSession = sessionmaker(bind=engine)
+        session = DBSession()
+
+    data = genfromtxt(
+        fpath_log,
+        delimiter=',',
+        skip_header=1,
+        dtype=(str)
+        )
+
+    for row in data:
+        record = LogInit(
+            run_name=row[0],
+            init_yml=row[1],
+            path_inits=row[2],
+            path_params=row[3],
+            path_jobs=row[4],
+            path_sims=row[5],
+            path_maizsim=row[6],
+            siteyears=row[7],
+            site_info=row[8],
+            site_summary=row[9],
+            pdate=row[10],
+            version=row[11]
+        )
+
+        # add row data to record
+        session.add(record)
+
+    # commit data to DB
+    session.commit()
 
 
 def insert_logmaizsim():
@@ -274,6 +316,10 @@ def insert_all():
     Combines individual insert_table functions create DB.
 
     """
+    # TODO: call function input parameters from yaml file
+    # most of the function parameters need file paths or directories
+    # to get to the data needed to build the database
+
     # WeaData
 
     # Sims
