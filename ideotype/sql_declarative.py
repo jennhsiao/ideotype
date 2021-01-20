@@ -1,25 +1,31 @@
-import os
-import sys
+"""
+Set up and create tables for SQL database.
+
+"""
 
 from sqlalchemy import (Column, ForeignKey, ForeignKeyConstraint,
                         Integer, String, Float, DateTime)
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
-
-# TODO: think about how foreign keys should work here
-# specifically, joint foresign keys
-# TODO: check code Bryna sent in Slack
 
 Base = declarative_base()  # declarative_base is how you define tables
 
 
 class WeaData(Base):
-    """ DB table for weather data table.
+    """
+    DB table for weather data table.
+
+    Parameters
+    ----------
+    site: String Column
+        Simulation site.
 
     """
+
     __tablename__ = 'weadata'
-    site = Column(String(6), primary_key=True)
+    site = Column(String(6),
+                  ForeignKey('SiteInfo.site'),
+                  primary_key=True)
     year = Column(Integer, primary_key=True)
     jday = Column(Integer)
     date = Column(DateTime, primary_key=True)  # TODO: check format
@@ -57,10 +63,16 @@ class Sims(Base):
 
     __tablename__ = 'sims'
     # primary keys
-    run_name = Column(String(), primary_key=True)
-    site = Column(String(6), primary_key=True)
+    run_name = Column(String(20),
+                      ForeignKey('LogInit.run_name'),
+                      primary_key=True)
+    site = Column(String(6),
+                  ForeignKey('Siteinto.site'),
+                  primary_key=True)
     year = Column(Integer, primary_key=True)
-    cvar = Integer(String(10), primary_key=True)
+    cvar = Column(Integer,
+                  ForeignKey('Params.cvar'),
+                  primary_key=True)
     date = Column(DateTime, primary_key=True)
     time = Column(Integer, primary_key=True)
 
@@ -127,15 +139,12 @@ class Params(Base):
 
     __tablename__ = 'params'
     # primary keys
-    run_name = Column(String(20), primary_key=True)
+    run_name = Column(String(20),
+                      ForeignKey('LogInit.run_name'),
+                      primary_key=True)
     cvar = Column(Integer, primary_key=True)
     param = Column(String, primary_key=True)
     value = Column(Float)
-
-    # foreign keys
-    __table_args__ = ForeignKeyConstraint(
-        ['run_name', 'cvar'],  # binding these two keys to make up foreign key
-        ['sims.run_name', 'sims_cvar'])  # point to sims table
 
 
 class SiteInfo(Base):
@@ -161,13 +170,11 @@ class SiteInfo(Base):
     """
 
     __tablename__ = 'siteinfo'
-    site = Column(String(6),
-                  ForeignKey('Sims.site'),
-                  primary_key=True),
-    state = Column(String(2)),
-    lat = Column(Float),
-    lon = Column(Float),
-    years = Column(Integer),
+    site = Column(String(6), primary_key=True)
+    state = Column(String(2))
+    lat = Column(Float)
+    lon = Column(Float)
+    years = Column(Integer)
     area = Column(Float)
     perct_irri = Column(Float)
 
@@ -208,32 +215,27 @@ class LogInit(Base):
     """
 
     __tablename__ = 'log_init'
-    run_name = Column(String,
-                      ForeignKey('Sims.run_name'),
-                      ForeignKey('Params.run_name'),
-                      primary_key=True)
-    init_yml = Column(String),
-    path_inits = Column(String),
-    path_params = Column(String),
-    path_jobs = Column(String),
-    path_sims = Column(String),
-    path_maizsim = Column(String),
-    siteyears = Column(String),
-    site_info = Column(String),
-    site_summary = Column(String),
-    pdate = Column(String),
+    run_name = Column(String, primary_key=True)
+    init_yml = Column(String)
+    path_inits = Column(String)
+    path_params = Column(String)
+    path_jobs = Column(String)
+    path_sims = Column(String)
+    path_maizsim = Column(String)
+    siteyears = Column(String)
+    site_info = Column(String)
+    site_summary = Column(String)
+    pdate = Column(String)
     version = Column(String)
 
 
-class LogMAIZSIM(Base):
-    """
-    """
-    # TODO: not sure how to capture this yet
-    __tablename__ = 'log_maizsim'
+#class LogMAIZSIM(Base):
+#    # TODO: not sure how to capture this yet
+#    __tablename__ = 'log_maizsim'
 
 
-class NASSYield(Base):
-    __tablename__ = 'nass_yield'
+#class NASSYield(Base):
+#    __tablename__ = 'nass_yield'
     # TODO: this is an issue here since lat/lon here
     # don't actually correspond to lat/lon in site
     # I use lat/lon to calcualte the nearest site/sites
@@ -243,16 +245,35 @@ class NASSYield(Base):
     # this can be a one-to-many relation
 
 
-class SoilClass(Base):
-    __tablename__ = 'soil_class'
-    site = Column(String, primary_key=True)
+#class SoilClass(Base):
+#    __tablename__ = 'soil_class'
+#    site = Column(String, primary_key=True)
     # TODO: similar issue
     # linked to NASS_yield but not to the rest of the DB
 
 
-# create engine to setup database
-engine = create_engine('')
+# TODO: maybe move elsewhere - consider later
+def create_table(fpath_db):
+    """
+    Create table in engine.
 
-# create all tables in engine
-# = 'Create Table' in SQL
-Base.metadata.create_all(engine)
+    Parameters
+    ----------
+    fpath_db: str
+        Path pointing to database.
+
+    """
+    Base = declarative_base()  # declarative_base is how you define tables
+
+#    WeaData(Base)
+#    Sims(Base)
+#    Params(Base)
+#    SiteInfo(Base)
+#    LogInit(Base)
+
+    # create engine to setup database
+    engine = create_engine('sqlite://' + fpath_db)
+
+    # create all tables in engine
+    # = 'Create Table' in SQL
+    Base.metadata.create_all(engine)

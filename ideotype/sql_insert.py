@@ -216,7 +216,7 @@ def insert_params(fpath_params, session=None):
 
 # TODO: need to modify this site_summary csv file
 # to not include an index column
-def insert_sitinfo(fpath_siteinfo, session=None):
+def insert_siteinfo(fpath_siteinfo, session=None):
     """
     Propagate values to DB table - SiteInfo.
 
@@ -311,6 +311,10 @@ def insert_logmaizsim():
     pass
 
 
+
+# TODO: split into two funcions
+# 1. things updated per run
+# 2. one off things to import
 def insert_all():
     """
     Combines individual insert_table functions create DB.
