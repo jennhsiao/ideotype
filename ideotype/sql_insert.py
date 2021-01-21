@@ -72,8 +72,7 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
                 site=site_id,
                 year=year_id,
                 jday=int(row[0]),
-                datetime=datetime.strptime(
-                    row[1].strip("'") + str(' ') + str(row[2]), '%m/%d/%Y %H'),
+                date=datetime.strptime(row[1].strip("'"), '%m/%d/%Y'),
                 time=int(row[2]),
                 solar=row[3],
                 temp=row[4],
@@ -229,15 +228,13 @@ def insert_params(fpath_params, fpath_db, session=None):
                 value=row[par]
             )
 
-        # add row data to record
-        session.add(record)
+            # add row data to record
+            session.add(record)
 
     # commit data to DB
     session.commit()
 
 
-# TODO: site_id not displaying correctly
-# TODO: state also looks weird, seems to be fetching wrong column
 def insert_siteinfo(fpath_siteinfo, fpath_db, session=None):
     """
     Propagate values to DB table - SiteInfo.

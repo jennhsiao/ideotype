@@ -47,7 +47,7 @@ class WeaData(Base):
                   primary_key=True)
     year = Column(Integer, primary_key=True)
     jday = Column(Integer)
-    datetime = Column(DateTime, primary_key=True)
+    date = Column(DateTime, primary_key=True)
     time = Column(Integer, primary_key=True)
     solar = Column(Float)
     temp = Column(Float)
@@ -82,13 +82,17 @@ class Sims(Base):
 
     __tablename__ = 'sims'
     # primary keys
+    # TODO: need a foreign key constrain here for
+    # TODO: run_name & cvar
     run_name = Column(String(20),
-                      ForeignKey('log_init.run_name'),
+                      ForeignKey('params.run_name'),
                       primary_key=True)
     site = Column(String(6),
                   ForeignKey('site_info.site'),
                   primary_key=True)
     year = Column(Integer, primary_key=True)
+    # TODO: need a foreign key constrain here for
+    # TODO: run_name & cvar
     cvar = Column(Integer,
                   ForeignKey('params.cvar'),
                   primary_key=True)
@@ -158,9 +162,9 @@ class Params(Base):
 
     __tablename__ = 'params'
     # primary keys
-    run_name = Column(String(20),
-                      ForeignKey('log_init.run_name'),
-                      primary_key=True)
+    # TODO: want run_name to be primay key here
+    # have other tables reference to it via foreignkey
+    run_name = Column(String(20), primary_key=True)
     cvar = Column(Integer, primary_key=True)
     param = Column(String, primary_key=True)
     value = Column(Float)
@@ -234,7 +238,9 @@ class LogInit(Base):
     """
 
     __tablename__ = 'log_init'
-    run_name = Column(String, primary_key=True)
+    run_name = Column(String,
+                      ForeignKey('params.run_name'),
+                      primary_key=True)
     init_yml = Column(String)
     path_inits = Column(String)
     path_params = Column(String)
