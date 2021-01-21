@@ -11,21 +11,26 @@ Base = declarative_base()  # declarative_base is how you define tables
 # makes an instance of a declarative_base() object
 
 
-class IdeotypeBase(Base):
-    """
-    """
-    def __repr__(self):  # magic function __repr__
-        """Define standard representation."""
-        columns = self.__table__.columns.keys()
-        rep_str = '<' + self.__class__.__name__ + '('
-        for c in columns:
-            rep_str += str(getattr(self, c)) + ', '  # getattr
-        rep_str = rep_str[0:-2]
-        rep_str += ')>'
-        return rep_str
+#class IdeotypeBase(Base):
+#    """
+#    Add specifics to Base to debug.
+
+#    __repr__:
+
+#    """
+
+#    def __repr__(self):  # magic function __repr__
+#        """Define standard representation."""
+ #       columns = self.__table__.columns.keys()
+ #       rep_str = '<' + self.__class__.__name__ + '('
+ #       for c in columns:
+ #           rep_str += str(getattr(self, c)) + ', '  # getattr
+ #       rep_str = rep_str[0:-2]
+ #       rep_str += ')>'
+ #       return rep_str
 
 
-class WeaData(IdeotypeBase):
+class WeaData(Base):
     """
     DB table for weather data table.
 
@@ -43,7 +48,7 @@ class WeaData(IdeotypeBase):
     year = Column(Integer, primary_key=True)
     jday = Column(Integer)
     datetime = Column(DateTime, primary_key=True)
-    #time = Column(Integer, primary_key=True)
+    time = Column(Integer, primary_key=True)
     solar = Column(Float)
     temp = Column(Float)
     precip = Column(Float)
@@ -52,7 +57,7 @@ class WeaData(IdeotypeBase):
     vpd = Column(Float)
 
 
-class Sims(IdeotypeBase):
+class Sims(Base):
     """
     DB table for simulation outputs.
 
@@ -134,7 +139,7 @@ class Sims(IdeotypeBase):
     Pheno = Column(String)
 
 
-class Params(IdeotypeBase):
+class Params(Base):
     """
     DB table for sampled parameter combinations.
 
@@ -161,7 +166,7 @@ class Params(IdeotypeBase):
     value = Column(Float)
 
 
-class SiteInfo(IdeotypeBase):
+class SiteInfo(Base):
     """
     DB table for simulation site info.
 
@@ -193,7 +198,7 @@ class SiteInfo(IdeotypeBase):
     perct_irri = Column(Float)
 
 
-class LogInit(IdeotypeBase):
+class LogInit(Base):
     """
     DB table for log files.
 
@@ -284,4 +289,4 @@ def create_table(fpath_db):
     # create all tables in engine
     # = 'Create Table' in SQL
 #    Base.metadata.create_all(engine)
-    IdeotypeBase.metadata.create_all(engine)
+    Base.metadata.create_all(engine)

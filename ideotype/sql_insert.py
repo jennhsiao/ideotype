@@ -1,26 +1,38 @@
+"""
+Insert table values into database.
+
+Tables include:
+- WeaData
+- Sims
+- Params
+- SiteInfo
+- LogInit
+
+"""
 import glob
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from numpy import genfromtxt
+from datetime import datetime
 
-from sql_declarative import (Base, WeaData, Sims, Params,
-                             SiteInfo, LogInit, LogMAIZSIM,
-                             NASSYield, SoilClass)
-from utils import get_filelist
+from ideotype.sql_declarative import (
+    Base, WeaData, Sims, Params,
+    SiteInfo, LogInit)
+#                             LogMAIZSIM,
+#                             NASSYield, SoilClass)
 
-# TODO: think about sessions as SQLAlchemy's
-# way to handle conflicts and serelizability, etc.
+from ideotype.utils import get_filelist, CC_VPD
 
-
-engine = create_engine('')  # TODO: decide where db is going to live
+# create connection with DB
+#engine = create_engine('sqlite:////home/disk/eos8/ach315/upscale/db/test.db')
 
 # Bind engine to metadata of Base class
 # so declaratives can be accessed through a DBSession instance
-Base.metadata.bind = engine
+#Base.metadata.bind = engine
 
 
-def insert_weadata(dirct_weadata, session=None):
+def insert_weadata(dirct_weadata, fpath_db, session=None):
     """
     Propagate values to DB table - WeaData.
 
@@ -35,6 +47,8 @@ def insert_weadata(dirct_weadata, session=None):
 
     """
     if session is None:
+        engine = create_engine('sqlite:///' + fpath_db)
+        Base.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
 
@@ -57,14 +71,16 @@ def insert_weadata(dirct_weadata, session=None):
             record = WeaData(
                 site=site_id,
                 year=year_id,
-                jday=row[0],
-                date=row[1],
-                hour=row[2],
-                solrad=row[3],
+                jday=int(row[0]),
+                datetime=datetime.strptime(
+                    row[1].strip("'") + str(' ') + str(row[2]), '%m/%d/%Y %H'),
+                time=int(row[2]),
+                solar=row[3],
                 temp=row[4],
                 precip=row[5],
                 rh=row[6],
-                co2=row[7])
+                co2=int(row[7]),
+                vpd=round(CC_VPD(row[4], row[6]/100), 2))
 
             # add row data to record
             session.add(record)
@@ -73,7 +89,7 @@ def insert_weadata(dirct_weadata, session=None):
         session.commit()
 
 
-def insert_sims(dirct_sims, session=None):
+def insert_sims(dirct_sims, fpath_db, session=None):
     """
     Propagate values to DB table - Sims.
 
@@ -86,6 +102,8 @@ def insert_sims(dirct_sims, session=None):
 
     """
     if session is None:
+        engine = create_engine('sqlite:///' + fpath_db)
+        Base.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
 
@@ -115,7 +133,7 @@ def insert_sims(dirct_sims, session=None):
                 site=site_id,
                 year=year_id,
                 cvar=cvar_id,
-                date=row[0],
+                date=datetime.strptime(row[0], '%m/%d/%Y'),
                 time=row[2],
                 leaves=row[3],
                 leaves_mature=row[4],
@@ -157,7 +175,7 @@ def insert_sims(dirct_sims, session=None):
                 DM_root=row[44],
                 AvailW=row[47],
                 solubleC=row[48],
-                Pheno=row[49].srip()  # remove leading whitespace in output
+                Pheno=row[49].strip()  # remove leading whitespace in output
             )
 
             # add row data to record
@@ -167,7 +185,9 @@ def insert_sims(dirct_sims, session=None):
         session.commit()
 
 
-def insert_params(fpath_params, session=None):
+# TODO: not recording all the parameters
+# seems like I'm not recording for loop outputs correctly
+def insert_params(fpath_params, fpath_db, session=None):
     """
     Propagate values to DB table - Params.
 
@@ -180,6 +200,8 @@ def insert_params(fpath_params, session=None):
 
     """
     if session is None:
+        engine = create_engine('sqlite:///' + fpath_db)
+        Base.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
 
@@ -214,9 +236,9 @@ def insert_params(fpath_params, session=None):
     session.commit()
 
 
-# TODO: need to modify this site_summary csv file
-# to not include an index column
-def insert_siteinfo(fpath_siteinfo, session=None):
+# TODO: site_id not displaying correctly
+# TODO: state also looks weird, seems to be fetching wrong column
+def insert_siteinfo(fpath_siteinfo, fpath_db, session=None):
     """
     Propagate values to DB table - SiteInfo.
 
@@ -229,6 +251,8 @@ def insert_siteinfo(fpath_siteinfo, session=None):
 
     """
     if session is None:
+        engine = create_engine('sqlite:///' + fpath_db)
+        Base.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
 
@@ -239,6 +263,9 @@ def insert_siteinfo(fpath_siteinfo, session=None):
         dtype=(int, 'U6', int, '<U40', 'U2',
                int, float, float, int, float, float),
         )
+    
+    print(data)
+    assert False
 
     for row in data:
         # make an object instance of the SiteInfo table
@@ -259,7 +286,7 @@ def insert_siteinfo(fpath_siteinfo, session=None):
     session.commit()
 
 
-def insert_loginit(fpath_log, session=None):
+def insert_loginit(fpath_log, fpath_db, session=None):
     """
     Propagate values to DB table - LogInit.
 
@@ -272,6 +299,8 @@ def insert_loginit(fpath_log, session=None):
 
     """
     if session is None:
+        engine = create_engine('sqlite:///' + fpath_db)
+        Base.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
 
@@ -320,6 +349,7 @@ def insert_all():
     Combines individual insert_table functions create DB.
 
     """
+    pass
     # TODO: call function input parameters from yaml file
     # most of the function parameters need file paths or directories
     # to get to the data needed to build the database
