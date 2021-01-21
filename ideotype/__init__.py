@@ -5,7 +5,7 @@ from pkg_resources import get_distribution, DistributionNotFound
 from .read_sims import *
 from .utils import *
 from .sql_declarative import *
-#from .sql_insert import *
+from .sql_insert import *
 #from . import sql_declarative
 #from . import sql_insert
 
