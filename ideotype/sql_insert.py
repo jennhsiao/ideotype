@@ -260,23 +260,20 @@ def insert_siteinfo(fpath_siteinfo, fpath_db, session=None):
         fpath_siteinfo,
         delimiter=',',
         skip_header=1,
-        dtype=(int, 'U6', int, '<U40', 'U2',
-               int, float, float, int, float, float),
+        dtype=('U6', int, '<U40', 'U2', int,
+               float, float, int, float, float),
         )
-    
-    print(data)
-    assert False
 
     for row in data:
         # make an object instance of the SiteInfo table
         record = SiteInfo(
-            site=row[0],
+            site=(row[0]),
             state=row[3],
             lat=row[5],
             lon=row[6],
-            years=row[7],
-            area=row[8],
-            perct_irri=row[9],
+            years=int(row[7]),
+            area=round(row[8], 2),
+            perct_irri=round(row[9], 2),
         )
 
         # add row data to record
