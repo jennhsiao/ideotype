@@ -2,16 +2,30 @@
 Set up and create tables for SQL database.
 
 """
-
 from sqlalchemy import (Column, ForeignKey, ForeignKeyConstraint,
                         Integer, String, Float, DateTime)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 
 Base = declarative_base()  # declarative_base is how you define tables
+# makes an instance of a declarative_base() object
 
 
-class WeaData(Base):
+class IdeotypeBase(Base):
+    """
+    """
+    def __repr__(self):  # magic function __repr__
+        """Define standard representation."""
+        columns = self.__table__.columns.keys()
+        rep_str = '<' + self.__class__.__name__ + '('
+        for c in columns:
+            rep_str += str(getattr(self, c)) + ', '  # getattr
+        rep_str = rep_str[0:-2]
+        rep_str += ')>'
+        return rep_str
+
+
+class WeaData(IdeotypeBase):
     """
     DB table for weather data table.
 
@@ -24,12 +38,12 @@ class WeaData(Base):
 
     __tablename__ = 'weadata'
     site = Column(String(6),
-                  ForeignKey('SiteInfo.site'),
+                  ForeignKey('site_info.site'),
                   primary_key=True)
     year = Column(Integer, primary_key=True)
     jday = Column(Integer)
-    date = Column(DateTime, primary_key=True)  # TODO: check format
-    time = Column(Integer, primary_key=True)
+    datetime = Column(DateTime, primary_key=True)
+    #time = Column(Integer, primary_key=True)
     solar = Column(Float)
     temp = Column(Float)
     precip = Column(Float)
@@ -38,7 +52,7 @@ class WeaData(Base):
     vpd = Column(Float)
 
 
-class Sims(Base):
+class Sims(IdeotypeBase):
     """
     DB table for simulation outputs.
 
@@ -64,14 +78,14 @@ class Sims(Base):
     __tablename__ = 'sims'
     # primary keys
     run_name = Column(String(20),
-                      ForeignKey('LogInit.run_name'),
+                      ForeignKey('log_init.run_name'),
                       primary_key=True)
     site = Column(String(6),
-                  ForeignKey('Siteinto.site'),
+                  ForeignKey('site_info.site'),
                   primary_key=True)
     year = Column(Integer, primary_key=True)
     cvar = Column(Integer,
-                  ForeignKey('Params.cvar'),
+                  ForeignKey('params.cvar'),
                   primary_key=True)
     date = Column(DateTime, primary_key=True)
     time = Column(Integer, primary_key=True)
@@ -120,7 +134,7 @@ class Sims(Base):
     Pheno = Column(String)
 
 
-class Params(Base):
+class Params(IdeotypeBase):
     """
     DB table for sampled parameter combinations.
 
@@ -140,14 +154,14 @@ class Params(Base):
     __tablename__ = 'params'
     # primary keys
     run_name = Column(String(20),
-                      ForeignKey('LogInit.run_name'),
+                      ForeignKey('log_init.run_name'),
                       primary_key=True)
     cvar = Column(Integer, primary_key=True)
     param = Column(String, primary_key=True)
     value = Column(Float)
 
 
-class SiteInfo(Base):
+class SiteInfo(IdeotypeBase):
     """
     DB table for simulation site info.
 
@@ -169,7 +183,7 @@ class SiteInfo(Base):
 
     """
 
-    __tablename__ = 'siteinfo'
+    __tablename__ = 'site_info'
     site = Column(String(6), primary_key=True)
     state = Column(String(2))
     lat = Column(Float)
@@ -179,7 +193,7 @@ class SiteInfo(Base):
     perct_irri = Column(Float)
 
 
-class LogInit(Base):
+class LogInit(IdeotypeBase):
     """
     DB table for log files.
 
@@ -253,6 +267,7 @@ class LogInit(Base):
 
 
 # TODO: maybe move elsewhere - consider later
+
 def create_table(fpath_db):
     """
     Create table in engine.
@@ -263,17 +278,10 @@ def create_table(fpath_db):
         Path pointing to database.
 
     """
-    Base = declarative_base()  # declarative_base is how you define tables
-
-#    WeaData(Base)
-#    Sims(Base)
-#    Params(Base)
-#    SiteInfo(Base)
-#    LogInit(Base)
-
     # create engine to setup database
-    engine = create_engine('sqlite://' + fpath_db)
+    engine = create_engine('sqlite:///' + fpath_db)
 
     # create all tables in engine
     # = 'Create Table' in SQL
-    Base.metadata.create_all(engine)
+#    Base.metadata.create_all(engine)
+    IdeotypeBase.metadata.create_all(engine)
