@@ -91,13 +91,14 @@ class Sims(Base):
                   ForeignKey('site_info.site'),
                   primary_key=True)
     year = Column(Integer, primary_key=True)
-    # TODO: need a foreign key constrain here for
-    # TODO: run_name & cvar
     cvar = Column(Integer,
                   ForeignKey('params.cvar'),
                   primary_key=True)
     date = Column(DateTime, primary_key=True)
     time = Column(Integer, primary_key=True)
+
+    __table_args__ = (ForeignKeyConstraint(
+        ['run_name', 'cvar'], ['params.run_name', 'params.cvar']), {})
 
     # other columns
     leaves = Column(Float)

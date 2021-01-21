@@ -72,7 +72,7 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
                 site=site_id,
                 year=year_id,
                 jday=int(row[0]),
-                date=datetime.strptime(row[1].strip("'"), '%m/%d/%Y'),
+                date=datetime.strptime(row[1].strip("'"), '%m/%d/%Y').date(),
                 time=int(row[2]),
                 solar=row[3],
                 temp=row[4],
@@ -342,6 +342,8 @@ def insert_all():
     """
     Combines individual insert_table functions create DB.
 
+    Single-time execution.
+
     """
     pass
     # TODO: call function input parameters from yaml file
@@ -363,3 +365,18 @@ def insert_all():
     # NASSYield
 
     # SoilClass
+
+
+def insert_update():
+    """
+    Insert value to tables that will need updates after new experiments.
+
+    Execute after new batch of experiments.
+    Tables that will need update:
+    - sims
+    - params
+    - log_init
+    - log_maizsim
+
+    """
+    pass
