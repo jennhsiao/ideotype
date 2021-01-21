@@ -45,7 +45,7 @@ def log_fetchinfo(run_name):
 
     # check that run name listed in yaml file matches
     # what was passed to log_fetchinfo
-    if dict_init['setup']['name'] != run_name:
+    if dict_init['setup']['run_name'] != run_name:
         raise ValueError('mismatched yaml run name!')
 
     # setup dict to hold all log info
@@ -55,8 +55,10 @@ def log_fetchinfo(run_name):
     for key, value in dict_init['setup'].items():
         dict_log[key] = value
 
-    for key, value in dict_init['params'].items():
-        dict_log[key] = value
+    dict_log['params'] = dict_init['params']
+
+#    for key, value in dict_init['params'].items():
+#        dict_log[key] = value
 
     # add yaml file name to log
     dict_log['pdate'] = dict_init['init']['plant_date']
