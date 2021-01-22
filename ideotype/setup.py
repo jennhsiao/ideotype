@@ -135,12 +135,15 @@ def make_dircts(run_name, dict_setup):
 
 def make_runs(run_name, dict_setup):
     """
-    Create run.txt files.
+    Create run.txt files in corresponding directories for experiment.
 
     Parameters
     ----------
     init_yaml: str
         init_runame.yml file that includes experiment setup and run specs.
+    dict_setup: dict
+        Dictionary with setup info & run specs.
+        Use read_yaml function to get this dictionary.
 
     """
     # setup project directory
@@ -153,13 +156,13 @@ def make_runs(run_name, dict_setup):
                       usecols=(0, 1),
                       dtype=('U6', int, int, 'U10'))
 
-    # setup site-years
+    # setup site_years
     siteyears = []
     for row in data:
         siteyears.append(str(row[0]) + '_' + str(row[1]))
 
     # setup cultivars
-    cvars = dict_setup['specs']['cvars']  # fetch from init_runame.yml
+    cvars = dict_setup['specs']['cvars']  # fetch cultivar numbers
     cultivars = list()
     for var in np.arange(cvars):
         cultivar = 'var_' + str(var)
@@ -167,7 +170,7 @@ def make_runs(run_name, dict_setup):
 
     # setup up directories
     dirct_init_wea = dict_setup['path_wea']
-    dirct_init_stand = dict_setup['path_init_standard']
+    dirct_init_stand = dict_setup['path_init_standards']
     dirct_init_soils = dict_setup['path_init_soils']
 
     dict_standard = {int(3): 'biology',
@@ -217,8 +220,8 @@ def make_runs(run_name, dict_setup):
                                         run_name,
                                         siteyear.split('_')[1],  # parse year
                                         cultivar)
-            dict_output = {int(17): 'out1_' + siteyear + cultivar,
-                           int(18): 'out2_' + siteyear + cultivar,
+            dict_output = {int(17): 'out1_' + siteyear + '_' + cultivar,
+                           int(18): 'out2_' + siteyear + '_' + cultivar,
                            int(19): 'out3',
                            int(20): 'out4',
                            int(21): 'out5',
@@ -247,12 +250,13 @@ def make_runs(run_name, dict_setup):
             strings = [dict_all[key] for key in keylist]
 
             # writing out run.txt file
-            run = open(os.path.join(dirct_project,
-                                    'runs',
-                                    run_name,
-                                    siteyear.split('_')[1],  # parse year
-                                    cultivar,
-                                    'run' + siteyear + cultivar + '.txt'), 'w')
+            run = open(os.path.join(
+                dirct_project,
+                'runs',
+                run_name,
+                siteyear.split('_')[1],  # parse year
+                cultivar,
+                'run' + siteyear + '_' + cultivar + '.txt'), 'w')
             run.writelines(strings)
             run.close()
 
@@ -260,81 +264,10 @@ def make_runs(run_name, dict_setup):
 def make_jobs(init_yaml):
     """
     """
-cultivars = glob.glob(dirct_project + 'inits/var/*')
-treatment = 'cont'
-
-for year in np.arange(1961, 2006):
-    for cvar in cultivars:
-        var = cvar.split('/')[-1].split('.')[-2]
-        logfile = str(year) + '_' + str(var) + '.log'
-        str1 = '#!/bin/bash\n'
-        str2 = '#PBS -l nodes=1:ppn=1\n'
-        str3 = '#PBS -l walltime=08:00:00\n'
-        str4 = '#PBS -m a\n'
-        str5 = '#PBS -M ach315@uw.edu\n'
-        str6 = '#PBS -N ' + treatment + '_' + str(i) + '_' + str(var) + '\n'
-        str7 = '\n'
-        str8 = 'FILES=' + full_dirct + str(year) + '/' + str(var) + '/*\n'
-        str9 = 'cd ' + os.path.join(dict_runspecs['path_sims'],
-                                    dict_runspecs['run_name'],
-                                    str(year),
-                                    str(cvar)) + '\n'
-        str10 = 'touch ' + logfile + '\n'
-        str11 = '\n'
-        str12 = 'for file in $FILES\n'
-        str13 = 'do\n'
-        str14 = '\tfname=$(echo $file)\n'  # grab file name
-        str15 = ('\tmaizsim_hash='
-                 '$(git describe --dirty --always --tags)\n')  # githash
-        str16 = f'\techo $fname,$maizsim_hash >> {logfile}\n'  # append to log
-        str17 = '\tcd /home/disk/eos8/ach315/MAIZSIM\n'
-        str18 = '\ttimeout 15m maizsim $file\n'
-        str19 = 'done\n'
-
-        strings = [str1, str2, str3, str4, str5, str6,
-                   str7, str8, str9, str10, str11, str12,
-                   str13, str14, str15, str16, str17, str18, str19]
-
-        jobs = open(os.path.join(dict_runspecs['path_jobs'],
-                                 str(year) + '_' + str(var) + '.job'), 'w')
-        jobs.writelines(strings)
-        jobs.close()
+    pass
 
 
 def make_subjobs(init_yaml):
     """
     """
-    # step 3: create bash script that automates qsub jobs
-    # TODO: still need to update this code
-    dirct = os.path.join(dict_runspecs['path_jobs'], run)
-                # TODO: this last run doesn't make sense
-                # should be run name
-
-    str1 = '#!/bin/bash\n'
-    str2 = '\n'
-    str3 = 'JOBS=' + dirct + '/*\n'
-    str4 = '\n'
-    str5 = 'for job in $JOBS\n'
-    str6 = 'do\n'
-    str7 = '\twhile [ `qstat | grep ach315 | wc -l` -ge 100 ]\n'
-    str8 = '\tdo\n'
-    str9 = '\tsleep 1\n'
-    str10 = '\tdone\n'
-    str11 = '\tqsub $job\n'
-    str12 = 'done\n'
-
-    strings = [str1, str2, str3, str4, str5, str6,
-            str7, str8, str9, str10, str11, str12]
-
-    subjobs = open(os.join(dirct, 'subjosb.sh', 'w')) # TODO: rename subjobs.sh as 
-                                                    # subjobs_runame.sh
-    subjobs.writelines(strings)
-    subjobs.close()
-
-    strings = [str1, str2, str3, str4, str5, str6, str7,
-            str8, str9, str10, str11, str12, str13, str14]
-
-    jobs = open(dirct + '/' + str(i) + '_' + str(var) + '.job', 'w')
-    jobs.writelines(strings)
-    jobs.close()
-
+    pass
