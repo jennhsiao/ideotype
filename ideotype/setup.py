@@ -19,19 +19,38 @@ import yaml
 from ideotype.data import DATA_PATH
 
 
-def read_yaml():
+def read_yaml(run_name):
     """
+    Read in init_runame yaml file.
+
+    yaml file inclues all setup info for a particular experiment run.
+
+    Parameters
+    ----------
+    run_name: str
+        Run name for particular batch of simulations.
+
+    Returns
+    -------
+    dict_setup: dictionary
+        Dictionary that only includes experiment setup info.
+
     """
-    # STEP 0: fetch yaml file with experiment setup specs
+    # Fetch yaml file with experiment setup specs
+    # yaml files all stored in ideotype/data/inits/
     fname_param = os.path.join(DATA_PATH, 'inits', 'init_' + run_name + '.yml')
 
     if not os.path.isfile(fname_param):  # check whether init_.yml file exists
         raise ValueError(f'init param file {fname_param} does not exist')
 
-    with open(fname_param, 'r') as pfile:  # read in init param yaml file
-        dict_param = yaml.safe_load(pfile)
+    # read in init param yaml file
+    with open(fname_param, 'r') as pfile:
+        dict_init = yaml.safe_load(pfile)
 
-    dict_runspecs = dict_param['setup']
+    dict_setup = dict_init['setup']
+    dict_setup['params'] = dict_init['params']
+
+    return dict_setup
 
 
 def make_dircts():
