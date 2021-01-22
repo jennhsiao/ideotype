@@ -15,6 +15,7 @@ import glob
 import numpy as np
 import pandas as pd
 import yaml
+from numpy import genfromtxt
 
 from ideotype.data import DATA_PATH
 
@@ -76,33 +77,58 @@ def make_dircts(dirct_project, run_name, dict_setup):
     """
     # /init
     dirct_inits = os.path.join(dirct_project, 'inits', run_name)
-    years = dict_setup['specs']['years']  # fetch from init_runame.yml
-    cvars = dict_setup['specs']['cvars']  # fetch from init_runame.yml
+
+    data = genfromtxt(dict_setup['siteyears'],
+                      delimiter=',',
+                      skip_header=1,
+                      usecols=(0, 1),
+                      dtype=('U6', int, int, 'U10'))
+
+    siteyears = []
+    for row in data:
+        siteyears.append(str(row[0]) + '_' + str(row[1]))
 
     # Check if folder exits, only execute if not
     if not os.path.isdir(dirct_inits):
         os.mkdir(dirct_inits)
-
-        for year in np.arange(years[0], years[1]+1):
-            os.mkdir(os.path.join(dirct_inits, str(year)))
-
-        cultivars = list()
-        for var in np.arange(cvars):
-            cultivar = 'var_' + str(var)
-            cultivars.append(cultivar)
-
-        for year in np.arange(years[0], years[1]+1):
-            for var in cultivars:
-                os.mkdir(os.path.join(dirct_inits, str(year), str(var)))
+        for siteyear in siteyears:
+            os.mkdir(os.path.join(dirct_inits, siteyear))
 
     else:
         raise ValueError(f'directory {dirct_inits} already exists!')
 
     # /jobs
+    dirct_jobs = os.path.join(dirct_project, 'jobs', run_name)
 
-    # /runs
+    if not os.path.isdir(dirct_jobs):
+        os.mkdir(dirct_jobs)
 
-    # /sims
+    else:
+        raise ValueError(f'directory {dirct_jobs} already exists!')
+
+    # /runs & /sims
+    for folder in (['runs', 'sims']):
+        dirct_folder = os.path.join(dirct_project, folder, run_name)
+        years = dict_setup['specs']['years']  # fetch from init_runame.yml
+        cvars = dict_setup['specs']['cvars']  # fetch from init_runame.yml
+
+        if not os.path.isdir(dirct_folder):
+            os.mkdir(dirct_folder)
+
+            for year in np.arange(years[0], years[1]+1):
+                os.mkdir(os.path.join(dirct_folder, str(year)))
+
+            cultivars = list()
+            for var in np.arange(cvars):
+                cultivar = 'var_' + str(var)
+                cultivars.append(cultivar)
+
+            for year in np.arange(years[0], years[1]+1):
+                for var in cultivars:
+                    os.mkdir(os.path.join(dirct_folder, str(year), str(var)))
+
+        else:
+            raise ValueError(f'directory {dirct_folder} already exists!')
 
 
 def make_runs(init_yaml):
