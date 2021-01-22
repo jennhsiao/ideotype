@@ -49,45 +49,66 @@ def read_yaml(run_name):
 
     dict_setup = dict_init['setup']
     dict_setup['params'] = dict_init['params']
+    dict_setup['specs'] = dict_init['specs']
 
     return dict_setup
 
 
-def make_dircts():
+def make_dircts(dirct_project, run_name, dict_setup):
     """
+    Make all required directories in experiment directory.
+
+    Directories include experiment-specific subdirectories for:
+    1. /inits
+    2. /jobs
+    3. /runs
+    4. /sims
+
+    Parameters
+    ----------
+    dirct_project: str
+        Root directory for project.
+    run_name: str
+        Run name for specific batch of simualtions.
+    dict_setup: dict
+        Dictionary that includes setup info.
+
     """
-    # STEP 0: setup directories
-    # TODO: add path_exp to yaml file and fetch dirct_exp directly
-    dirct_exp = '/home/disk/eos8/ach315/upscale/'  # experiment directory
-    folder = args.folder  # e.g. 'sims/' or 'runs/'
-    folder_name = 'opt_pdate/'
+    # /init
+    dirct_inits = os.path.join(dirct_project, 'inits', run_name)
+    years = dict_setup['specs']['years']  # fetch from init_runame.yml
+    cvars = dict_setup['specs']['cvars']  # fetch from init_runame.yml
 
-    # check to see if folder exits, only execute if not
-    if not os.path.isdir(dirct_exp + folder):
-        os.mkdir(dirct_exp + folder)
-        full_dirct = dirct_exp + folder + folder_name
-        os.mkdir(full_dirct)
+    # Check if folder exits, only execute if not
+    if not os.path.isdir(dirct_inits):
+        os.mkdir(dirct_inits)
 
-        for year in np.arange(1961, 2006):
-            os.mkdir(dirct_exp + folder + folder_name + str(year))
+        for year in np.arange(years[0], years[1]+1):
+            os.mkdir(os.path.join(dirct_inits, str(year)))
 
         cultivars = list()
-        for var in np.arange(0, 100):
+        for var in np.arange(cvars):
             cultivar = 'var_' + str(var)
             cultivars.append(cultivar)
 
-        for year in np.arange(1961, 2006):
+        for year in np.arange(years[0], years[1]+1):
             for var in cultivars:
-                os.mkdir(dirct_exp + folder + folder_name +
-                        str(year) + '/' + str(var))
+                os.mkdir(os.path.join(dirct_inits, str(year), str(var)))
+
     else:
-        raise ValueError(f'directory {dirct_exp + folder} already exists!')
+        raise ValueError(f'directory {dirct_inits} already exists!')
+
+    # /jobs
+
+    # /runs
+
+    # /sims
 
 
 def make_runs(init_yaml):
     """
     """
-siteyears = pd.read_csv(dirct_exp + 'weadata/siteyears_filtered.csv',
+siteyears = pd.read_csv(dirct_project + 'weadata/siteyears_filtered.csv',
                         dtype={'site': str}, index_col=0)
 
 custom_dict = {int(2): 'time',
@@ -110,9 +131,9 @@ for i in np.arange(siteyears.shape[0]):
     year = str(siteyears.iloc[i, 1])
 
     # setting up directories
-    init_dirct_wea = dirct_exp + 'weadata/data/control/'
-    init_dirct_stand = dirct_exp + 'inits/standard_test/'
-    init_dirct_custom = dirct_exp + 'inits/custom/' + site + '_' + year + '/'
+    init_dirct_wea = dirct_project + 'weadata/data/control/'
+    init_dirct_stand = dirct_project + 'inits/standard_test/'
+    init_dirct_custom = dirct_project + 'inits/custom/' + site + '_' + year + '/'
 
     custom_dict_loop = custom_dict.copy()
     standard_dict_loop = standard_dict.copy()
@@ -122,7 +143,7 @@ for i in np.arange(siteyears.shape[0]):
         standard_dict_loop[key] = init_dirct_stand + value + '.txt\n'
 
     # strings in run file
-    cultivars = glob.glob(dirct_exp + 'inits/var/*')
+    cultivars = glob.glob(dirct_project + 'inits/var/*')
 
     for j in cultivars:
         var = j.split('/')[-1].split('.')[-2]
@@ -160,7 +181,7 @@ for i in np.arange(siteyears.shape[0]):
 def make_jobs(init_yaml):
     """
     """
-cultivars = glob.glob(dirct_exp + 'inits/var/*')
+cultivars = glob.glob(dirct_project + 'inits/var/*')
 treatment = 'cont'
 
 for year in np.arange(1961, 2006):
