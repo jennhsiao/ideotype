@@ -9,7 +9,6 @@ Based on init_runame.yml file, sets up:
 - subjob.s
 
 """
-
 import os
 import glob
 import numpy as np
@@ -55,7 +54,7 @@ def read_yaml(run_name):
     return dict_setup
 
 
-def make_dircts(dirct_project, run_name, dict_setup):
+def make_dircts(run_name, dict_setup):
     """
     Make all required directories in experiment directory.
 
@@ -75,6 +74,9 @@ def make_dircts(dirct_project, run_name, dict_setup):
         Dictionary that includes setup info.
 
     """
+    # setup project directory
+    dirct_project = dict_setup['path_project']
+
     # /init
     dirct_inits = os.path.join(dirct_project, 'inits', run_name)
 
@@ -131,77 +133,128 @@ def make_dircts(dirct_project, run_name, dict_setup):
             raise ValueError(f'directory {dirct_folder} already exists!')
 
 
-def make_runs(init_yaml):
+def make_runs(run_name, dict_setup):
     """
+    Create run.txt files.
+
+    Parameters
+    ----------
+    init_yaml: str
+        init_runame.yml file that includes experiment setup and run specs.
+
     """
-siteyears = pd.read_csv(dirct_project + 'weadata/siteyears_filtered.csv',
-                        dtype={'site': str}, index_col=0)
+    # setup project directory
+    dirct_project = dict_setup['path_project']
 
-custom_dict = {int(2): 'time',
-               int(4): 'climate',
-               int(8): 'management',
-               int(12): 'init'}
-standard_dict = {int(3): 'biology',
-                 int(5): 'nitrogen',
-                 int(6): 'solute',
-                 int(7): 'soil',
-                 int(9): 'drip',
-                 int(10): 'water',
-                 int(11): 'waterbound',
-                 int(14): 'grid',
-                 int(15): 'nod',
-                 int(16): 'massbl'}
+    # read in dict_setup to fetch site-years info
+    data = genfromtxt(dict_setup['siteyears'],
+                      delimiter=',',
+                      skip_header=1,
+                      usecols=(0, 1),
+                      dtype=('U6', int, int, 'U10'))
 
-for i in np.arange(siteyears.shape[0]):
-    site = siteyears.iloc[i, 0]
-    year = str(siteyears.iloc[i, 1])
+    # setup site-years
+    siteyears = []
+    for row in data:
+        siteyears.append(str(row[0]) + '_' + str(row[1]))
 
-    # setting up directories
-    init_dirct_wea = dirct_project + 'weadata/data/control/'
-    init_dirct_stand = dirct_project + 'inits/standard_test/'
-    init_dirct_custom = dirct_project + 'inits/custom/' + site + '_' + year + '/'
+    # setup cultivars
+    cvars = dict_setup['specs']['cvars']  # fetch from init_runame.yml
+    cultivars = list()
+    for var in np.arange(cvars):
+        cultivar = 'var_' + str(var)
+        cultivars.append(cultivar)
 
-    custom_dict_loop = custom_dict.copy()
-    standard_dict_loop = standard_dict.copy()
-    for key, value in custom_dict_loop.items():
-        custom_dict_loop[key] = init_dirct_custom + value + '.txt\n'
-    for key, value in standard_dict_loop.items():
-        standard_dict_loop[key] = init_dirct_stand + value + '.txt\n'
+    # setup up directories
+    dirct_init_wea = dict_setup['path_wea']
+    dirct_init_stand = dict_setup['path_init_standard']
+    dirct_init_soils = dict_setup['path_init_soils']
 
-    # strings in run file
-    cultivars = glob.glob(dirct_project + 'inits/var/*')
+    dict_standard = {int(3): 'biology',
+                     int(5): 'nitrogen',
+                     int(9): 'drip',
+                     int(10): 'water',
+                     int(11): 'waterbound',
+                     int(16): 'massbl'}
+    dict_soils = {int(14): 'grid',
+                  int(15): 'nod',
+                  int(7): 'soil',
+                  int(6): 'solute'}
+    dict_custom = {int(2): 'time',
+                   int(4): 'climate',
+                   int(8): 'management',
+                   int(12): 'init'}
 
-    for j in cultivars:
-        var = j.split('/')[-1].split('.')[-2]
-        output_dirct = full_dirct + year + '/' + var + '/'
-        output_dict = {int(17): 'out1_' + site + '_' + year + '_' + var, 
-                       int(18): 'out2_' + site + '_' + year + '_' + var,
-                       int(19): 'out3',
-                       int(20): 'out4',
-                       int(21): 'out5',
-                       int(22): 'out6',
-                       int(23): 'massbl',
-                       int(24): 'runoff'}
+    # itemize dictionary items into paths
+    dict_standard_loop = dict_standard.copy()
+    dict_soils_loop = dict_soils.copy()
+    for key, value in dict_standard_loop.items():
+        dict_standard_loop[key] = os.path.join(
+            dirct_init_stand, f'{value}.txt') + '\n'
+    for key, value in dict_soils_loop.items():
+        dict_soils_loop[key] = os.path.join(
+            dirct_init_soils, f'{value}.txt') + '\n'
 
-        for key, value in output_dict.items():
-            output_dict[key] = output_dirct + value + '.txt\n'
+    # loop through siteyears
+    for siteyear in siteyears:
+        # setup siteyear-specific directory
+        dirct_init_custom = os.path.join(dirct_project,
+                                         'inits',
+                                         'customs',
+                                         run_name,
+                                         siteyear)
 
-        full_dict = {int(1): init_dirct_wea + site + '_' + year + '.txt\n',
-                     int(13): j + '\n',  # loop through different var files
-                     **custom_dict_loop,
-                     **standard_dict_loop,
-                     **output_dict}
+        # itemize dictionary items into paths
+        dict_custom_loop = dict_custom.copy()
+        for key, value in dict_custom_loop.items():
+            dict_custom_loop[key] = os.path.join(
+                dirct_init_custom, f'{value}.txt') + '\n'
 
-        # combine strings
-        keylist = sorted(full_dict.keys())
-        strings = [full_dict[key] for key in keylist]
+        # loop through cultivars
+        for cultivar in cultivars:
+            dirct_output = os.path.join(dirct_project,
+                                        'sims',
+                                        run_name,
+                                        siteyear.split('_')[1],  # parse year
+                                        cultivar)
+            dict_output = {int(17): 'out1_' + siteyear + cultivar,
+                           int(18): 'out2_' + siteyear + cultivar,
+                           int(19): 'out3',
+                           int(20): 'out4',
+                           int(21): 'out5',
+                           int(22): 'out6',
+                           int(23): 'massbl',
+                           int(24): 'runoff'}
 
-        # writing out run.txt file
-        run = open(full_dirct + year + '/' + var + 
-                   '/run_' + site + '_' + year + '_' + var + '.txt', 'w')
-        run.writelines(strings)
-        run.close()
+            for key, value in dict_output.items():
+                dict_output[key] = os.path.join(dirct_output,
+                                                f'{value}.txt') + '\n'
 
+            dict_all = {int(1): os.path.join(dirct_init_wea,
+                                             f'{siteyear}.txt') + '\n',
+                        int(13): os.path.join(dirct_project,
+                                              'inits',
+                                              'cultivars',
+                                              run_name,
+                                              cultivar) + '\n',
+                        **dict_standard_loop,
+                        **dict_soils_loop,
+                        **dict_custom_loop,
+                        **dict_output}
+
+            # combine strings
+            keylist = sorted(dict_all.keys())
+            strings = [dict_all[key] for key in keylist]
+
+            # writing out run.txt file
+            run = open(os.path.join(dirct_project,
+                                    'runs',
+                                    run_name,
+                                    siteyear.split('_')[1],  # parse year
+                                    cultivar,
+                                    'run' + siteyear + cultivar + '.txt'), 'w')
+            run.writelines(strings)
+            run.close()
 
 
 def make_jobs(init_yaml):
