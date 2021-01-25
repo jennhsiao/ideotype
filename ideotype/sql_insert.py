@@ -8,6 +8,12 @@ Tables include:
 - SiteInfo
 - LogInit
 
+* Note:
+* Order of insert table need to depend on
+* foreign key construction.
+* Foreign keys can't be inserted prior to their
+* linked primay keys.
+
 """
 import glob
 
@@ -17,7 +23,7 @@ from numpy import genfromtxt
 from datetime import datetime
 
 from ideotype.sql_declarative import (
-    Base, WeaData, Sims, Params,
+    IdeotypeBase, WeaData, Sims, Params,
     SiteInfo, LogInit)
 #                             LogMAIZSIM,
 #                             NASSYield, SoilClass)
@@ -30,6 +36,102 @@ from ideotype.utils import get_filelist, CC_VPD
 # Bind engine to metadata of Base class
 # so declaratives can be accessed through a DBSession instance
 #Base.metadata.bind = engine
+
+
+def insert_siteinfo(fpath_siteinfo, fpath_db, session=None):
+    """
+    Propagate values to DB table - SiteInfo.
+
+    Parameters
+    ----------
+    fpath_siteinfo : str
+        Path to site_info file.
+    session: str
+        Database session, default to None and generates new session.
+
+    """
+    if session is None:
+        engine = create_engine('sqlite:///' + fpath_db)
+        IdeotypeBase.metadata.bind = engine
+        DBSession = sessionmaker(bind=engine)
+        session = DBSession()
+
+    data = genfromtxt(
+        fpath_siteinfo,
+        delimiter=',',
+        skip_header=1,
+        dtype=('U6', int, '<U40', 'U2', int,
+               float, float, int, float, float),
+        )
+
+    for row in data:
+        # make an object instance of the SiteInfo table
+        record = SiteInfo(
+            site=(row[0]),
+            state=row[3],
+            lat=row[5],
+            lon=row[6],
+            years=int(row[7]),
+            area=round(row[8], 2),
+            perct_irri=round(row[9], 2),
+        )
+
+        # add row data to record
+        session.add(record)
+
+    # commit data to DB
+    session.commit()
+
+
+# TODO: not recording all the parameters
+# seems like I'm not recording for loop outputs correctly
+def insert_params(fpath_params, fpath_db, session=None):
+    """
+    Propagate values to DB table - Params.
+
+    Parameters
+    ----------
+    fpath_params: str
+        Path to params file.
+    session: str
+        Database session, default to None and generates new session.
+
+    """
+    if session is None:
+        engine = create_engine('sqlite:///' + fpath_db)
+        IdeotypeBase.metadata.bind = engine
+        DBSession = sessionmaker(bind=engine)
+        session = DBSession()
+
+    data = genfromtxt(
+        fpath_params,
+        delimiter=',',
+        names=True,
+        dtype=(float)
+        )
+
+    # parse out run_name from parameter file name
+    # TODO: need to make sure parameter file name is generated systematically
+    # TODO: is there a way to write a test to always check for this?
+    runame = fpath_params.split('/')[-1].split('.')[0].split('_')[1]
+    # fetch parameters
+    params = data.dtype.names
+
+    for count, row in enumerate(data):
+        for par in params:
+            # make an object instance of the Params table
+            record = Params(
+                run_name=runame,
+                cvar=count,
+                param=par,
+                value=row[par]
+            )
+
+            # add row data to record
+            session.add(record)
+
+    # commit data to DB
+    session.commit()
 
 
 def insert_weadata(dirct_weadata, fpath_db, session=None):
@@ -48,7 +150,7 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
     """
     if session is None:
         engine = create_engine('sqlite:///' + fpath_db)
-        Base.metadata.bind = engine
+        IdeotypeBase.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
 
@@ -72,7 +174,7 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
                 site=site_id,
                 year=year_id,
                 jday=int(row[0]),
-                date=datetime.strptime(row[1].strip("'"), '%m/%d/%Y').date(),
+                date=datetime.strptime(row[1].strip("'"), '%m/%d/%Y').date(), #TODO: think about making this date-time
                 time=int(row[2]),
                 solar=row[3],
                 temp=row[4],
@@ -102,7 +204,7 @@ def insert_sims(dirct_sims, fpath_db, session=None):
     """
     if session is None:
         engine = create_engine('sqlite:///' + fpath_db)
-        Base.metadata.bind = engine
+        IdeotypeBase.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
 
@@ -122,7 +224,6 @@ def insert_sims(dirct_sims, fpath_db, session=None):
             delimiter=',',
             skip_header=1,
             dtype=tuple(['U10'] + [float]*48 + ['<U50']),
-            encoding='latin_1'
             )
 
         # read in each line of sim file
@@ -174,7 +275,7 @@ def insert_sims(dirct_sims, fpath_db, session=None):
                 DM_root=row[44],
                 AvailW=row[47],
                 solubleC=row[48],
-                Pheno=row[49].strip()  # remove leading whitespace in output
+                pheno=row[49].strip()  # remove leading whitespace in output
             )
 
             # add row data to record
@@ -182,102 +283,6 @@ def insert_sims(dirct_sims, fpath_db, session=None):
 
         # commit data to DB
         session.commit()
-
-
-# TODO: not recording all the parameters
-# seems like I'm not recording for loop outputs correctly
-def insert_params(fpath_params, fpath_db, session=None):
-    """
-    Propagate values to DB table - Params.
-
-    Parameters
-    ----------
-    fpath_params: str
-        Path to params file.
-    session: str
-        Database session, default to None and generates new session.
-
-    """
-    if session is None:
-        engine = create_engine('sqlite:///' + fpath_db)
-        Base.metadata.bind = engine
-        DBSession = sessionmaker(bind=engine)
-        session = DBSession()
-
-    data = genfromtxt(
-        fpath_params,
-        delimiter=',',
-        names=True,
-        dtype=(float)
-        )
-
-    # parse out run_name from parameter file name
-    # TODO: need to make sure parameter file name is generated systematically
-    # TODO: is there a way to write a test to always check for this?
-    runame = fpath_params.split('/')[-1].split('.')[0].split('_')[1]
-    # fetch parameters
-    params = data.dtype.names
-
-    for count, row in enumerate(data):
-        for par in params:
-            # make an object instance of the Params table
-            record = Params(
-                run_name=runame,
-                cvar=count,
-                param=par,
-                value=row[par]
-            )
-
-            # add row data to record
-            session.add(record)
-
-    # commit data to DB
-    session.commit()
-
-
-def insert_siteinfo(fpath_siteinfo, fpath_db, session=None):
-    """
-    Propagate values to DB table - SiteInfo.
-
-    Parameters
-    ----------
-    fpath_siteinfo : str
-        Path to site_info file.
-    session: str
-        Database session, default to None and generates new session.
-
-    """
-    if session is None:
-        engine = create_engine('sqlite:///' + fpath_db)
-        Base.metadata.bind = engine
-        DBSession = sessionmaker(bind=engine)
-        session = DBSession()
-
-    data = genfromtxt(
-        fpath_siteinfo,
-        delimiter=',',
-        skip_header=1,
-        dtype=('U6', int, '<U40', 'U2', int,
-               float, float, int, float, float),
-        )
-
-    for row in data:
-        # make an object instance of the SiteInfo table
-        record = SiteInfo(
-            site=(row[0]),
-            state=row[3],
-            lat=row[5],
-            lon=row[6],
-            years=int(row[7]),
-            area=round(row[8], 2),
-            perct_irri=round(row[9], 2),
-        )
-
-        # add row data to record
-        session.add(record)
-
-    # commit data to DB
-    session.commit()
 
 
 def insert_loginit(fpath_log, fpath_db, session=None):
@@ -294,7 +299,7 @@ def insert_loginit(fpath_log, fpath_db, session=None):
     """
     if session is None:
         engine = create_engine('sqlite:///' + fpath_db)
-        Base.metadata.bind = engine
+        IdeotypeBase.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
 
