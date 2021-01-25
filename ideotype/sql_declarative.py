@@ -7,30 +7,33 @@ from sqlalchemy import (Column, ForeignKey, ForeignKeyConstraint,
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 
-Base = declarative_base()  # declarative_base is how you define tables
+
+class IdeotypeBase(object):
+    """
+    Add specifics to Base to debug.
+
+    __repr__:
+
+    """
+
+    def __repr__(self):  # magic function __repr__
+        """Define standard representation."""
+        columns = self.__table__.columns.keys()
+        rep_str = '<' + self.__class__.__name__ + '('
+        for c in columns:
+            rep_str += str(getattr(self, c)) + ', '  # getattr
+        rep_str = rep_str[0:-2]
+        rep_str += ')>'
+
+        return rep_str
+
+
+# declarative_base is how you define tables
 # makes an instance of a declarative_base() object
+IdeotypeBase = declarative_base(cls=IdeotypeBase)
 
 
-#class IdeotypeBase(Base):
-#    """
-#    Add specifics to Base to debug.
-
-#    __repr__:
-
-#    """
-
-#    def __repr__(self):  # magic function __repr__
-#        """Define standard representation."""
- #       columns = self.__table__.columns.keys()
- #       rep_str = '<' + self.__class__.__name__ + '('
- #       for c in columns:
- #           rep_str += str(getattr(self, c)) + ', '  # getattr
- #       rep_str = rep_str[0:-2]
- #       rep_str += ')>'
- #       return rep_str
-
-
-class WeaData(Base):
+class WeaData(IdeotypeBase):
     """
     DB table for weather data table.
 
@@ -57,7 +60,7 @@ class WeaData(Base):
     vpd = Column(Float)
 
 
-class Sims(Base):
+class Sims(IdeotypeBase):
     """
     DB table for simulation outputs.
 
@@ -141,10 +144,10 @@ class Sims(Base):
     DM_root = Column(Float)
     AvailW = Column(Float)
     solubleC = Column(Float)
-    Pheno = Column(String)
+    pheno = Column(String)
 
 
-class Params(Base):
+class Params(IdeotypeBase):
     """
     DB table for sampled parameter combinations.
 
@@ -171,7 +174,7 @@ class Params(Base):
     value = Column(Float)
 
 
-class SiteInfo(Base):
+class SiteInfo(IdeotypeBase):
     """
     DB table for simulation site info.
 
@@ -203,7 +206,7 @@ class SiteInfo(Base):
     perct_irri = Column(Float)
 
 
-class LogInit(Base):
+class LogInit(IdeotypeBase):
     """
     DB table for log files.
 
@@ -296,4 +299,4 @@ def create_table(fpath_db):
     # create all tables in engine
     # = 'Create Table' in SQL
 #    Base.metadata.create_all(engine)
-    Base.metadata.create_all(engine)
+    IdeotypeBase.metadata.create_all(engine)
