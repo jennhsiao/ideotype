@@ -1,11 +1,17 @@
+"""
+Setup namespace for project modules.
+
+In addition, fetch current project version (git-hash).
+
+"""
 from setuptools_scm import get_version
 from pathlib import Path
 from pkg_resources import get_distribution, DistributionNotFound
 
-from .read_sims import *
-from .utils import *
-from .sql_declarative import *
-from .sql_insert import *
+from .read_sims import *  # noqa
+from .utils import *  # noqa
+from .sql_declarative import *  # noqa
+from .sql_insert import *  # noqa
 #from . import sql_declarative
 #from . import sql_insert
 
