@@ -1,0 +1,35 @@
+ideotype_version: 0.1.dev31+gba7e2ab.d20210121
+init_yml: init_opt_pdate.yml
+params:
+  LM_min:
+  - 80
+  - 120
+  Vcmax:
+  - 60
+  - 80
+  Vpmax:
+  - 60
+  - 120
+  g1:
+  - 1
+  - 10
+  juv_leaves:
+  - 15
+  - 25
+  ref_potential:
+  - -4
+  - -1
+  rmax_ltar: []
+  stayGreen:
+  - 3
+  - 8
+path_inits: /home/disk/eos8/ach315/upscale/inits/
+path_jobs: /home/disk/eos8/ach315/upscale/jobs/
+path_maizsim: /home/disk/eos8/ach315/MAIZSIM
+path_params: /home/disk/eos8/ach315/upscale/params/
+path_sims: /home/disk/eos8/ach315/upscale/sims/
+pdate: dynamic_gdd
+run_name: opt_pdate
+site_info: /home/disk/eos8/ach315/upscale/weadata/stations_info_9110.csv
+site_summary: /home/disk/eos8/ach315/upscale/weadata/site_summary.csv
+siteyears: /home/disk/eos8/ach315/upscale/weadata/siteyears_filtered.csv
