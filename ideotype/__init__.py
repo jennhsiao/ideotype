@@ -10,18 +10,9 @@ from pkg_resources import get_distribution, DistributionNotFound
 
 from .read_sims import *  # noqa
 from .utils import *  # noqa
+from .log import * # noqa
 from .sql_declarative import *  # noqa
 from .sql_insert import *  # noqa
-#from . import sql_declarative
-#from . import sql_insert
-
-# from .sql_insert import * vs. from . import sql_insert
-# are essentially the same thing but results in different namespace 
-# option 1 (from .sql_insert import *):
-#   you can access functions in modules by
-#   directly calling the function name
-#   e.g. from ideotype import CC_VPD
-#   instead of from from ideotype.utils import CC_VPD
 
 try:
     # get accurate version for developer installs
