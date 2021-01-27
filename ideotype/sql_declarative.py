@@ -1,7 +1,5 @@
-"""
-Set up and create tables for SQL database.
+"""Set up and create tables for SQL database."""
 
-"""
 from sqlalchemy import (Column, ForeignKey, ForeignKeyConstraint,
                         Integer, String, Float, DateTime)
 from sqlalchemy.ext.declarative import declarative_base
@@ -298,5 +296,7 @@ def create_table(fpath_db):
 
     # create all tables in engine
     # = 'Create Table' in SQL
-#    Base.metadata.create_all(engine)
+    # metadata contains all definition of tables
     IdeotypeBase.metadata.create_all(engine)
+
+    return engine
