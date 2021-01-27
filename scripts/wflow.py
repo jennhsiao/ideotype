@@ -12,18 +12,9 @@ from ideotype.log import log_fetchinfo
 from ideotype.wflow_setup import (make_dircts, make_runs,
                                   make_jobs, make_subjobs)
 
-# TODO: really need to test this code
-# TODO: to properly do so, will need to setup test directory to test on
-# TODO: add code to mkdir for custom init files here as well
-# TODO: update some names to make code more readable
-# TODO: test that output directories and run/job files are correct
-# TODO: if directories already exist, print to terminal to show that
-# TODO: update some hard-coded directories to point to yml file
-
-
 # Setup argparse for terminal control
 a = argparse.ArgumentParser(
-    description='help text here ___ '
+    description='additional info to setup project directories and files'
 )
 
 a.add_argument(
