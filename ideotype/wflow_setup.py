@@ -40,7 +40,7 @@ def read_yaml(run_name):
     fname_param = os.path.join(DATA_PATH, 'inits', 'init_' + run_name + '.yml')
 
     if not os.path.isfile(fname_param):  # check whether init_.yml file exists
-        raise ValueError(f'init param file {fname_param} does not exist')
+        raise ValueError(f'init param file {fname_param} does not exist!')
 
     # read in init param yaml file
     with open(fname_param, 'r') as pfile:
@@ -53,7 +53,7 @@ def read_yaml(run_name):
     return dict_setup
 
 
-def make_dircts(run_name, dict_setup):
+def make_dircts(run_name):
     """
     Make all required directories in experiment directory.
 
@@ -65,18 +65,17 @@ def make_dircts(run_name, dict_setup):
 
     Parameters
     ----------
-    dirct_project: str
-        Root directory for project.
     run_name: str
         Run name for specific batch of simualtions.
-    dict_setup: dict
-        Dictionary that includes setup info.
 
     """
+    # read in setup yaml file
+    dict_setup = read_yaml(run_name)
+
     # setup project directory
     dirct_project = dict_setup['path_project']
 
-    # /init
+    # /inits
     dirct_inits = os.path.join(dirct_project, 'inits', 'customs', run_name)
 
     data = genfromtxt(dict_setup['siteyears'],
@@ -94,7 +93,6 @@ def make_dircts(run_name, dict_setup):
         os.mkdir(dirct_inits)
         for siteyear in siteyears:
             os.mkdir(os.path.join(dirct_inits, siteyear))
-
     else:
         raise ValueError(f'directory {dirct_inits} already exists!')
 
@@ -103,7 +101,6 @@ def make_dircts(run_name, dict_setup):
 
     if not os.path.isdir(dirct_jobs):
         os.mkdir(dirct_jobs)
-
     else:
         raise ValueError(f'directory {dirct_jobs} already exists!')
 
@@ -121,48 +118,42 @@ def make_dircts(run_name, dict_setup):
 
         if not os.path.isdir(dirct_folder):
             os.mkdir(dirct_folder)
-
+            # create top level year directories
             for year in np.arange(years[0], years[1]+1):
                 os.mkdir(os.path.join(dirct_folder, str(year)))
-
+                # create second layer cultivar directories
                 for cultivar in cultivars:
                     os.mkdir(os.path.join(dirct_folder,
                                           str(year),
                                           str(cultivar)))
-
         else:
             raise ValueError(f'directory {dirct_folder} already exists!')
 
 
-def make_runs(run_name, dict_setup):
+def make_runs(run_name):
     """
     Create run.txt files in corresponding directories for experiment.
 
     Parameters
     ----------
-    init_yaml: str
-        init_runame.yml file that includes experiment setup and run specs.
-    dict_setup: dict
-        Dictionary with setup info & run specs.
-        Use read_yaml function to get this dictionary.
+    run_name: str
+        run name for batch of experiments.
 
     """
-    # TODO: should check if these run files exist already in case you overwrite
-    # setup project directory
+    dict_setup = read_yaml(run_name)
     dirct_project = dict_setup['path_project']
 
     dirct_runs = os.path.join(dirct_project, 'runs', run_name)
+
+    # only execute if no run files already exist
     filelist = get_filelist(dirct_runs)
-    if len(filelist=0):
-
-
-
+    if len(filelist) == 0:
         # read in dict_setup to fetch site-years info
         data = genfromtxt(dict_setup['siteyears'],
-                        delimiter=',',
-                        skip_header=1,
-                        usecols=(0, 1),
-                        dtype=('U6', int, int, 'U10'))
+                          delimiter=',',
+                          skip_header=1,
+                          usecols=(0, 1),
+                          dtype=('U6', int, int, 'U10'))
 
         # setup site_years
         siteyears = []
@@ -182,19 +173,19 @@ def make_runs(run_name, dict_setup):
         dirct_init_soils = dict_setup['path_init_soils']
 
         dict_standard = {int(3): 'biology',
-                        int(5): 'nitrogen',
-                        int(9): 'drip',
-                        int(10): 'water',
-                        int(11): 'waterbound',
-                        int(16): 'massbl'}
+                         int(5): 'nitrogen',
+                         int(9): 'drip',
+                         int(10): 'water',
+                         int(11): 'waterbound',
+                         int(16): 'massbl'}
         dict_soils = {int(14): 'grid',
-                    int(15): 'nod',
-                    int(7): 'soil',
-                    int(6): 'solute'}
+                      int(15): 'nod',
+                      int(7): 'soil',
+                      int(6): 'solute'}
         dict_custom = {int(2): 'time',
-                    int(4): 'climate',
-                    int(8): 'management',
-                    int(12): 'init'}
+                       int(4): 'climate',
+                       int(8): 'management',
+                       int(12): 'init'}
 
         # itemize dictionary items into paths
         dict_standard_loop = dict_standard.copy()
@@ -210,10 +201,10 @@ def make_runs(run_name, dict_setup):
         for siteyear in siteyears:
             # setup siteyear-specific directory
             dirct_init_custom = os.path.join(dirct_project,
-                                            'inits',
-                                            'customs',
-                                            run_name,
-                                            siteyear)
+                                             'inits',
+                                             'customs',
+                                             run_name,
+                                             siteyear)
 
             # itemize dictionary items into paths
             dict_custom_loop = dict_custom.copy()
@@ -226,28 +217,28 @@ def make_runs(run_name, dict_setup):
                 dirct_output = os.path.join(dirct_project,
                                             'sims',
                                             run_name,
-                                            siteyear.split('_')[1],  # parse year
+                                            siteyear.split('_')[1],
                                             cultivar)
                 dict_output = {int(17): 'out1_' + siteyear + '_' + cultivar,
-                            int(18): 'out2_' + siteyear + '_' + cultivar,
-                            int(19): 'out3',
-                            int(20): 'out4',
-                            int(21): 'out5',
-                            int(22): 'out6',
-                            int(23): 'massbl',
-                            int(24): 'runoff'}
+                               int(18): 'out2_' + siteyear + '_' + cultivar,
+                               int(19): 'out3',
+                               int(20): 'out4',
+                               int(21): 'out5',
+                               int(22): 'out6',
+                               int(23): 'massbl',
+                               int(24): 'runoff'}
 
                 for key, value in dict_output.items():
                     dict_output[key] = os.path.join(dirct_output,
                                                     f'{value}.txt') + '\n'
 
                 dict_all = {int(1): os.path.join(dirct_init_wea,
-                                                f'{siteyear}.txt') + '\n',
+                                                 f'{siteyear}.txt') + '\n',
                             int(13): os.path.join(dirct_project,
-                                                'inits',
-                                                'cultivars',
-                                                run_name,
-                                                cultivar) + '\n',
+                                                  'inits',
+                                                  'cultivars',
+                                                  run_name,
+                                                  cultivar) + '\n',
                             **dict_standard_loop,
                             **dict_soils_loop,
                             **dict_custom_loop,
@@ -268,16 +259,133 @@ def make_runs(run_name, dict_setup):
                 run.writelines(strings)
                 run.close()
     else:
-        raise ValueError(f'run.txt files for {run_name} already exists!')
+        raise ValueError(f'run.txt files for run_name: "{run_name}"'
+                         ' already exist!')
 
 
-def make_jobs(init_yaml):
+def make_jobs(run_name):
     """
+    Create job.txt files in corresponding directories for experiment.
+
+    Parameters
+    ----------
+    run_name: str
+        run name for batch of experiments.
+
     """
-    pass
+    # read in setup yaml file
+    dict_setup = read_yaml(run_name)
+    # setup project directory
+    dirct_project = dict_setup['path_project']
+
+    # point to jobs directory
+    dirct_jobs = os.path.join(dirct_project, 'jobs', run_name)
+
+    # only execute if no run files already exist
+    filelist = get_filelist(dirct_jobs)
+    if len(filelist) == 0:
+        years = dict_setup['specs']['years']  # fetch from init_runame.yml
+        cvars = dict_setup['specs']['cvars']  # fetch from init_runame.yml
+
+        # assemble cultivars
+        cultivars = list()
+        for var in np.arange(cvars):
+            cultivar = 'var_' + str(var)
+            cultivars.append(cultivar)
+
+        # create a job script for each year_cultivar combination
+        # for the job script to grab all run files of all valid sites
+        # within that year
+        for year in np.arange(years[0], years[1]+1):
+            for cvar in cultivars:
+                logfile = str(year) + '_' + cvar + '.log'
+
+                str1 = '#!/bin/bash\n'
+                str2 = '#PBS -l nodes=1:ppn=1\n'
+                str3 = '#PBS -l walltime=12:00:00\n'
+                str4 = '#PBS -m a\n'
+                str5 = '#PBS -M ach315@uw.edu\n'
+                str6 = ('#PBS -N ' + run_name + '_' + str(year) +
+                        '_' + cvar + '\n')
+                str7 = '\n'
+                str8 = 'FILES=' + os.path.join(dirct_project,
+                                               'runs',
+                                               run_name,
+                                               str(year),
+                                               cvar,
+                                               '*') + '\n'
+                str9 = '\n'
+                str10 = 'cd ' + os.path.join(dirct_project,
+                                             'sims',
+                                             run_name,
+                                             str(year),
+                                             cvar) + '\n'
+                str11 = 'touch ' + logfile + '\n'
+                str12 = '\n'
+                str13 = 'for file in $FILES\n'
+                str14 = 'do\n'
+                str15 = '\tfname=$(echo $file)\n'  # grab file name
+                str16 = ('\tmaizsim_hash='  # grab git hash
+                         '$(git describe --dirty --always --tags)\n')
+                str17 = f'\techo $fname,$maizsim_hash >> {logfile}\n'  # append
+                str18 = '\tcd /home/disk/eos8/ach315/MAIZSIM\n'
+                str19 = '\ttimeout 15m maizsim $file\n'
+                str20 = 'done\n'
+
+                strings = [str1, str2, str3, str4, str5, str6,
+                           str7, str8, str9, str10, str11, str12, str13,
+                           str14, str15, str16, str17, str18, str19, str20]
+
+                jobs = open(os.path.join(dirct_jobs,
+                                         str(year) + '_' + cvar + '.job'), 'w')
+                jobs.writelines(strings)
+                jobs.close()
+
+    else:
+        raise ValueError(f'job.txt files for run_name: "{run_name}"'
+                         ' already exist!')
 
 
-def make_subjobs(init_yaml):
+def make_subjobs(run_name):
     """
+    Create subjobs.sh bash script to runall corresponding jobs.
+
+    Parameters
+    ----------
+    run_name: str
+        run name for batch of experiments.
+
     """
-    pass
+    # read in setup yaml file
+    dict_setup = read_yaml(run_name)
+    # setup project directory
+    dirct_project = dict_setup['path_project']
+
+    # point to jobs directory
+    dirct_jobs = os.path.join(dirct_project, 'jobs')
+    subjobs = 'subjobs_' + run_name + '.sh'
+
+    if not os.path.exists(os.path.join(dirct_jobs, subjobs)):
+        str1 = '#!/bin/bash\n'
+        str2 = '\n'
+        str3 = 'JOBS=' + os.path.join(dirct_jobs, run_name, '*') + '\n'
+        str4 = '\n'
+        str5 = 'for job in $JOBS\n'
+        str6 = 'do\n'
+        str7 = '\twhile [ `qstat | grep ach315 | wc -l` -ge 100 ]\n'
+        str8 = '\tdo\n'
+        str9 = '\t\tsleep 1\n'
+        str10 = '\tdone\n'
+        str11 = '\tqsub $job\n'
+        str12 = 'done\n'
+
+        strings = [str1, str2, str3, str4, str5, str6,
+                   str7, str8, str9, str10, str11, str12]
+
+        subjobs_script = open(os.path.join(dirct_jobs, subjobs), 'w')
+        subjobs_script.writelines(strings)
+        subjobs_script.close()
+
+    else:
+        raise ValueError(f'subjobs.sh for run_name: "{run_name}"'
+                         ' already exists!')
