@@ -10,7 +10,6 @@ import os
 import yaml
 
 from ideotype.data import DATA_PATH
-from . import __version__
 
 
 def log_fetchinfo(run_name):
@@ -66,6 +65,9 @@ def log_fetchinfo(run_name):
     # add yaml file name to log
     dict_log['pdate'] = dict_init['init']['plant_date']
     dict_log['init_yml'] = 'init_' + run_name + '.yml'
+
+    # import package version and add to log
+    from ideotype import __version__
     dict_log['ideotype_version'] = __version__
 
     # writing out log as yaml file
