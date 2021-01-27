@@ -12,9 +12,6 @@ import yaml
 from ideotype.data import DATA_PATH
 from . import __version__
 
-# TODO: save logfile as yaml file to data/logs/
-# TODO: add param.csv file as part of log
-
 
 def log_fetchinfo(run_name):
     """
@@ -39,6 +36,14 @@ def log_fetchinfo(run_name):
     if not os.path.isfile(fpath_init):
         raise ValueError(f'init param file {fpath_init} does not exist!')
 
+    # setup log file
+    log_runinfo = os.path.join(DATA_PATH, 'logs',
+                               'log_' + run_name + '.yml')
+
+    # check if log file for experiment exists already
+    if os.path.isfile(log_runinfo):
+        raise ValueError(f'log file for run_name: "{run_name}" exists already!')
+
     # read in init param yaml file
     with open(fpath_init, 'r') as pfile:
         dict_init = yaml.safe_load(pfile)
@@ -56,18 +61,12 @@ def log_fetchinfo(run_name):
         dict_log[key] = value
 
     dict_log['params'] = dict_init['params']
-
-#    for key, value in dict_init['params'].items():
-#        dict_log[key] = value
+    dict_log['specs'] = dict_init['specs']
 
     # add yaml file name to log
     dict_log['pdate'] = dict_init['init']['plant_date']
     dict_log['init_yml'] = 'init_' + run_name + '.yml'
     dict_log['ideotype_version'] = __version__
-
-    # create log file
-    log_runinfo = os.path.join(DATA_PATH, 'logs',
-                               'log_' + run_name + '.yml')
 
     # writing out log as yaml file
     with open(log_runinfo, 'w') as outfile:
