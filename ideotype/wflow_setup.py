@@ -18,7 +18,7 @@ from ideotype.utils import get_filelist
 from ideotype.data import DATA_PATH
 
 
-def read_yaml(run_name):
+def read_inityaml(run_name, yamlfile=None):
     """
     Read in init_runame yaml file.
 
@@ -28,6 +28,9 @@ def read_yaml(run_name):
     ----------
     run_name: str
         Run name for particular batch of simulations.
+    yamlfile: str
+        default None - function reads init_runame.yml file in project dirct.
+        a testing yamlfile path need to be passed for testing purposes.
 
     Returns
     -------
@@ -35,15 +38,22 @@ def read_yaml(run_name):
         Dictionary that only includes experiment setup info.
 
     """
-    # Fetch yaml file with experiment setup specs
-    # yaml files all stored in ideotype/data/inits/
-    fname_param = os.path.join(DATA_PATH, 'inits', 'init_' + run_name + '.yml')
+    # Default situation
+    if yamlfile is None:
+        # Fetch yaml file with experiment setup specs
+        # yaml files all stored in ideotype/data/inits/
+        fname_init = os.path.join(DATA_PATH,
+                                  'inits',
+                                  'init_' + run_name + '.yml')
+    # Manul input a test yamlfile to function for testing purposes
+    else:
+        fname_init = yamlfile
 
-    if not os.path.isfile(fname_param):  # check whether init_.yml file exists
-        raise ValueError(f'init param file {fname_param} does not exist!')
+    if not os.path.isfile(fname_init):  # check whether init_.yml file exists
+        raise ValueError(f'init param file {fname_init} does not exist!')
 
     # read in init param yaml file
-    with open(fname_param, 'r') as pfile:
+    with open(fname_init, 'r') as pfile:
         dict_init = yaml.safe_load(pfile)
 
     dict_setup = dict_init['setup']
@@ -53,7 +63,7 @@ def read_yaml(run_name):
     return dict_setup
 
 
-def make_dircts(run_name):
+def make_dircts(run_name, yamlfile=None):
     """
     Make all required directories in experiment directory.
 
@@ -67,10 +77,13 @@ def make_dircts(run_name):
     ----------
     run_name: str
         Run name for specific batch of simualtions.
+    yamlfile: str
+        default None - function reads init_runame.yml file in project dirct.
+        a testing yamlfile path need to be passed for testing purposes.
 
     """
     # read in setup yaml file
-    dict_setup = read_yaml(run_name)
+    dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
 
     # setup project directory
     dirct_project = dict_setup['path_project']
@@ -130,7 +143,7 @@ def make_dircts(run_name):
             raise ValueError(f'directory {dirct_folder} already exists!')
 
 
-def make_runs(run_name):
+def make_runs(run_name, yamlfile=None):
     """
     Create run.txt files in corresponding directories for experiment.
 
@@ -138,9 +151,12 @@ def make_runs(run_name):
     ----------
     run_name: str
         run name for batch of experiments.
+    yamlfile: str
+        default None - function reads init_runame.yml file in project dirct.
+        a testing yamlfile path need to be passed for testing purposes.
 
     """
-    dict_setup = read_yaml(run_name)
+    dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
     dirct_project = dict_setup['path_project']
 
     dirct_runs = os.path.join(dirct_project, 'runs', run_name)
@@ -263,7 +279,7 @@ def make_runs(run_name):
                          ' already exist!')
 
 
-def make_jobs(run_name):
+def make_jobs(run_name, yamlfile=None):
     """
     Create job.txt files in corresponding directories for experiment.
 
@@ -271,10 +287,13 @@ def make_jobs(run_name):
     ----------
     run_name: str
         run name for batch of experiments.
+    yamlfile: str
+        default None - function reads init_runame.yml file in project dirct.
+        a testing yamlfile path need to be passed for testing purposes.
 
     """
     # read in setup yaml file
-    dict_setup = read_yaml(run_name)
+    dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
     # setup project directory
     dirct_project = dict_setup['path_project']
 
@@ -346,7 +365,7 @@ def make_jobs(run_name):
                          ' already exist!')
 
 
-def make_subjobs(run_name):
+def make_subjobs(run_name, yamlfile=None):
     """
     Create subjobs.sh bash script to runall corresponding jobs.
 
@@ -354,10 +373,13 @@ def make_subjobs(run_name):
     ----------
     run_name: str
         run name for batch of experiments.
+    yamlfile: str
+        default None - function reads init_runame.yml file in project dirct.
+        a testing yamlfile path need to be passed for testing purposes.
 
     """
     # read in setup yaml file
-    dict_setup = read_yaml(run_name)
+    dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
     # setup project directory
     dirct_project = dict_setup['path_project']
 
