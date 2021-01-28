@@ -63,7 +63,7 @@ def read_inityaml(run_name, yamlfile=None):
     return dict_setup
 
 
-def make_dircts(run_name, yamlfile=None):
+def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
     """
     Make all required directories in experiment directory.
 
@@ -123,27 +123,44 @@ def make_dircts(run_name, yamlfile=None):
         years = dict_setup['specs']['years']  # fetch from init_runame.yml
         cvars = dict_setup['specs']['cvars']  # fetch from init_runame.yml
 
-        # assemble cultivars
+        # check if cultivar in yamlfile is continuous or not
+        # False case mostly for testing purposes
         cultivars = list()
-        for var in np.arange(cvars):
+        if cont_cvars is True:
+            cvars_iter = np.arange(cvars)
+        else:
+            cvars_iter = cvars
+
+        # assemble cultivars
+        for var in cvars_iter:
             cultivar = 'var_' + str(var)
             cultivars.append(cultivar)
 
         if not os.path.isdir(dirct_folder):
+            # make /runs or /sims directory with run_name
             os.mkdir(dirct_folder)
+
+            # check if years in yaml file are consecutive range or individual
+            # False case mostly for testing
+            if cont_years is True:
+                years_iter = np.arange(years[0], years[1]+1)
+            else:
+                years_iter = years
+
             # create top level year directories
-            for year in np.arange(years[0], years[1]+1):
+            for year in years_iter:
                 os.mkdir(os.path.join(dirct_folder, str(year)))
                 # create second layer cultivar directories
                 for cultivar in cultivars:
                     os.mkdir(os.path.join(dirct_folder,
                                           str(year),
                                           str(cultivar)))
+
         else:
             raise ValueError(f'directory {dirct_folder} already exists!')
 
 
-def make_runs(run_name, yamlfile=None):
+def make_runs(run_name, yamlfile=None, cont_cvars=True):
     """
     Create run.txt files in corresponding directories for experiment.
 
@@ -178,8 +195,17 @@ def make_runs(run_name, yamlfile=None):
 
         # setup cultivars
         cvars = dict_setup['specs']['cvars']  # fetch cultivar numbers
+
+        # check if cultivar in yamlfile is continuous or not
+        # False case mostly for testing purposes
         cultivars = list()
-        for var in np.arange(cvars):
+        if cont_cvars is True:
+            cvars_iter = np.arange(cvars)
+        else:
+            cvars_iter = cvars
+
+        # assemble cultivars
+        for var in cvars_iter:
             cultivar = 'var_' + str(var)
             cultivars.append(cultivar)
 
@@ -279,7 +305,7 @@ def make_runs(run_name, yamlfile=None):
                          ' already exist!')
 
 
-def make_jobs(run_name, yamlfile=None):
+def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
     """
     Create job.txt files in corresponding directories for experiment.
 
@@ -306,16 +332,30 @@ def make_jobs(run_name, yamlfile=None):
         years = dict_setup['specs']['years']  # fetch from init_runame.yml
         cvars = dict_setup['specs']['cvars']  # fetch from init_runame.yml
 
-        # assemble cultivars
+        # check if cultivar in yamlfile is continuous or not
+        # False case mostly for testing purposes
         cultivars = list()
-        for var in np.arange(cvars):
+        if cont_cvars is True:
+            cvars_iter = np.arange(cvars)
+        else:
+            cvars_iter = cvars
+
+        # assemble cultivars
+        for var in cvars_iter:
             cultivar = 'var_' + str(var)
             cultivars.append(cultivar)
+
+        # check if years in yaml file are consecutive range or individual
+        # False case mostly for testing
+        if cont_years is True:
+            years_iter = np.arange(years[0], years[1]+1)
+        else:
+            years_iter = years
 
         # create a job script for each year_cultivar combination
         # for the job script to grab all run files of all valid sites
         # within that year
-        for year in np.arange(years[0], years[1]+1):
+        for year in years_iter:
             for cvar in cultivars:
                 logfile = str(year) + '_' + cvar + '.log'
 
