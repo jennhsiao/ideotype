@@ -17,6 +17,8 @@ from ideotype.utils import get_filelist
 
 from ideotype.data import DATA_PATH
 
+# TODO: add parameter docstrings for cont_years & cont_cvars
+
 
 def read_inityaml(run_name, yamlfile=None):
     """
@@ -78,8 +80,18 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
     run_name: str
         Run name for specific batch of simualtions.
     yamlfile: str
-        default None - function reads init_runame.yml file in project dirct.
+        Default None - function reads init_runame.yml file in project dirct.
         a testing yamlfile path need to be passed for testing purposes.
+    cont_years: Bool
+        Default True
+        How yaml file stores simulation years info.
+        True: stored start and end year assuming all years in between.
+        False: stores individual years (testing purposes)
+    cont_cvars: Bool
+        Default True
+        How yaml file stores simulation cvars info.
+        True: stored single number representing the total number of cultivas.
+        Fals: stored specific cultivars (testing purposes).
 
     """
     # read in setup yaml file
@@ -171,6 +183,11 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
     yamlfile: str
         default None - function reads init_runame.yml file in project dirct.
         a testing yamlfile path need to be passed for testing purposes.
+    cont_cvars: Bool
+        Default True
+        How yaml file stores simulation cvars info.
+        True: stored single number representing the total number of cultivas.
+        Fals: stored specific cultivars (testing purposes).
 
     """
     dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
@@ -316,6 +333,16 @@ def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
     yamlfile: str
         default None - function reads init_runame.yml file in project dirct.
         a testing yamlfile path need to be passed for testing purposes.
+    cont_years: Bool
+        Default True
+        How yaml file stores simulation years info.
+        True: stored start and end year assuming all years in between.
+        False: stores individual years (testing purposes)
+    cont_cvars: Bool
+        Default True
+        How yaml file stores simulation cvars info.
+        True: stored single number representing the total number of cultivas.
+        Fals: stored specific cultivars (testing purposes).
 
     """
     # read in setup yaml file
