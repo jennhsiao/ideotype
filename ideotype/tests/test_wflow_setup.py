@@ -64,12 +64,14 @@ def make_testyaml(tmp_path_factory):
 #def test_tmpath(tmp_path):
 
 
-
 def test_make_dircts(make_testyaml):
     """Make test directories under temporary path."""
     run_name = 'test'
     yamlfile = make_testyaml
-    make_dircts(run_name, yamlfile=yamlfile)  # make test directories
+    make_dircts(run_name,
+                yamlfile=yamlfile,
+                cont_years=False,
+                cont_cvars=False)  # make test directories
 
     # code to test directories are correct
     get_filelist()
@@ -78,7 +80,9 @@ def test_make_dircts(make_testyaml):
 def test_make_runs(make_testyaml):
     run_name = 'test'
     yamlfile = make_testyaml
-    make_runs(run_name, yamlfile=yamlfile)  # write run.txt files
+    make_runs(run_name,
+              yamlfile=yamlfile,
+              cont_cvars=False)  # write run.txt files
 
     # code to test that run files are correct
 
@@ -86,7 +90,10 @@ def test_make_runs(make_testyaml):
 def test_make_jobs(make_testyaml):
     run_name = 'test'
     yamlfile = make_testyaml
-    make_jobs(run_name, yamlfile=yamlfile)  # write job.txt files
+    make_jobs(run_name,
+              yamlfile=yamlfile,
+              cont_years=False,
+              cont_cvars=False)  # write job.txt files
 
     # code to test that job files are correct
 
@@ -94,6 +101,7 @@ def test_make_jobs(make_testyaml):
 def test_make_subjobs(make_testyaml):
     run_name = 'test'
     yamlfile = make_testyaml
-    make_subjobs(run_name, yamlfile=yamlfile)  # write subjobs.sh
+    make_subjobs(run_name,
+                 yamlfile=yamlfile)  # write subjobs.sh
 
     # code to test that subjobs.sh is correct
