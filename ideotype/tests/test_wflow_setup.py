@@ -1,42 +1,99 @@
 """Testing wflow setup."""
+
 import os
-import numpy as np
 import pytest
-from numpy import genfromtxt
+import yaml
+from shutil import copyfile
 
 from ideotype.utils import get_filelist
-
 from ideotype.data import DATA_PATH
-from ideotype.wflow_setup import read_yaml, make_dircts, make_runs
+from ideotype.wflow_setup import (make_dircts, make_runs,
+                                  make_jobs, make_subjobs)
 
 
-run_name = 'test'  # TODO: make sure init_test.yml file is setup correctly
-                   # to handle tests!
+@pytest.fixture(scope='module')
+def make_testyaml(tmp_path_factory):
+    """Update init_test.yml file on the fly."""
+    # link to init_test.yml
+    tmp_path = tmp_path_factory.mktemp('ideotype_test')
 
-@pytest.fixtures(scope='module')
-def make_tmpath(tmp_path):
-    """Create temporary path for workflow testing."""
-    dirct_project = tmp_path
+    # TODO: will need to make standard directories in tmp_path
+    # that mirror how things look like in the standard project directory
+    # TODO: shutil (standard library for shell commands, copyfile)
+    # use this to copy the init files you need into the tmp_paths
 
-    return dirct_project
+    # create the four main directories under the temp project directory
+    os.mkdir(os.path.join(tmp_path, 'inits'))
+    os.mkdir(os.path.join(tmp_path, 'jobs'))
+    os.mkdir(os.path.join(tmp_path, 'runs'))
+    os.mkdir(os.path.join(tmp_path, 'sims'))
+
+    # create secondary directories that need to exist
+    os.mkdir(os.path.join(tmp_path, 'inits', 'standards'))
+    os.mkdir(os.path.join(tmp_path, 'inits', 'soils'))
+    os.mkdir(os.path.join(tmp_path, 'inits', 'cultivars'))
+    os.mkdir(os.path.join(tmp_path, 'inits', 'customs'))
+
+    # copy and move files needed for testing purposes that
+    # exist in normal project dirct
 
 
-def test_make_dircts(make_tmpath):
+    # create test_yaml file for testing purposes
+    test_yaml = os.path.join(DATA_PATH, 'inits', 'init_test.yml')
+    updated_yaml = os.path.join(tmp_path, 'init_test.yml')
+
+    # check if init_test.yml exists
+    if not os.path.exists(test_yaml):
+        raise ValueError(f'{test_yaml} does not exist!')
+
+    # read in init_test.yml
+    with open(test_yaml, 'r') as pfile:
+        dict_init = yaml.safe_load(pfile)
+
+    # insert tmp_path as path_project
+    dict_init['setup']['path_project'] = str(tmp_path)
+
+    # overwrite existing init_test.yml file
+    with open(updated_yaml, 'w') as outfile:
+        yaml.dump(dict_init, outfile,
+                  default_flow_style=False, sort_keys=False)
+
+    return updated_yaml
+
+
+#def test_tmpath(tmp_path):
+
+
+
+def test_make_dircts(make_testyaml):
     """Make test directories under temporary path."""
     run_name = 'test'
-    dict_setup = read_yaml(run_name)
+    yamlfile = make_testyaml
+    make_dircts(run_name, yamlfile=yamlfile)  # make test directories
 
-    # make test directories
-    make_dircts(run_name, dict_setup)
-
-    # 
-
+    # code to test directories are correct
+    get_filelist()
 
 
+def test_make_runs(make_testyaml):
+    run_name = 'test'
+    yamlfile = make_testyaml
+    make_runs(run_name, yamlfile=yamlfile)  # write run.txt files
 
-def test_make_runs(make_tmpath):
-    # setup project directory for testing as the assigned temp path.
-    dirct_project = make_tmpath
+    # code to test that run files are correct
 
-    # read in test yaml file with directory setup info
-    dict_setup = read_yaml(run_name)
+
+def test_make_jobs(make_testyaml):
+    run_name = 'test'
+    yamlfile = make_testyaml
+    make_jobs(run_name, yamlfile=yamlfile)  # write job.txt files
+
+    # code to test that job files are correct
+
+
+def test_make_subjobs(make_testyaml):
+    run_name = 'test'
+    yamlfile = make_testyaml
+    make_subjobs(run_name, yamlfile=yamlfile)  # write subjobs.sh
+
+    # code to test that subjobs.sh is correct
