@@ -8,9 +8,25 @@ fpath_wea = ('/home/disk/eos8/ach315/ideotype/ideotype/data'
              '/test_data/wea/725300_1964.txt')
 fpath_sim = ('/home/disk/eos8/ach315/ideotype/ideotype/data'
              '/test_data/sims/test/1964/var_6/out1_725300_1964_var_6.txt')
-# TODO: update
 fpath_param = ('/home/disk/eos8/ach315/ideotype/ideotype/data'
                '/test_data/params/param_test.csv')
+
+
+def test_insert_params(ideotype_session):
+    """Test if query output match params."""
+    query = ideotype_session.query(Params).filter(
+        Params.run_name == 'test').filter(
+            Params.cvar == 6).filter(
+                Params.param == 'stayGreen')
+    results = query.all()
+
+    data = genfromtxt(fpath_param,
+                      delimiter=',',
+                      max_rows=10,
+                      names=True,
+                      dtype=(float))
+
+    assert results[0].value == data[6]['stayGreen']
 
 
 def test_insert_weadata(ideotype_session):
@@ -47,30 +63,16 @@ def test_insert_sims(ideotype_session):
 
     data = genfromtxt(fpath_sim,
                       delimiter=',',
-                      skip_header=1,
+                      names=True,
                       dtype=tuple(['U10'] + [float]*48 + ['<U50']),
                       max_rows=10)
 
     for index, row in enumerate(data):
         obj_sim = results[index]
         assert obj_sim.site == '725300'
-        assert obj_sim.year == int(row[0].split('/')[-1])
-        assert obj_sim.DM_ear == row[40]
-        assert obj_sim.pheno == row[-1].strip()
-
-
-def test_insert_params(ideotype_session):
-    """Test if query output match params."""
-    query = ideotype_session.query(Params).filter(
-        Params.cvar == 0).filter(
-            Params.param == 'stayGreen')
-    results = query.all()
-
-    data = genfromtxt(fpath_param,
-                      delimiter=',',
-                      skip_header=1,
-                      max_rows=10)
-
-#    for index, row in enumerate(data):
-#        obj_param = results[index]
-#        assert obj_param.value == row[1]
+#        assert obj_sim.year == int(row[0].split('/')[-1])
+        assert obj_sim.year == int(row['date'].split('/')[-1])
+#        assert obj_sim.DM_ear == row[40]
+        assert obj_sim.DM_ear == row['earDM']
+#        assert obj_sim.pheno == row[-1].strip()
+        assert obj_sim.pheno == row['Note'].strip()
