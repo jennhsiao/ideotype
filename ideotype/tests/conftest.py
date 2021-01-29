@@ -38,11 +38,14 @@ def setup_and_teardown_package():
     # bind metadata with engine
     IdeotypeBase.metadata.bind = test_engine
 
+    # setup run name
+    run_name = 'test'
+
     # insert table values
     insert_siteinfo(fpath_siteinfo, fpath_db)
-    insert_params(fpath_params, fpath_db)
+    insert_params(fpath_params, fpath_db, run_name)
     insert_weadata(dirct_weadata, fpath_db)
-    insert_sims(dirct_sims, fpath_db)
+    insert_sims(dirct_sims, fpath_db, run_name)
 
     yield test_engine
 
