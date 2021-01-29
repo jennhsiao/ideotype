@@ -82,9 +82,8 @@ class Sims(IdeotypeBase):
     """
 
     __tablename__ = 'sims'
+
     # primary keys
-    # TODO: need a foreign key constrain here for
-    # TODO: run_name & cvar
     run_name = Column(String(20),
                       ForeignKey('params.run_name'),
                       primary_key=True)
@@ -163,9 +162,6 @@ class Params(IdeotypeBase):
     """
 
     __tablename__ = 'params'
-    # primary keys
-    # TODO: want run_name to be primay key here
-    # have other tables reference to it via foreignkey
     run_name = Column(String(20), primary_key=True)
     cvar = Column(Integer, primary_key=True)
     param = Column(String, primary_key=True)
