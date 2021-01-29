@@ -15,8 +15,6 @@ Tables include:
 * linked primay keys.
 
 """
-import glob
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from numpy import genfromtxt
@@ -30,13 +28,6 @@ from ideotype.sql_declarative import (
 
 from ideotype.utils import get_filelist, CC_VPD
 
-# create connection with DB
-#engine = create_engine('sqlite:////home/disk/eos8/ach315/upscale/db/test.db')
-
-# Bind engine to metadata of Base class
-# so declaratives can be accessed through a DBSession instance
-#Base.metadata.bind = engine
-
 
 def insert_siteinfo(fpath_siteinfo, fpath_db, session=None):
     """
@@ -46,6 +37,8 @@ def insert_siteinfo(fpath_siteinfo, fpath_db, session=None):
     ----------
     fpath_siteinfo : str
         Path to site_info file.
+    fpath_db: str
+        Database path.
     session: str
         Database session, default to None and generates new session.
 
@@ -83,9 +76,7 @@ def insert_siteinfo(fpath_siteinfo, fpath_db, session=None):
     session.commit()
 
 
-# TODO: not recording all the parameters
-# seems like I'm not recording for loop outputs correctly
-def insert_params(fpath_params, fpath_db, session=None):
+def insert_params(fpath_params, fpath_db, run_name, session=None):
     """
     Propagate values to DB table - Params.
 
@@ -93,6 +84,10 @@ def insert_params(fpath_params, fpath_db, session=None):
     ----------
     fpath_params: str
         Path to params file.
+    fpath_db: str
+        Database path.
+    run_name: str
+        Run name for batch of simulations.
     session: str
         Database session, default to None and generates new session.
 
@@ -113,7 +108,7 @@ def insert_params(fpath_params, fpath_db, session=None):
     # parse out run_name from parameter file name
     # TODO: need to make sure parameter file name is generated systematically
     # TODO: is there a way to write a test to always check for this?
-    runame = fpath_params.split('/')[-1].split('.')[0].split('_')[1]
+    runame = run_name
     # fetch parameters
     params = data.dtype.names
 
@@ -144,6 +139,8 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
         Directory where all weather file is stored.
         Make sure to include /* at the end in order to fetch
         all files stored in directory.
+    fpath_db: str
+        Database path.
     session: str
         Database session, default to None and generates new session.
 
@@ -154,10 +151,7 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
 
-    # fetch all weather files in directory
-    # TODO: code up something that will work regardless of
-    # directory input format to function
-    weafiles = glob.glob(dirct_weadata)
+    weafiles = get_filelist(dirct_weadata)
 
     for weafile in weafiles:
         site_id = weafile.split('/')[-1].split('_')[0]
@@ -174,7 +168,7 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
                 site=site_id,
                 year=year_id,
                 jday=int(row[0]),
-                date=datetime.strptime(row[1].strip("'"), '%m/%d/%Y').date(), #TODO: think about making this date-time
+                date=datetime.strptime(row[1].strip("'"), '%m/%d/%Y').date(),
                 time=int(row[2]),
                 solar=row[3],
                 temp=row[4],
@@ -190,7 +184,7 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
         session.commit()
 
 
-def insert_sims(dirct_sims, fpath_db, session=None):
+def insert_sims(dirct_sims, fpath_db, run_name, session=None):
     """
     Propagate values to DB table - Sims.
 
@@ -198,6 +192,10 @@ def insert_sims(dirct_sims, fpath_db, session=None):
     ----------
     dirct_sims: str
         Upper most directory where sim files are stroed.
+    fpath_db: str
+        Database path.
+    run_name: str
+        Run name for batch of simulations.
     session: str
         Database session, default to None and generates new session.
 
@@ -208,9 +206,8 @@ def insert_sims(dirct_sims, fpath_db, session=None):
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
 
-    # fetch all files within directory
     simfiles = get_filelist(dirct_sims)
-    runame = dirct_sims.split('/')[-1]
+    runame = run_name
 
     for sim in simfiles:
         # parse info needed from file name
@@ -293,6 +290,8 @@ def insert_loginit(fpath_log, fpath_db, session=None):
     ----------
     fpath_log: str
         File path for experiment log file.
+    fpath_db: str
+        Database path.
     session:
         Database session, default to None and generates new session.
 
