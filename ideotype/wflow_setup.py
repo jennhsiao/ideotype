@@ -17,8 +17,6 @@ from ideotype.utils import get_filelist
 
 from ideotype.data import DATA_PATH
 
-# TODO: add parameter docstrings for cont_years & cont_cvars
-
 
 def read_inityaml(run_name, yamlfile=None):
     """
