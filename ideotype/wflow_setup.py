@@ -56,6 +56,10 @@ def read_inityaml(run_name, yamlfile=None):
     with open(fname_init, 'r') as pfile:
         dict_init = yaml.safe_load(pfile)
 
+    if not dict_init['setup']['run_name'] == run_name:
+        raise ValueError('mismatch run_name between yaml file name'
+                         'and setup record within yaml file!')
+
     dict_setup = dict_init['setup']
     dict_setup['params'] = dict_init['params']
     dict_setup['specs'] = dict_init['specs']
