@@ -10,18 +10,18 @@ from ideotype.data import DATA_PATH
 from ideotype.wflow_setup import (make_dircts, make_runs,
                                   make_jobs, make_subjobs)
 
+# setup pointer to some default init files
+dirct_default_init = '/home/disk/eos8/ach315/upscale/inits/'
+
 
 @pytest.fixture(scope='module')
 def make_testyaml(tmp_path_factory):
-    """Update init_test.yml file on the fly."""
+    """Update init_test.yml file on the fly with tmp_paths."""
     # link to init_test.yml
     tmp_path = tmp_path_factory.mktemp('ideotype_test')
 
-    # TODO: will need to make standard directories in tmp_path
-    # that mirror how things look like in the standard project directory
-    # TODO: shutil (standard library for shell commands, copyfile)
-    # use this to copy the init files you need into the tmp_paths
-
+    # create standard directory structure in the temp directory
+    # the mirrors standard project directory
     # create the four main directories under the temp project directory
     os.mkdir(os.path.join(tmp_path, 'inits'))
     os.mkdir(os.path.join(tmp_path, 'jobs'))
@@ -34,11 +34,46 @@ def make_testyaml(tmp_path_factory):
     os.mkdir(os.path.join(tmp_path, 'inits', 'cultivars'))
     os.mkdir(os.path.join(tmp_path, 'inits', 'customs'))
 
-    # copy and move files needed for testing purposes that
-    # exist in normal project dirct
+    # /init_standards
+    dirct_default_standard = os.path.join(dirct_default_init,
+                                          'standards',
+                                          'opt')
+    dirct_temp_standard = os.path.join(tmp_path,
+                                       'inits',
+                                       'standards')
 
+    # list of standard init files to copy
+    fname_standards = ['biology.txt',
+                       'nitrogen.txt',
+                       'drip.txt',
+                       'water.txt',
+                       'waterbound.txt',
+                       'massbl.txt']
 
-    # create test_yaml file for testing purposes
+    # copy all standard init files to temp directory
+    for fname in fname_standards:
+        copyfile(
+            os.path.join(dirct_default_standard, fname),
+            os.path.join(dirct_temp_standard, fname))
+
+    # /init_soils
+    dirct_default_soil = os.path.join(dirct_default_init,
+                                      'soils',
+                                      'soil1')
+    dirct_temp_soil = os.path.join(tmp_path,
+                                   'inits',
+                                   'soils')
+
+    # list of soil init files to copy
+    fname_soils = ['grid', 'nod', 'soil', 'solute']
+
+    # copy all standard init files to temp directory
+    for fname in fname_soils:
+        copyfile(
+            os.path.join(dirct_default_soil, fname),
+            os.path.join(dirct_temp_soil, fname))
+
+    # create test_yaml file on the fly for testing purposes
     test_yaml = os.path.join(DATA_PATH, 'inits', 'init_test.yml')
     updated_yaml = os.path.join(tmp_path, 'init_test.yml')
 
@@ -50,8 +85,10 @@ def make_testyaml(tmp_path_factory):
     with open(test_yaml, 'r') as pfile:
         dict_init = yaml.safe_load(pfile)
 
-    # insert tmp_path as path_project
+    # update certain paths with tmp_path
     dict_init['setup']['path_project'] = str(tmp_path)
+    dict_init['setup']['path_init_standards'] = dirct_temp_standard
+    dict_init['setup']['path_init_soils'] = dirct_temp_soil
 
     # overwrite existing init_test.yml file
     with open(updated_yaml, 'w') as outfile:
@@ -59,9 +96,6 @@ def make_testyaml(tmp_path_factory):
                   default_flow_style=False, sort_keys=False)
 
     return updated_yaml
-
-
-#def test_tmpath(tmp_path):
 
 
 def test_make_dircts(make_testyaml):
@@ -78,6 +112,7 @@ def test_make_dircts(make_testyaml):
 
 
 def test_make_runs(make_testyaml):
+    """Make test run.txt within temporary directories."""
     run_name = 'test'
     yamlfile = make_testyaml
     make_runs(run_name,
