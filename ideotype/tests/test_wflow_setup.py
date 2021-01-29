@@ -59,13 +59,16 @@ def make_testyaml(tmp_path_factory):
     # /init_soils
     dirct_default_soil = os.path.join(dirct_default_init,
                                       'soils',
-                                      'soil1')
+                                      'soils_1')
     dirct_temp_soil = os.path.join(tmp_path,
                                    'inits',
                                    'soils')
 
     # list of soil init files to copy
-    fname_soils = ['grid', 'nod', 'soil', 'solute']
+    fname_soils = ['grid.txt',
+                   'nod.txt',
+                   'soil.txt',
+                   'solute.txt']
 
     # copy all standard init files to temp directory
     for fname in fname_soils:
@@ -108,7 +111,7 @@ def test_make_dircts(make_testyaml):
                 cont_cvars=False)  # make test directories
 
     # code to test directories are correct
-    get_filelist()
+    #get_filelist()
 
 
 def test_make_runs(make_testyaml):
