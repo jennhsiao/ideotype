@@ -1,23 +1,24 @@
 """Test environment."""
-import pytest
+import os
 
-from sqlalchemy import create_engine
+import pytest
 from sqlalchemy.orm import sessionmaker
 from ideotype.sql_declarative import IdeotypeBase
 from ideotype.sql_insert import (insert_siteinfo, insert_params,
                                  insert_sims, insert_weadata)
-from ideotype.data import DATA_PATH
 
 import ideotype
+from ideotype.data import DATA_PATH
 
+# setup test database
 test_db = None
-# TODO: add test data to /test_data and reference them with relative path
-# so you'll have the test files on repo
-# os.path.join(DATA_PATH, 'test_data', ...)
-dirct_weadata = '/home/disk/eos8/ach315/upscale/db/test_data/wea/*'
-dirct_sims = '/home/disk/eos8/ach315/upscale/db/test_data/sim'
-fpath_params = '/home/disk/eos8/ach315/upscale/db/test_data/param/param_opt.csv'
-fpath_siteinfo = '/home/disk/eos8/ach315/upscale/db/test_data/site/site_summary.csv'
+
+# setup paths pointing to data for test DB tables
+fpath_siteinfo = os.path.join(DATA_PATH, 'test_data', 'sites',
+                              'site_summary.csv')
+fpath_params = os.path.join(DATA_PATH, 'test_data', 'params', 'param_test.csv')
+dirct_weadata = os.path.join(DATA_PATH, 'test_data', 'wea')
+dirct_sims = os.path.join(DATA_PATH, 'test_data', 'sims')
 
 
 @pytest.fixture(autouse=True, scope='session')
