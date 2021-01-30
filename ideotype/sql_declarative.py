@@ -47,9 +47,9 @@ class WeaData(IdeotypeBase):
                   ForeignKey('site_info.site'),
                   primary_key=True)
     year = Column(Integer, primary_key=True)
-    jday = Column(Integer)
-    date = Column(DateTime, primary_key=True)
+    jday = Column(Integer, primary_key=True)
     time = Column(Integer, primary_key=True)
+    date = Column(String)
     solar = Column(Float)
     temp = Column(Float)
     precip = Column(Float)
@@ -94,13 +94,14 @@ class Sims(IdeotypeBase):
     cvar = Column(Integer,
                   ForeignKey('params.cvar'),
                   primary_key=True)
-    date = Column(DateTime, primary_key=True)
+    jday = Column(Integer, primary_key=True)
     time = Column(Integer, primary_key=True)
 
     __table_args__ = (ForeignKeyConstraint(
         ['run_name', 'cvar'], ['params.run_name', 'params.cvar']), {})
 
     # other columns
+    date = Column(String)
     leaves = Column(Float)
     leaves_mature = Column(Float)
     leaves_dropped = Column(Float)
