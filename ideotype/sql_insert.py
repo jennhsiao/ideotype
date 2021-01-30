@@ -34,8 +34,9 @@ from ideotype.sql_declarative import (
 
 from ideotype.utils import get_filelist, CC_VPD
 
-profile = line_profiler.LineProfiler()
-atexit.register(profile.print_stats)
+# code for line profiler
+# profile = line_profiler.LineProfiler()
+# atexit.register(profile.print_stats)
 
 
 def insert_siteinfo(fpath_siteinfo, fpath_db, session=None):
@@ -140,6 +141,15 @@ def insert_params(fpath_params, fpath_db, run_name, session=None):
 
 def _time_estimate(time_list, count_list, nfiles, fname):
     """
+    Time estimate for DB table inserts.
+
+    Parameters
+    ----------
+    time_list:
+    count_list:
+    nfiles:
+    fname:
+
     """
     time_perloop = (time_list[-1] - time_list[0])/count_list[-1]
     count = count_list[-1]
@@ -158,7 +168,7 @@ def _time_estimate(time_list, count_list, nfiles, fname):
           f'estimated time remaining {estimated_time} {unit}')
 
 
-#@profile
+# @profile
 def insert_weadata(dirct_weadata, fpath_db, session=None):
     """
     Propagate values to DB table - WeaData.
@@ -175,15 +185,19 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
         Database session, default to None and generates new session.
 
     """
-    print('importing weafiles')
+    print('< importing weafiles >')
+    start_time = time.perf_counter()
+
     if session is None:
         engine = create_engine('sqlite:///' + fpath_db)
         IdeotypeBase.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
 
+    # fetch all weather files
     weafiles = get_filelist(dirct_weadata)
 
+    # setup for run-time estimation
     timelist = [time.perf_counter()]
     count_times = [0]
     nfiles = len(weafiles)
@@ -193,47 +207,63 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
     else:
         printreport_loop = np.arange(nfiles - 1) + 1
 
+    # setup core list
+    # following SQLAlchemy Core Method to reduce table insert time:
+    # https://docs.sqlalchemy.org/en/13/faq/performance.html#i-m-inserting-400-000-rows-with-the-orm-and-it-s-really-slow
+    # create list of dicts that stores table info
+    core_list = []
+
+    # loop through individual weather files
     for count, weafile in enumerate(weafiles):
+        # estimate run time
         if count == 1 or count in printreport_loop:
             timelist.append(time.perf_counter())
             count_times.append(count)
             _time_estimate(timelist, count_times, nfiles, weafile)
 
+        # parse info needed from file name
         site_id = weafile.split('/')[-1].split('_')[0]
         year_id = int(weafile.split('/')[-1].split('_')[1].split('.')[0])
-        data = genfromtxt(weafile,
-                          delimiter='\t',
-                          skip_header=1,
-                          dtype=(int, 'U12', int, float,
-                                 float, float, float, int))
 
-        object_list = []
+        # read individual sim file with pandas
+        # pd.read_csv is actually faster than genfromtxt
+        data = pd.read_csv(weafile, delimiter='\t')
+        # immediately convert dataframe back to recarrays (data.to_records)
+        # since accessing individual row info slow in dataframes
+        data = data.to_records(index=False)
+
         for row in data:
-            # make an object instance
-            record = WeaData(
-                site=site_id,
-                year=year_id,
-                jday=int(row[0]),
-                date=datetime.strptime(row[1].strip("'"), '%m/%d/%Y').date(),
-                time=int(row[2]),
-                solar=row[3],
-                temp=row[4],
-                precip=row[5],
-                rh=row[6],
-                co2=int(row[7]),
-                vpd=round(CC_VPD(row[4], row[6]/100), 2))
+            core_list.append(
+                {
+                    'site': site_id,
+                    'year': year_id,
+                    'jday': int(row[0]),
+                    'date': row[1],
+                    'time': int(row[2]),
+                    'solar': row[3],
+                    'temp': row[4],
+                    'precip': row[5],
+                    'rh': row[6],
+                    'co2': int(row[7]),
+                    'vpd': round(CC_VPD(row[4], row[6]/100), 2)
+                }
+            )
 
-            # add row data to record
-            #session.add(record)
-            object_list.append(record)
+    # insert list of dicts with all weather info into WeaData
+    engine.execute(
+        WeaData.__table__.insert(),
+        core_list
+    )
 
-        session.bulk_save_objects(object_list)
-        # add data to database
-        session.commit()
+    # commit data to database
+    session.commit()
+
+    end_time = time.perf_counter()
+    print(f'sims total run time: {end_time - start_time} s')
 
 
 #@profile
-def insert_sims(dirct_sims, fpath_db, run_name, session=None, core=True):
+def insert_sims(dirct_sims, fpath_db, run_name, session=None):
     """
     Propagate values to DB table - Sims.
 
@@ -249,31 +279,38 @@ def insert_sims(dirct_sims, fpath_db, run_name, session=None, core=True):
         Database session, default to None and generates new session.
 
     """
-    print('importing sims')
+    print('< importing sims >')
     start_time = time.perf_counter()
+
     if session is None:
         engine = create_engine('sqlite:///' + fpath_db)
         IdeotypeBase.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
 
+    # fetch all simulation files
     simfiles = get_filelist(dirct_sims)
+
+    # setup run name
     runame = run_name
 
+    # setup for run-time estimation
     timelist = [time.perf_counter()]
     count_times = [0]
     nfiles = len(simfiles)
-
     if nfiles > 10:
         printreport_loop = (nfiles*(
             (np.arange(10)+1)/10)).round().astype(int).tolist()
     else:
         printreport_loop = np.arange(nfiles-1) + 1
 
-    object_list = []
+    # setup core list
+    # following SQLAlchemy Core Method to reduce table insert time:
     core_list = []
 
+    # loop through individual simulation files
     for count, sim in enumerate(simfiles):
+        # estimate run time
         if count == 1 or count in printreport_loop:
             timelist.append(time.perf_counter())
             count_times.append(count)
@@ -284,20 +321,14 @@ def insert_sims(dirct_sims, fpath_db, run_name, session=None, core=True):
         year_id = int(sim.split('/')[-1].split('.')[0].split('_')[2])
         cvar_id = int(sim.split('/')[-1].split('.')[0].split('_')[4])
 
-        # read in individual sim file
-#        data = genfromtxt(
-#            sim,
-#            delimiter=',',
-#            skip_header=1,
-#            dtype=tuple(['U10'] + [float]*48 + ['<U50']),
-#            )
-
-        # pandas read_csv actually faster than genfromtxt
+        # read in individual sim file with pandas
+        # pd.read_csv better performance over genfromtxt
         data = pd.read_csv(sim, delimiter=',')
+        # immediately convert dataframe back to recarrays (data.to_records)
+        # for improved process time
         data = data.to_records(index=False)
 
         # read in each line of sim file
-        #object_list = []
         for row in data:
             core_list.append(
                 {
@@ -305,9 +336,9 @@ def insert_sims(dirct_sims, fpath_db, run_name, session=None, core=True):
                     'site': site_id,
                     'year': year_id,
                     'cvar': cvar_id,
-                    'jday': row[1],
+                    'jday': int(row[1]),
+                    'time': int(row[2]),
                     'date': row[0],
-                    'time': row[2],
                     'leaves': row[3],
                     'leaves_mature': row[4],
                     'leaves_dropped': row[5],
@@ -350,7 +381,6 @@ def insert_sims(dirct_sims, fpath_db, run_name, session=None, core=True):
                     'solubleC': row[48],
                     'pheno': row[49].strip()
                 }
-
             )
 
     engine.execute(
