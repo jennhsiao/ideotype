@@ -33,7 +33,7 @@ fpath_db = '/home/disk/eos8/ach315/upscale/db/smalldb.db'
 
 # make DB if DB doesn't exist yet
 if os.path.exists(fpath_db):
-    print('DB already exists!')
+    print('DB exists!')
 else:
     create_table(fpath_db)
 
@@ -58,4 +58,4 @@ dirct_sims = os.path.join(init_dict['path_sims'])
 insert_siteinfo(fpath_siteinfo, fpath_db)
 insert_params(fpath_params, fpath_db, args.run_name)
 insert_weadata(dirct_weadata, fpath_db)
-insert_sims(dirct_sims, fpath_db, args.run_name)
+insert_sims(dirct_sims, fpath_db, args.run_name, n_savefiles=3)
