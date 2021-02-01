@@ -16,15 +16,15 @@ Tables include:
 
 """
 import time
-import atexit
+import atexit  # noqa
 
 import numpy as np
 import pandas as pd
-import line_profiler
+import line_profiler  # noqa
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from numpy import genfromtxt
-from datetime import datetime
+# from datetime import datetime
 
 from ideotype.sql_declarative import (
     IdeotypeBase, WeaData, Sims, Params,
@@ -168,7 +168,7 @@ def _time_estimate(time_list, count_list, nfiles, fname):
           f'estimated time remaining {estimated_time} {unit}')
 
 
-# @profile
+#@profile  # noqa
 def insert_weadata(dirct_weadata, fpath_db, session=None):
     """
     Propagate values to DB table - WeaData.
@@ -185,7 +185,7 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
         Database session, default to None and generates new session.
 
     """
-    print('< importing weafiles >')
+    print('>>> importing weafiles')
     start_time = time.perf_counter()
 
     if session is None:
@@ -250,36 +250,41 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
             )
 
     # insert list of dicts with all weather info into WeaData
+    print('> inserting weafiles to DB')
     engine.execute(
         WeaData.__table__.insert(),
         core_list
     )
 
     # commit data to database
+    print('> commiting weafiles to DB')
     session.commit()
 
     end_time = time.perf_counter()
     print(f'sims total run time: {end_time - start_time} s')
 
 
-#@profile
-def insert_sims(dirct_sims, fpath_db, run_name, session=None):
+#@profile  # noqa
+def insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=100, session=None):
     """
     Propagate values to DB table - Sims.
 
     Parameters
     ----------
-    dirct_sims: str
+    dirct_sims : str
         Upper most directory where sim files are stroed.
-    fpath_db: str
+    fpath_db : str
         Database path.
-    run_name: str
+    run_name : str
         Run name for batch of simulations.
-    session: str
+    session : str
         Database session, default to None and generates new session.
+    n_savefiles : int
+        Number of files to collect before batch inserting into DB.
+        Default to 100 but need much smaller value for testing purposes.
 
     """
-    print('< importing sims >')
+    print('>>> importing sims')
     start_time = time.perf_counter()
 
     if session is None:
@@ -307,6 +312,10 @@ def insert_sims(dirct_sims, fpath_db, run_name, session=None):
     # setup core list
     # following SQLAlchemy Core Method to reduce table insert time:
     core_list = []
+
+    n_to_save = np.ceil(nfiles/n_savefiles).astype(int)
+    core_list_iter = list(np.arange(n_to_save)*n_savefiles)
+    core_list_iter[-1] = nfiles - 1
 
     # loop through individual simulation files
     for count, sim in enumerate(simfiles):
@@ -383,13 +392,17 @@ def insert_sims(dirct_sims, fpath_db, run_name, session=None):
                 }
             )
 
-    engine.execute(
-        Sims.__table__.insert(),
-        core_list
-    )
+        if count in core_list_iter:
+            print(f'> batch sims insert at file #: {count}')
+            engine.execute(
+                Sims.__table__.insert(),
+                core_list
+            )
 
-    # commit data to DB
-    session.commit()
+            # commit data to DB
+            session.commit()
+
+            core_list = []
 
     end_time = time.perf_counter()
     print(f'sims total run time: {end_time - start_time} s')
