@@ -45,7 +45,7 @@ def setup_and_teardown_package():
     insert_siteinfo(fpath_siteinfo, fpath_db)
     insert_params(fpath_params, fpath_db, run_name)
     insert_weadata(dirct_weadata, fpath_db)
-    insert_sims(dirct_sims, fpath_db, run_name)
+    insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=3)
 
     yield test_engine
 
@@ -69,9 +69,6 @@ def ideotype_session(setup_and_teardown_package):
     test_trans = test_conn.begin()
     # make a session
     test_session = sessionmaker(bind=test_conn)()
-    # TODO: refer back to sql_insert code
-    # some differences between sessionmaker vs. an actual session
-    # TODO: read up engine, sessions, and DB
 
     yield test_session
 
