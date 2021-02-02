@@ -13,6 +13,7 @@ from .utils import *  # noqa
 from .log import * # noqa
 from .sql_declarative import *  # noqa
 from .sql_insert import *  # noqa
+from .wflow_setup import * # noqa
 
 try:
     # get accurate version for developer installs
