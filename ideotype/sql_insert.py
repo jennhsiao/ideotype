@@ -143,17 +143,20 @@ def _time_estimate(time_list, count_list, nfiles, fname):
     """
     Time estimate for DB table inserts.
 
+    Time estimations output to terminal at intervals of numbers of files read.
+
     Parameters
     ----------
-    time_list:
-    count_list:
-    nfiles:
-    fname:
+    time_list : list of times at record point.
+    count_list : list of file counts at record point.
+    nfiles : total number of files left to read in.
+    fname : file name for record point.
 
     """
     time_perloop = (time_list[-1] - time_list[0])/count_list[-1]
     count = count_list[-1]
-    estimated_time = (nfiles - count)/time_perloop
+#    estimated_time = (nfiles - count)/time_perloop
+    estimated_time = (nfiles - count) * time_perloop
     unit = 's'
     if estimated_time > 60:
         estimated_time = estimated_time/60
@@ -164,8 +167,8 @@ def _time_estimate(time_list, count_list, nfiles, fname):
 
     print(f'on file {count+1} of {nfiles}, '
           f'filename: {fname}, '
-          f'time per loop = {time_perloop} s, '
-          f'estimated time remaining {estimated_time} {unit}')
+          f'time per loop = {round(time_perloop, 3)} s, '
+          f'estimated time remaining {round(estimated_time, 2)} {unit}')
 
 
 #@profile  # noqa
@@ -219,7 +222,8 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
         if count == 1 or count in printreport_loop:
             timelist.append(time.perf_counter())
             count_times.append(count)
-            _time_estimate(timelist, count_times, nfiles, weafile)
+            fname = weafile.split('/')[-1]
+            _time_estimate(timelist, count_times, nfiles, fname)
 
         # parse info needed from file name
         site_id = weafile.split('/')[-1].split('_')[0]
@@ -303,9 +307,9 @@ def insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=100, session=None):
     timelist = [time.perf_counter()]
     count_times = [0]
     nfiles = len(simfiles)
-    if nfiles > 10:
+    if nfiles > 1000:
         printreport_loop = (nfiles*(
-            (np.arange(10)+1)/10)).round().astype(int).tolist()
+            (np.arange(1000)+1)/1000)).round().astype(int).tolist()
     else:
         printreport_loop = np.arange(nfiles-1) + 1
 
@@ -323,7 +327,8 @@ def insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=100, session=None):
         if count == 1 or count in printreport_loop:
             timelist.append(time.perf_counter())
             count_times.append(count)
-            _time_estimate(timelist, count_times, nfiles, sim)
+            fname = sim.split('/')[-1]
+            _time_estimate(timelist, count_times, nfiles, fname)
 
         # parse info needed from file name
         site_id = str(sim.split('/')[-1].split('.')[0].split('_')[1])
@@ -393,6 +398,7 @@ def insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=100, session=None):
             )
 
         if count in core_list_iter:
+            insert_start = time.perf_counter()
             print(f'> batch sims insert at file #: {count}')
             engine.execute(
                 Sims.__table__.insert(),
@@ -401,6 +407,9 @@ def insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=100, session=None):
 
             # commit data to DB
             session.commit()
+            insert_end = time.perf_counter()
+            insert_time = insert_end - insert_start
+            print(f'> insert + commit done in {round((insert_time), 2)} s')
 
             core_list = []
 
