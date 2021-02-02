@@ -48,7 +48,6 @@ def test_insert_weadata(ideotype_session):
         obj_wea = results[index]
         assert obj_wea.site == '725300'
         assert obj_wea.jday == row[0]
-        assert obj_wea.date.year == int(row[1].split('/')[-1].split("'")[0])
         assert obj_wea.time == row[2]
 
 
@@ -70,9 +69,6 @@ def test_insert_sims(ideotype_session):
     for index, row in enumerate(data):
         obj_sim = results[index]
         assert obj_sim.site == '725300'
-#        assert obj_sim.year == int(row[0].split('/')[-1])
         assert obj_sim.year == int(row['date'].split('/')[-1])
-#        assert obj_sim.DM_ear == row[40]
         assert obj_sim.DM_ear == row['earDM']
-#        assert obj_sim.pheno == row[-1].strip()
         assert obj_sim.pheno == row['Note'].strip()
