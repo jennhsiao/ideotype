@@ -1,22 +1,26 @@
+"""Misc utility functions."""
 import os
+
 import pandas as pd
 import numpy as np
-
 import pytz
-# from scipy import stats, linalg
-#from timezonefinder import TimezoneFinder
-
-# TODO: move relevant functions from func.py into here
-# TODO: some functions in func.py should be taken out and
-# turned into their own modules or incorporated into other scripts
-# only small functions that serve some utility function should be placed here
+from timezonefinder import TimezoneFinder
 
 
 def fold(val, min, max):
     """
-    transform values normalized between 0-1 back to their regular range
-    """
+    Transform values normalized between 0-1 back to their regular range.
 
+    Parameters
+    ----------
+    val : float
+        value to be unfolded.
+    min: float
+        min of value range.
+    max: float
+        max of value range.
+
+    """
     fold_list = []
     for i in val:
         fold_i = (i-min)/(max - min)
@@ -30,9 +34,12 @@ def unfold(val, min, max):
 
     Parameters
     ----------
-    val:
-    min:
-    max:
+    val : float
+        value to be unfolded.
+    min: float
+        min of value range.
+    max: float
+        max of value range.
 
     """
     unfold_list = []
@@ -44,12 +51,13 @@ def unfold(val, min, max):
 
 def get_filelist(path):
     """
-    For the given path, retrieve list of all files in the directory tree
-    including those in subdirectories.
+    Retrieve all files within given file path.
+
+    Including those in subdirectories.
 
     Parameter
     ---------
-    path: String
+    path : String
 
     """
     # create a list of file and sub directories names in the given directory
@@ -75,14 +83,14 @@ def CC_VPD(temp, rh):
 
     Parameter
     ---------
-    temp: Float
+    temp : Float
         Temperature in ˚C.
-    rh: Float
+    rh : Float
         Relative humidity range between 0 & 1 (fraction, not %).
 
     Returns
     -------
-    vpd: Float
+    vpd : Float
         VPD value calculated based on temp & rh.
 
     """
@@ -103,14 +111,15 @@ def CC_VPD(temp, rh):
 
     return(vpd)
 
+
 def find_zone(site, siteinfo):
     """
     Find time zone for specific sites.
 
     Parameters
     ----------
-    site:
-    siteinfo:
+    site :
+    siteinfo :
 
     Returns
     -------
@@ -125,32 +134,35 @@ def find_zone(site, siteinfo):
 
 
 def utc_to_local(times, zone):
-    """
-    convert list of utc timestamps into local time
-    """
-    times = times.to_pydatetime() # convert from pd.DatetimeIndex into python datetime format
-    utc = pytz.timezone('UTC') # setting up the UTC timezone, requires package 'pytz'
+    """Convert list of utc timestamps into local time."""
+    # convert from pd.DatetimeIndex into python datetime format
+    times = times.to_pydatetime()
+    # setting up the UTC timezone, requires package 'pytz'
+    utc = pytz.timezone('UTC')
     local_datetime = list()
-    
+
     for time in times:
         utctime = utc.localize(time) # adding UTC timezone to datetime
         localtime = utctime.astimezone(pytz.timezone(zone)) 
         datetime = pd.to_datetime(localtime)
         local_datetime.append(datetime)
-        
+
     return local_datetime
 
 
-def calc_gdd(temps): 
+def calc_gdd(temps):
     """
+    Maize growing season GDD calculation.
+
     - calculates GDH with base temperature = 8˚C
     - calculated values divided by 24 to correspond to daily values
     - function returns count of point in which gdd exceeds 100
       which can then be used to identify date in which GDD=100 is reached
+
     """
     gdd = 0
-    for count, temp in enumerate(temps): 
-        if gdd > 100: 
+    for count, temp in enumerate(temps):
+        if gdd > 100:
             break
         else:
             if temp-8 < 0:
