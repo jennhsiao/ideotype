@@ -15,12 +15,15 @@ Tables include:
 * linked primay keys.
 
 """
+import os
 import time
 import atexit  # noqa
 
 import numpy as np
 import pandas as pd
 import line_profiler  # noqa
+import sqlalchemy
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from numpy import genfromtxt
@@ -269,7 +272,8 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
 
 
 #@profile  # noqa
-def insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=100, session=None):
+def insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=100, session=None,
+                start_year=None, start_cvar=None, start_site=None):
     """
     Propagate values to DB table - Sims.
 
@@ -286,6 +290,15 @@ def insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=100, session=None):
     n_savefiles : int
         Number of files to collect before batch inserting into DB.
         Default to 100 but need much smaller value for testing purposes.
+    start_year : int
+        Specify sim year to start reading from.
+        Must also include start_cvar & start_site.
+    start_cvar : int
+        Specify sim cultivar to start reading from.
+        Must also include start_year & start_site.
+    start_site : int
+        Specify sim site to start reading from.
+        Must also include start_year & start_cvar.
 
     """
     print('>>> importing sims')
@@ -298,7 +311,20 @@ def insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=100, session=None):
         session = DBSession()
 
     # fetch all simulation files
-    simfiles = get_filelist(dirct_sims)
+    if (start_year is None) and (start_cvar is None) and (start_site is None):
+        # standard read-all case
+        simfiles = get_filelist(dirct_sims)
+    else:
+        # if start point specified for reading in sim files
+        dirct_sims_full = os.path.join(dirct_sims,
+                                       str(start_year),
+                                       'var_' + str(start_cvar),
+                                       'out1_' + str(start_site) + '_' +
+                                       str(start_year) + '_' +
+                                       'var_' + str(start_cvar) + '.txt')
+        simfiles = get_filelist(dirct_sims)
+        simfile_index = simfiles.index(dirct_sims_full)
+        simfiles = simfiles[simfile_index:]
 
     # setup run name
     runame = run_name
@@ -313,7 +339,7 @@ def insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=100, session=None):
     else:
         printreport_loop = np.arange(nfiles-1) + 1
 
-    # setup core list
+    # setup core list - list of dicts
     # following SQLAlchemy Core Method to reduce table insert time:
     core_list = []
 
@@ -400,16 +426,29 @@ def insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=100, session=None):
         if count in core_list_iter:
             insert_start = time.perf_counter()
             print(f'> batch sims insert at file #: {count}')
-            engine.execute(
-                Sims.__table__.insert(),
-                core_list
-            )
 
-            # commit data to DB
-            session.commit()
-            insert_end = time.perf_counter()
-            insert_time = insert_end - insert_start
-            print(f'> insert + commit done in {round((insert_time), 2)} s')
+            try:
+                engine.execute(
+                    Sims.__table__.insert(),
+                    core_list
+                )
+                # commit data to DB
+                session.commit()
+                insert_end = time.perf_counter()
+                insert_time = insert_end - insert_start
+                print(f'> insert + commit done in {round((insert_time), 2)} s')
+            except IntegrityError:
+                print('!!! integrity error - start check !!!')
+                for item in core_list:
+                    try:
+                        engine.execute(
+                            Sims.__table__.insert(),
+                            item
+                        )
+                        session.commit()
+                    except IntegrityError as error:
+                        print(item)
+                        raise error
 
             core_list = []
 
