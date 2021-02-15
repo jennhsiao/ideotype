@@ -11,10 +11,10 @@ def alter_table(fpath_db):
         con.execute('BEGIN TRANSACTION')
         con.execute(
             'CREATE TABLE IF NOT EXISTS new_sims(\
-                run_name varchar(20) not null,\
                 year int not null,\
                 cvar int not null,\
                 site varchar(6) not null,\
+                run_name varchar(20) not null,\
                 jday int not null,\
                 time int not null,\
                 date varchar(10),\
@@ -59,15 +59,15 @@ def alter_table(fpath_db):
                 AvailW float,\
                 solubleC float,\
                 pheno varchar(20),\
-                PRIMARY KEY (run_name, year, cvar, site, jday, time),\
+                PRIMARY KEY (year, cvar, site, run_name, jday, time),\
                 FOREIGN KEY (cvar) REFERENCES params (cvar),\
                 FOREIGN KEY (site) REFERENCES site_info (site))')
         con.execute(
             'INSERT INTO new_sims('
-            'run_name,'
             'year,'
             'cvar,'
             'site,'
+            'run_name,'
             'jday,'
             'time,'
             'date,'
@@ -164,7 +164,7 @@ def alter_table(fpath_db):
             'FROM sims')
         con.execute('DROP TABLE sims')
         con.execute('ALTER TABLE new_sims RENAME TO sims')
-        con.execute('CREATE INDEX id_year ON sims(year)')
+        con.execute('CREATE INDEX id_runame ON sims(run_name)')
         con.execute('CREATE INDEX id_cvar ON sims(cvar)')
         con.execute('CREATE INDEX id_site ON sims(site)')
         con.execute('CREATE INDEX id_pheno ON sims(pheno)')
