@@ -339,6 +339,8 @@ def make_init(run_name, yamlfile=None):
 
             # *** climate.txt
             climate_txt = open(os.path.join(dirct, 'climate.txt'), 'w')
+
+            # put together txt strings
             str1 = '*** standard meteorological data ***\n'
             str2 = 'latitude\n'
             str3 = f'{lat}\n'
@@ -352,7 +354,7 @@ def make_init(run_name, yamlfile=None):
                     f'{dict_setup["climate"]["relative_humidity"]}\t'
                     f'{dict_setup["climate"]["daily_co2"]}\n')
             str6 = ('parameters for unit conversion:'
-                   'BSOLAR BTEMP ATEMP ERAIN BWIND BIR\n')
+                    'BSOLAR BTEMP ATEMP ERAIN BWIND BIR\n')
             str7 = 'BSOLAR is 1e6/3600 to go from jm-2h-1 to wm-2\n'
             str8 = (f'{dict_setup["climate"]["bsolar"]}\t'
                     f'{dict_setup["climate"]["btemp"]}\t'
@@ -373,18 +375,36 @@ def make_init(run_name, yamlfile=None):
 
             # *** management.txt
             management_txt = open(os.path.join(dirct, 'management.txt'), 'w')
-            
 
+            # put together txt strings
+            str1 = '*** script for chemical application module ***\n'
+            str2 = 'number of fertilizer applicaitons (max=25)\n'
+            str3 = f'{dict_setup["management"]["appl_num"]}\n'
+            str4 = ('appl_time(i)\tappl_mg(i)\tappl_depth(cm)\t'
+                    'residue_C\tresidue_N\n')
+            # TODO: how to address N application date?
+            # TODO: likely will just set days after planting
+            # TODO: and use datetime functions to help convert into actual date
+            appl_time1 = dict_setup['init']['start_date'] + 
+            str5 = (f'{appl_time1}\t'
+                    f'{dict_setup["management"]["appl_mg"]}\t'
+                    f'{dict_setup["management"]["appl_depth"]}\t'
+                    f'{dict_setup["management"]["residue_C"]}\t'
+                    f'{dict_setup["management"]["redisue_N"]}\n')
+            appl_time2 = 
+            str6 = (f'{appl_time2}\t'
+                    f'{dict_setup["management"]["appl_mg"]}\t'
+                    f'{dict_setup["management"]["appl_depth"]}\t'
+                    f'{dict_setup["management"]["residue_C"]}\t'
+                    f'{dict_setup["management"]["redisue_N"]}\n')
+
+            strings = [str1, str2, str3, str4, str5, str6]
             management_txt.writeliens(strings)
             management_txt.close()
-
-
-
 
     else:
         raise ValueError(f'custom initial files for run_name: "{run_name}"'
                          ' already exist!')
-
 
 
 def make_runs(run_name, yamlfile=None, cont_cvars=True):
