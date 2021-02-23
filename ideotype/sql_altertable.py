@@ -165,6 +165,8 @@ def alter_table(fpath_db):
         con.execute('DROP TABLE sims')
         con.execute('ALTER TABLE new_sims RENAME TO sims')
         con.execute('CREATE INDEX id_runame ON sims(run_name)')
+        con.execute('CREATE INDEX id_year ON sims(year')
         con.execute('CREATE INDEX id_cvar ON sims(cvar)')
         con.execute('CREATE INDEX id_site ON sims(site)')
+        con.execute('CREATE INDEX id_siteyear ON sims(year, site)')
         con.execute('CREATE INDEX id_pheno ON sims(pheno)')
