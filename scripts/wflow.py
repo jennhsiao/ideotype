@@ -9,8 +9,8 @@ The files listed here are only ones that require:
 """
 import argparse
 from ideotype.log import log_fetchinfo
-from ideotype.wflow_setup import (make_dircts, make_runs,
-                                  make_jobs, make_subjobs)
+from ideotype.wflow_setup import (make_dircts, make_inits, make_cultivars,
+                                  make_runs, make_jobs, make_subjobs)
 
 # Setup argparse for terminal control
 a = argparse.ArgumentParser(
@@ -39,11 +39,18 @@ log_fetchinfo(args.run_name)
 # STEP 0.1: setup directories
 make_dircts(args.run_name)
 
-# STEP 1: create run.txt files
+# STEP 1: create maizsim initial files
+# init.txt, time.txt, climate.txt, management.txt
+make_inits(args.run_name)
+
+# STEP 2: create cultivar files
+make_cultivars(args.run_name)
+
+# STEP 3: create run.txt files
 make_runs(args.run_name)
 
-# step 2: create job files that execute batch of run files
+# step 4: create job files that execute batch of run files
 make_jobs(args.run_name)
 
-# step 3: create bash script that automates qsub jobs
+# step 5: create bash script that automates qsub jobs
 make_subjobs(args.run_name)
