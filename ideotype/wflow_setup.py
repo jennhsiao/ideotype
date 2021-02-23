@@ -141,7 +141,7 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
         # False case mostly for testing purposes
         cultivars = list()
         if cont_cvars is True:
-            cvars_iter = np.arange(cvars)
+            cvars_iter = np.arange(cvars[0])
         else:
             cvars_iter = cvars
 
@@ -219,7 +219,7 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
         # False case mostly for testing purposes
         cultivars = list()
         if cont_cvars is True:
-            cvars_iter = np.arange(cvars)
+            cvars_iter = np.arange(cvars[0])
         else:
             cvars_iter = cvars
 
@@ -365,7 +365,7 @@ def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
         # False case mostly for testing purposes
         cultivars = list()
         if cont_cvars is True:
-            cvars_iter = np.arange(cvars)
+            cvars_iter = np.arange(cvars[0])
         else:
             cvars_iter = cvars
 
