@@ -63,6 +63,10 @@ def read_inityaml(run_name, yamlfile=None):
     dict_setup = dict_init['setup']
     dict_setup['params'] = dict_init['params']
     dict_setup['specs'] = dict_init['specs']
+    dict_setup['init'] = dict_init['init']
+    dict_setup['time'] = dict_init['time']
+    dict_setup['climate'] = dict_init['climate']
+    dict_setup['management'] = dict_init['management']
 
     return dict_setup
 
@@ -172,6 +176,112 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
 
         else:
             raise ValueError(f'directory {dirct_folder} already exists!')
+
+
+def make_init(run_name, yamlfile=None):
+    """
+    Create custom init files for MAIZSIM sims.
+
+    Parameters
+    ----------
+    run_name: str
+        run name for batch of experiments.
+    yamlfile: str
+        default None - function reads init_runame.yml file in project dirct.
+        a testing yamlfile path need to be passed for testing purposes.
+
+    Returns
+    -------
+    init.txt
+    time.txt
+    climate.txt
+    management.txt
+
+    """
+    dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
+    dirct_project = dict_setup['path_project']
+
+    dirct_init = os.path.join(dirct_project, 'inits', 'customs', run_name)
+
+    # only execute if no run files already exist
+    filelist = get_filelist(dirct_init)
+    if len(filelist) == 0:
+        # read in dict_setup to fetch site-years info
+        data = genfromtxt(dict_setup['siteyears'],
+                          delimiter=',',
+                          skip_header=1,
+                          usecols=(0, 1),
+                          dtype=('U6', int, int, 'U10'))
+
+        # setup site_years
+        siteyears = []
+        for row in data:
+            siteyears.append(str(row[0]) + '_' + str(row[1]))
+
+        for siteyear in siteyears:
+            dirct = os.path.join(dirct_init, siteyear)
+            init = open(dirct + '/init.txt', 'w')
+            year = dirct.split('/')[-1].split('_')[-1]
+            site = dirct.split('/')[-1].split('_')[-2]
+
+            # customized parameters: location
+            lat = site_info[site_info.site == site].lat.item()
+            lon = site_info[site_info.site == site].lon.item()
+
+            # TODO: code something that can handel dynamic vs. fixed pdate
+            pdate = siteyears[(siteyears.site == site) &
+                              (siteyears.year == year)].iloc[0, 3]
+            pdate_month = pdate.split('-')[1]
+            pdate_day = pdate.split('-')[2]
+
+            # customized parameters: timing
+            start = "'" + f'{dict_setup['init']['start_date']}' + year + "'"
+            sowing = "'" + pdate_month + '/' + pdate_day + '/' + year + "'"
+            end = "'" + f'{dict_setup['init']['end_date']}' + year + "'"
+
+            # setting up text strings
+            str1 = '*** initialization data ***\n'
+            str2 = ('poprow\trowsp\tplant_density\trowang\t'
+                    'x_seed\ty_seed\ttab\tCEC\teomult\n')
+            str3 = (f'{param_dict["init"]["poprow"]:.1f}\t'
+                    f'{param_dict["init"]["rowsp"]:.1f}\t'
+                    f'{param_dict["init"]["plant_density"]:.1f}\t'
+                    f'{param_dict["init"]["rowang"]:.1f}\t'
+                    f'{param_dict["init"]["x_seed"]:.1f}\t'
+                    f'{param_dict["init"]["y_seed"]:.1f}\t'
+                    f'{param_dict["init"]["cec"]:.2f}\t'
+                    f'{param_dict["init"]["eomult"]:.2f}\n')
+            str4 = 'latitude\tlongitude\taltitude\n'
+            str5 = (f'{lat:.2f}\t'
+                    f'{lon:.2f}\t'
+                    f'{param_dict["init"]["alt"]:.2f}\n')
+            str6 = 'autoirrigate\n'
+            str7 = f'{param_dict["init"]["irrigate"]}\n'
+            str8 = 'begin\tsowing\tend\ttimestep (mins)\n'
+            str9 = (start + '\t' + sowing + '\t' + end + '\t'
+                    f'{param_dict["init"]["timestep"]:.0f}\n')
+            str10 = 'output soils data (g03, g04, g05, and g06 files) 1 if true\n'
+            str11 = 'no soil files\toutputsoil files\n'
+            if param_dict["init"]["soil"]:
+                str12 = '0\t1\n'
+            else:
+                str12 = '1\t0\n'
+
+            # compiling all strings
+            strings = [str1, str2, str3, str4, str5, str6,
+                    str7, str8, str9, str10, str11, str12]
+
+            # writing out .txt file and clsoing file
+            init.writelines(strings)
+            init.close()            
+
+
+
+
+    else:
+        raise ValueError(f'custom initial files for run_name: "{run_name}"'
+                         ' already exist!')
+
 
 
 def make_runs(run_name, yamlfile=None, cont_cvars=True):
