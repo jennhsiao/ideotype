@@ -386,7 +386,7 @@ def make_inits(run_name, yamlfile=None):
                      f'{dict_setup["climate"]["co2"]}\n')
 
             strings = [str1, str2, str3, str4, str5,
-                       str6, str7, str8, str9, str9, str10]
+                       str6, str7, str8, str9, str10]
             climate_txt.writelines(strings)
             climate_txt.close()
 
@@ -410,15 +410,15 @@ def make_inits(run_name, yamlfile=None):
                     f'{dict_setup["management"]["appl_mg"]}\t'
                     f'{dict_setup["management"]["appl_depth"]}\t'
                     f'{dict_setup["management"]["residue_C"]}\t'
-                    f'{dict_setup["management"]["redisue_N"]}\n')
+                    f'{dict_setup["management"]["residue_N"]}\n')
             str6 = (f'{appl_time2}\t'
                     f'{dict_setup["management"]["appl_mg"]}\t'
                     f'{dict_setup["management"]["appl_depth"]}\t'
                     f'{dict_setup["management"]["residue_C"]}\t'
-                    f'{dict_setup["management"]["redisue_N"]}\n')
+                    f'{dict_setup["management"]["residue_N"]}\n')
 
             strings = [str1, str2, str3, str4, str5, str6]
-            management_txt.writeliens(strings)
+            management_txt.writelines(strings)
             management_txt.close()
 
     else:
@@ -466,7 +466,7 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
              vpm_25, g1, ref_potential, rmax_ltar] = df_params.iloc[cvar, :]
 
             cvar_txt = open(os.path.join(dirct_cvars,
-                            'var_' + cvar + '.txt'), 'w')
+                            'var_' + str(cvar) + '.txt'), 'w')
 
             str1 = '*** Corn growth simulation for US maize simualtion ***\n'
             str2 = f'cultivar: {cvar}\n'
@@ -509,10 +509,10 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
             str22 = 'ConstI\tConstk\tCmin0\n'
             str23 = (f'{dict_setup["cultivar"]["consti_1"]:.2f}\t'
                      f'{dict_setup["cultivar"]["constk_1"]:.2f}\t'
-                     f'{dict_setup["cultivar"]["cmin0_1"]:.2f}\t')
+                     f'{dict_setup["cultivar"]["cmin0_1"]:.2f}\n')
             str24 = (f'{dict_setup["cultivar"]["consti_2"]:.2f}\t'
                      f'{dict_setup["cultivar"]["constk_2"]:.2f}\t'
-                     f'{dict_setup["cultivar"]["cmin0_2"]:.2f}\t')
+                     f'{dict_setup["cultivar"]["cmin0_2"]:.2f}\n')
             str25 = '[Gas_Exchange Species Parameters]\n'
             str26 = '*** for photosynthesis calculations ***\n'
             str27 = ('EaVP\tEaVc\tEaj\tHj\tSj\t'
@@ -800,12 +800,12 @@ def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
                 str12 = '\n'
                 str13 = 'for file in $FILES\n'
                 str14 = 'do\n'
-                str15 = '\tfname=$(echo $file)\n'  # grab file name
-                str16 = ('\tmaizsim_hash='  # grab git hash
+                str15 = '    fname=$(echo $file)\n'  # grab file name
+                str16 = ('    maizsim_hash='  # grab git hash
                          '$(git describe --dirty --always --tags)\n')
-                str17 = f'\techo $fname,$maizsim_hash >> {logfile}\n'  # append
-                str18 = '\tcd /home/disk/eos8/ach315/MAIZSIM\n'
-                str19 = '\ttimeout 15m maizsim $file\n'
+                str17 = f'    echo $fname,$maizsim_hash >> {logfile}\n'
+                str18 = '    cd /home/disk/eos8/ach315/MAIZSIM\n'
+                str19 = '    timeout 15m maizsim $file\n'
                 str20 = 'done\n'
 
                 strings = [str1, str2, str3, str4, str5, str6,
@@ -848,11 +848,11 @@ def make_subjobs(run_name, yamlfile=None):
         str4 = '\n'
         str5 = 'for job in $JOBS\n'
         str6 = 'do\n'
-        str7 = '\twhile [ `qstat | grep ach315 | wc -l` -ge 100 ]\n'
-        str8 = '\tdo\n'
-        str9 = '\t\tsleep 1\n'
-        str10 = '\tdone\n'
-        str11 = '\tqsub $job\n'
+        str7 = '    while [ `qstat | grep ach315 | wc -l` -ge 100 ]\n'
+        str8 = '    do\n'
+        str9 = '        sleep 1\n'
+        str10 = '    done\n'
+        str11 = '    qsub $job\n'
         str12 = 'done\n'
 
         strings = [str1, str2, str3, str4, str5, str6,
