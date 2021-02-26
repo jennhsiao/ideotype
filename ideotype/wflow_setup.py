@@ -106,6 +106,8 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
 
     Directories include experiment-specific subdirectories for:
     1. /inits
+        1.1 /inits/customs
+        1.2 /inits/cultivars
     2. /jobs
     3. /runs
     4. /sims
@@ -135,8 +137,11 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
     # setup project directory
     dirct_project = dict_setup['path_project']
 
-    # /inits
-    dirct_inits = os.path.join(dirct_project, 'inits', 'customs', run_name)
+    # /inits - customs
+    dirct_inits_customs = os.path.join(dirct_project,
+                                       'inits',
+                                       'customs',
+                                       run_name)
 
     data = genfromtxt(dict_setup['siteyears'],
                       delimiter=',',
@@ -149,12 +154,24 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
         siteyears.append(str(row[0]) + '_' + str(row[1]))
 
     # Check if folder exits, only execute if not
-    if not os.path.isdir(dirct_inits):
-        os.mkdir(dirct_inits)
+    if not os.path.isdir(dirct_inits_customs):
+        os.mkdir(dirct_inits_customs)
         for siteyear in siteyears:
-            os.mkdir(os.path.join(dirct_inits, siteyear))
+            os.mkdir(os.path.join(dirct_inits_customs, siteyear))
     else:
-        raise ValueError(f'directory {dirct_inits} already exists!')
+        raise ValueError(f'directory {dirct_inits_customs} already exists!')
+
+    # /inits - cultivars
+    dirct_inits_cultivars = os.path.join(dirct_project,
+                                         'inits',
+                                         'cultivars',
+                                         run_name)
+
+    # Check if folder exits, only execute if not
+    if not os.path.isdir(dirct_inits_cultivars):
+        os.mkdir(dirct_inits_cultivars)
+    else:
+        raise ValueError(f'directory {dirct_inits_cultivars} already exists!')
 
     # /jobs
     dirct_jobs = os.path.join(dirct_project, 'jobs', run_name)
@@ -392,7 +409,8 @@ def make_inits(run_name, yamlfile=None):
                     f'{dict_setup["management"]["appl_depth"]}\t'
                     f'{dict_setup["management"]["residue_C"]}\t'
                     f'{dict_setup["management"]["redisue_N"]}\n')
-            appl_time2 = 
+            # TODO: include dynamic N application date
+            #appl_time2 = dict_setup['init']['start_date'] + 
             str6 = (f'{appl_time2}\t'
                     f'{dict_setup["management"]["appl_mg"]}\t'
                     f'{dict_setup["management"]["appl_depth"]}\t'
@@ -433,114 +451,120 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
     dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
     dirct_project = dict_setup['path_project']
     dirct_cvars = os.path.join(dirct_project, 'inits', 'cultivars', run_name)
-
     df_params = pd.read_csv(dict_setup['path_params'])
 
-    if cont_cvars = True:
-        cvars = np.arange(dict_setup['specs']['cvars'][0])
+    filelist = get_filelist(dirct_cvars)
+    if len(filelist) == 0:
+        if cont_cvars is True:
+            cvars = np.arange(dict_setup['specs']['cvars'][0])
+        else:
+            cvars = dict_setup['specs']['cvars']
+
+        for cvar in cvars:
+            [juv_leaves, staygreen, rmax_ltir,
+             phyllo, LM_min, vcm_25,
+             vpm_25, g1, ref_potential, rmax_ltar] = df_params.iloc[cvar, :]
+
+            cvar_txt = open(os.path.join(dirct_cvars,
+                            'var_' + cvar + '.txt'), 'w')
+
+            str1 = '*** Corn growth simulation for US maize simualtion ***\n'
+            str2 = f'cultivar: {cvar}\n'
+            str3 = ('juv_leaf\tdaylen_sen\tstaygreen\t'
+                    'LM_min\tRmax_LTAR\tRmax_LTIR\tphyllo\n')
+            str4 = '\n'
+            str5 = (f'{juv_leaves:.0f}\t'
+                    f'{dict_setup["cultivar"]["daylen_sen"]:.0f}\t'
+                    f'{staygreen:.2f}\t'
+                    f'{LM_min:.0f}\t'
+                    f'{rmax_ltar:.2f}\t'
+                    f'{rmax_ltir:.2f}\t'
+                    f'{phyllo:.0f}\n')
+            str6 = '[SoilRoot]\n'
+            str7 = '*** water uptake parameter information ***\n'
+            str8 = 'RRRM\tRRRY\tRVRL\n'
+            str9 = (f'{dict_setup["cultivar"]["rrrm"]:.2f}\t'
+                    f'{dict_setup["cultivar"]["rrry"]:.2f}\t'
+                    f'{dict_setup["cultivar"]["rvrl"]:.2f}\n')
+            str10 = 'ALPM\tALPY\tRTWL\tRtMinWtPerUnitArea\n'
+            str11 = (f'{dict_setup["cultivar"]["alpm"]:.2f}\t'
+                     f'{dict_setup["cultivar"]["alpy"]:.2f}\t'
+                     f'{dict_setup["cultivar"]["rtwl"]:.7f}\t'
+                     f'{dict_setup["cultivar"]["rtminwtperunitarea"]:.4f}\n')
+            str12 = '[RootDiff]\n'
+            str13 = '*** root mover parameter information ***\n'
+            str14 = 'EPSI\tlUpW\tCourMax\n'
+            str15 = (f'{dict_setup["cultivar"]["epsi"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["lupw"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["courmax"]:.0f}\n')
+            str16 = 'Diffusivity and geotrophic velocity\n'
+            str17 = (f'{dict_setup["cultivar"]["diffgeo1"]:.1f}\t'
+                     f'{dict_setup["cultivar"]["diffgeo2"]:.1f}\t'
+                     f'{dict_setup["cultivar"]["diffgeo3"]:.1f}\n')
+            str18 = '[SoilNitrogen]\n'
+            str19 = '*** nitrogen root uptake parameter infromation ***\n'
+            str20 = 'ISINK\tRroot\n'
+            str21 = (f'{dict_setup["cultivar"]["isink"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["rroot"]:.2f}\n')
+            str22 = 'ConstI\tConstk\tCmin0\n'
+            str23 = (f'{dict_setup["cultivar"]["consti_1"]:.2f}\t'
+                     f'{dict_setup["cultivar"]["constk_1"]:.2f}\t'
+                     f'{dict_setup["cultivar"]["cmin0_1"]:.2f}\t')
+            str24 = (f'{dict_setup["cultivar"]["consti_2"]:.2f}\t'
+                     f'{dict_setup["cultivar"]["constk_2"]:.2f}\t'
+                     f'{dict_setup["cultivar"]["cmin0_2"]:.2f}\t')
+            str25 = '[Gas_Exchange Species Parameters]\n'
+            str26 = '*** for photosynthesis calculations ***\n'
+            str27 = ('EaVP\tEaVc\tEaj\tHj\tSj\t'
+                     'Vpm25\tVcm25\tJm25\tRd25\tEar\tg0\tg1\n')
+            str28 = (f'{dict_setup["cultivar"]["eavp"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["eavc"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["eaj"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["hj"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["sj"]:.0f}\t'
+                     f'{vpm_25:.0f}\t'
+                     f'{vcm_25:.0f}\t'
+                     f'{dict_setup["cultivar"]["jm_25"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["rd_25"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["ear"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["g0"]:.2f}\t'
+                     f'{g1:.2f}\n')
+            str29 = '*** second set of parameters for photosynthesis ***\n'
+            str30 = 'f\tscatt\tKc_25\tKo_25\tKp_25\tgbs\tgi\tgamma1\n'
+            str31 = (f'{dict_setup["cultivar"]["f"]:.2f}\t'
+                     f'{dict_setup["cultivar"]["scatt"]:.2f}\t'
+                     f'{dict_setup["cultivar"]["Kc_25"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["Ko_25"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["Kp_25"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["gbs"]:.3f}\t'
+                     f'{dict_setup["cultivar"]["gi"]:.2f}\t'
+                     f'{dict_setup["cultivar"]["gamma1"]:.2f}\n')
+            str32 = '*** third set of photosynthesis parameters ***\n'
+            str33 = ('gamma_gsw\tsensitivity (sf)\tref_potential (phyla, bars)\t'
+                     'stoma_ratio\twidfct\tleaf_wid (m)\n')
+            str34 = (f'{dict_setup["cultivar"]["gamma_gsw"]:.1f}\t'
+                     f'{dict_setup["cultivar"]["sf"]:.1f}\t'
+                     f'{ref_potential:.1f}\t'
+                     f'{dict_setup["cultivar"]["stomata_ratio"]:.1f}\t'
+                     f'{dict_setup["cultivar"]["widfct"]:.2f}\t'
+                     f'{dict_setup["cultivar"]["leaf_wid"]:.2f}\n')
+            str35 = '**** seconday parameters for miscelanioius equations ****\n'
+            str36 = 'Ci/Ca\tSC_param\tBLC_param\n'
+            str37 = (f'{dict_setup["cultivar"]["cica_ratio"]:.1f}\t'
+                     f'{dict_setup["cultivar"]["SC_param"]:.2f}\t'
+                     f'{dict_setup["cultivar"]["BLC_param"]:.1f}\n')
+            str38 = '[Leaf Parameters]\n'
+
+            strings = [str1, str2, str3, str4, str5, str6, str7, str8,
+                       str9, str10, str11, str12, str13, str14, str15, str16,
+                       str17, str18, str19, str20, str21, str22, str23, str24,
+                       str25, str26, str27, str28, str29, str30, str31, str32,
+                       str33, str34, str35, str36, str37, str38]
+            cvar_txt.writelines(strings)
+
     else:
-        cvars = dict_setup(dict_setup['specs']['cvars'])
-
-    for cvar in cvars:
-        [juv_leaves, staygreen, rmax_ltir,
-         phyllo, LM_min, vcm_25,
-         vpm_25, g1, ref_potential, rmax_ltar] = df_params.iloc[cvar, :]
-
-        cvar_txt = open(os.path.join(dirct_cvars, 'var_' + cvar + '.txt'), 'w')
-
-        str1 = '*** Corn growth simulation for US maize simualtion ***\n'
-        str2 = f'cultivar: {cvar}\n'
-        str3 = ('juv_leaf\tdaylen_sen\tstaygreen\t'
-                'LM_min\tRmax_LTAR\tRmax_LTIR\tphyllo\n')
-        str4 = '\n'
-        str5 = (f'{juv_leaves:.0f}\t'
-                f'{dict_setup["cultivar"]["daylen_sen"]:.0f}\t'
-                f'{staygreen:.2f}\t'
-                f'{LM_min:.0f}\t'
-                f'{rmax_ltar:.2f}\t'
-                f'{rmax_ltir:.2f}\t'
-                f'{phyllo:.0f}\n')
-        str6 = '[SoilRoot]\n'
-        str7 = '*** water uptake parameter information ***\n'
-        str8 = 'RRRM\tRRRY\tRVRL\n'
-        str9 = (f'{dict_setup["cultivar"]["rrrm"]:.2f}\t'
-                f'{dict_setup["cultivar"]["rrry"]:.2f}\t'
-                f'{dict_setup["cultivar"]["rvrl"]:.2f}\n')
-        str10 = 'ALPM\tALPY\tRTWL\tRtMinWtPerUnitArea\n'
-        str11 = (f'{dict_setup["cultivar"]["alpm"]:.2f}\t'
-                 f'{dict_setup["cultivar"]["alpy"]:.2f}\t'
-                 f'{dict_setup["cultivar"]["trwl"]:.7f}\t'
-                 f'{dict_setup["cultivar"]["rtminwtperunitarea"]:.4f}\n')
-        str12 = '[RootDiff]\n'
-        str13 = '*** root mover parameter information ***\n'
-        str14 = 'EPSI\tlUpW\tCourMax\n'
-        str15 = (f'{dict_setup["cultivar"]["epsi"]:.0f}\t'
-                 f'{dict_setup["cultivar"]["lupw"]:.0f}\t'
-                 f'{dict_setup["cultivar"]["courmax"]:.0f}\n')
-        str16 = 'Diffusivity and geotrophic velocity\n'
-        str17 = (f'{dict_setup["cultivar"]["diffgeo1"]:.1f}\t'
-                 f'{dict_setup["cultivar"]["diffgeo2"]:.1f}\t'
-                 f'{dict_setup["cultivar"]["diffgeo3"]:.1f}\n')
-        str18 = '[SoilNitrogen]\n'
-        str19 = '*** nitrogen root uptake parameter infromation ***\n'
-        str20 = 'ISINK\tRroot\n'
-        str21 = (f'{dict_setup["cultivar"]["isink"]:.0f}\t'
-                 f'{dict_setup["cultivar"]["rroot"]:.2f}\n')
-        str22 = 'ConstI\tConstk\tCmin0\n'
-        str23 = (f'{dict_setup["cultivar"]["consti_1"]:.2f}\t'
-                 f'{dict_setup["cultivar"]["constk_1"]:.2f}\t'
-                 f'{dict_setup["cultivar"]["cmin0_1"]:.2f}\t')
-        str24 = (f'{dict_setup["cultivar"]["consti_2"]:.2f}\t'
-                 f'{dict_setup["cultivar"]["constk_2"]:.2f}\t'
-                 f'{dict_setup["cultivar"]["cmin0_2"]:.2f}\t')
-        str25 = '[Gas_Exchange Species Parameters]\n'
-        str26 = '*** for photosynthesis calculations ***\n'
-        str27 = ('EaVP\tEaVc\tEaj\tHj\tSj\t'
-                 'Vpm25\tVcm25\tJm25\tRd25\tEar\tg0\tg1\n')
-        str28 = (f'{dict_setup["cultivar"]["eavp"]:.0f}\t'
-                 f'{dict_setup["cultivar"]["eavc"]:.0f}\t'
-                 f'{dict_setup["cultivar"]["eaj"]:.0f}\t'
-                 f'{dict_setup["cultivar"]["hj"]:.0f}\t'
-                 f'{dict_setup["cultivar"]["sj"]:.0f}\t'
-                 f'{vpm_25:.0f}\t'
-                 f'{vcm_25:.0f}\t'
-                 f'{dict_setup["cultivar"]["jm_25"]:.0f}\t'
-                 f'{dict_setup["cultivar"]["rd_25"]:.0f}\t'
-                 f'{dict_setup["cultivar"]["ear"]:.0f}\t'
-                 f'{dict_setup["cultivar"]["g0"]:.2f}\t'
-                 f'{g1:.2f}\n'
-        str29 = '*** second set of parameters for photosynthesis ***\n'
-        str30 = 'f\tscatt\tKc_25\tKo_25\tKp_25\tgbs\tgi\tgamma1\n'
-        str31 = (f'{dict_setup["cultivar"]["f"]:.2f}\t'
-                 f'{dict_setup["cultivar"]["scatt"]:.2f}\t'
-                 f'{dict_setup["cultivar"]["Kc_25"]:.0f}\t'
-                 f'{dict_setup["cultivar"]["Ko_25"]:.0f}\t'
-                 f'{dict_setup["cultivar"]["Kp_25"]:.0f}\t'
-                 f'{dict_setup["cultivar"]["gbs"]:.3f}\t'
-                 f'{dict_setup["cultivar"]["gi"]:.2f}\t'
-                 f'{dict_setup["cultivar"]["gamma1"]:.2f}\n')
-        str32 = '*** third set of photosynthesis parameters ***\n'
-        str33 = ('gamma_gsw\tsensitivity (sf)\tref_potential (phyla, bars)\t'
-                 'stoma_ratio\twidfct\tleaf_wid (m)\n')
-        str34 = (f'{dict_setup["cultivar"]["gamma_gsw"]:.1f}\t'
-                 f'{dict_setup["cultivar"]["sf"]:.1f}\t'
-                 f'{ref_potential:.1f}\t'
-                 f'{dict_setup["cultivar"]["stomata_ratio"]:.1f}\t'
-                 f'{dict_setup["cultivar"]["widfct"]:.2f}\t'
-                 f'{dict_setup["cultivar"]["leaf_wid"]:.2f}\n')
-        str35 = '**** seconday parameters for miscelanioius equations ****\n'
-        str36 = 'Ci/Ca\tSC_param\tBLC_param\n'
-        str37 = (f'{dict_setup["cultivar"]["cica_ratio"]:.1f}\t'
-                 f'{dict_setup["cultivar"]["SC_param"]:.2f}\t'
-                 f'{dict_setup["cultivar"]["BLC_param"]:.1f}\n')
-        str38 = '[Leaf Parameters]\n'
-
-        strings = [str1, str2, str3, str4, str5, str6, str7, str8,
-                   str9, str10, str11, str12, str13, str14, str15, str16,
-                   str17, str18, str19, str20, str21, str22, str23, str24,
-                   str25, str26, str27, str28, str29, str30, str31, str32,
-                   str33, str34, str35, str36, str37, str38]
-        cvar_txt.writelines(strings)
+        raise ValueError(f'cultivar files already exist '
+                         f'for run name: "{run_name}"!')
 
 
 def make_runs(run_name, yamlfile=None, cont_cvars=True):
