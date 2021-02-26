@@ -9,6 +9,12 @@ setup:
   siteyears: /home/disk/eos8/ach315/upscale/weadata/siteyears_filtered.csv
   site_info: /home/disk/eos8/ach315/upscale/weadata/stations_info_9110.csv
   site_summary: /home/disk/eos8/ach315/upscale/weadata/site_summary.csv
+specs:
+  years:
+  - 1961
+  - 2005
+  cvars:
+  - 100
 params:
   juv_leaves:
   - 15
@@ -32,12 +38,6 @@ params:
   ref_potential:
   - -4
   - -1
-specs:
-  years:
-  - 1961
-  - 2005
-  cvars:
-  - 100
 init:
   poprow: 7.5
   rowsp: 75
@@ -88,3 +88,55 @@ management:
   appl_depth: 5
   residue_C: 0
   residue_N: 0
+cultivar:
+  daylen_sen: 0
+  rrrm: 166.7
+  rrry: 31.3
+  rvrl: 0.73
+  alpm: 0.35
+  alpy: 0.04
+  rtwl: 1.059e-004
+  rtminwtperunitarea: 2.0000e-004
+  epsi: 1
+  lupw: 1
+  courmax: 1
+  diffgeo1: 2.4
+  diffgeo2: 2.9
+  diffgeo3: 0
+  wl: 1
+  wa: 1
+  wr: 2
+  wb: 10
+  isink: 0
+  rroot: 0.017
+  consti_1: 35.0
+  constk_1: 0.50
+  cmin0_1: 0.01
+  consti_2: 17.2
+  constk_2: 0.75
+  cmin0_2: 0.30
+  eavp: 75100
+  eavc: 55900
+  eaj: 32800
+  hj: 220000
+  sj: 702.6
+  jm_25: 300
+  rd_25: 2
+  ear: 39800
+  g0: 0.017
+  f: 0.15
+  scatt: 0.15
+  Kc_25: 650
+  Ko_25: 450
+  Kp_25: 80
+  gbs: 0.003
+  gi: 1
+  gamma1: 0.193
+  gamma_gsw: 10.0
+  sf: 2.3
+  stomata_ratio: 1.0
+  widfct: 0.72
+  leaf_wid: 0.05
+  cica_ratio: 0.7
+  SC_param: 1.57
+  BLC_param: 1.36
