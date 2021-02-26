@@ -278,16 +278,18 @@ def make_inits(run_name, yamlfile=None):
             lat = df_siteinfo[df_siteinfo.site == site].lat.item()
             lon = df_siteinfo[df_siteinfo.site == site].lon.item()
 
-            # TODO: code something that can handel dynamic vs. fixed pdate
-            pdate = df_siteyears[(df_siteyears.site == site) &
-                                 (df_siteyears.year == year)].iloc[0, 3]
-            pdate_month = pdate.split('-')[1]
-            pdate_day = pdate.split('-')[2]
+            if dict_setup['init']['plant_date'] == 'dynamic':
+                pdate = df_siteyears[(df_siteyears.site == site) &
+                                     (df_siteyears.year == year)].iloc[0, 3]
+                pdate_month = pdate.split('-')[1]
+                pdate_day = pdate.split('-')[2]
+                sowing = f'"{pdate_month}/{pdate_day}/{year}"'
+            else:
+                sowing = f'"{dict_setup["init"]["plant_date"]}{year}"'
 
             # customized parameters: timing
-            start = "'" + f'{dict_setup["init"]["start_date"]}' + year + "'"
-            sowing = "'" + pdate_month + '/' + pdate_day + '/' + year + "'"
-            end = "'" + f'{dict_setup["init"]["end_date"]}' + year + "'"
+            start = f'"{dict_setup["init"]["start_date"]}{year}"'
+            end = f'"{dict_setup["init"]["end_date"]}{year}"'
 
             # set up init.txt text strings
             str1 = '*** initialization data ***\n'
@@ -318,11 +320,8 @@ def make_inits(run_name, yamlfile=None):
             else:
                 str12 = '1\t0\n'
 
-            # compiling all strings
             strings = [str1, str2, str3, str4, str5, str6,
                        str7, str8, str9, str10, str11, str12]
-
-            # writing out .txt file and clsoing file
             init_txt.writelines(strings)
             init_txt.close()
 
@@ -394,23 +393,24 @@ def make_inits(run_name, yamlfile=None):
             # *** management.txt
             management_txt = open(os.path.join(dirct, 'management.txt'), 'w')
 
+            # addressing N application date according to dynamic pdate
+            sowing_date = pd.to_datetime(sowing, format='"%m/%d/%Y"')
+            appl_date1 = sowing_date + pd.DateOffset(days=14)
+            appl_date2 = sowing_date + pd.DateOffset(days=14+30)
+            appl_time1 = appl_date1.strftime('"%m/%d/%Y"')
+            appl_time2 = appl_date2.strftime('"%m/%d/%Y"')
+
             # put together txt strings
             str1 = '*** script for chemical application module ***\n'
             str2 = 'number of fertilizer applicaitons (max=25)\n'
             str3 = f'{dict_setup["management"]["appl_num"]}\n'
             str4 = ('appl_time(i)\tappl_mg(i)\tappl_depth(cm)\t'
                     'residue_C\tresidue_N\n')
-            # TODO: how to address N application date?
-            # TODO: likely will just set days after planting
-            # TODO: and use datetime functions to help convert into actual date
-            appl_time1 = dict_setup['init']['start_date']
             str5 = (f'{appl_time1}\t'
                     f'{dict_setup["management"]["appl_mg"]}\t'
                     f'{dict_setup["management"]["appl_depth"]}\t'
                     f'{dict_setup["management"]["residue_C"]}\t'
                     f'{dict_setup["management"]["redisue_N"]}\n')
-            # TODO: include dynamic N application date
-            #appl_time2 = dict_setup['init']['start_date'] + 
             str6 = (f'{appl_time2}\t'
                     f'{dict_setup["management"]["appl_mg"]}\t'
                     f'{dict_setup["management"]["appl_depth"]}\t'
