@@ -68,6 +68,7 @@ def read_inityaml(run_name, yamlfile=None):
     dict_setup['time'] = dict_init['time']
     dict_setup['climate'] = dict_init['climate']
     dict_setup['management'] = dict_init['management']
+    dict_setup['cultivar'] = dict_init['cultivar']
 
     return dict_setup
 
@@ -206,7 +207,7 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
             raise ValueError(f'directory {dirct_folder} already exists!')
 
 
-def make_init(run_name, yamlfile=None):
+def make_inits(run_name, yamlfile=None):
     """
     Create custom init files for MAIZSIM sims.
 
@@ -385,7 +386,7 @@ def make_init(run_name, yamlfile=None):
             # TODO: how to address N application date?
             # TODO: likely will just set days after planting
             # TODO: and use datetime functions to help convert into actual date
-            appl_time1 = dict_setup['init']['start_date'] + 
+            appl_time1 = dict_setup['init']['start_date']
             str5 = (f'{appl_time1}\t'
                     f'{dict_setup["management"]["appl_mg"]}\t'
                     f'{dict_setup["management"]["appl_depth"]}\t'
@@ -407,19 +408,154 @@ def make_init(run_name, yamlfile=None):
                          ' already exist!')
 
 
+def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
+    """
+    Create cultivar files based on perturbed combinations of parameters.
+
+    Parameters
+    ----------
+    run_name : str
+        run name for batch of experiments.
+    yamlfile: str
+        default None - function reads init_runame.yml file in project dirct.
+        a testing yamlfile path need to be passed for testing purposes.
+    cont_cvars : Bool
+        Default True.
+        How yaml file stores simulation cvars info.
+        True: stored single number representing the total number of cultivas.
+        Fals: stored specific cultivars (testing purposes).
+
+    Returns
+    -------
+    var.txt
+
+    """
+    dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
+    dirct_project = dict_setup['path_project']
+    dirct_cvars = os.path.join(dirct_project, 'inits', 'cultivars', run_name)
+
+    df_params = pd.read_csv(dict_setup['path_params'])
+
+    if cont_cvars = True:
+        cvars = np.arange(dict_setup['specs']['cvars'][0])
+    else:
+        cvars = dict_setup(dict_setup['specs']['cvars'])
+
+    for cvar in cvars:
+        [juv_leaves, staygreen, rmax_ltir,
+         phyllo, LM_min, vcm_25,
+         vpm_25, g1, ref_potential, rmax_ltar] = df_params.iloc[cvar, :]
+
+        cvar_txt = open(os.path.join(dirct_cvars, 'var_' + cvar + '.txt'), 'w')
+
+        str1 = '*** Corn growth simulation for US maize simualtion ***\n'
+        str2 = f'cultivar: {cvar}\n'
+        str3 = ('juv_leaf\tdaylen_sen\tstaygreen\t'
+                'LM_min\tRmax_LTAR\tRmax_LTIR\tphyllo\n')
+        str4 = '\n'
+        str5 = (f'{juv_leaves:.0f}\t'
+                f'{dict_setup["cultivar"]["daylen_sen"]:.0f}\t'
+                f'{staygreen:.2f}\t'
+                f'{LM_min:.0f}\t'
+                f'{rmax_ltar:.2f}\t'
+                f'{rmax_ltir:.2f}\t'
+                f'{phyllo:.0f}\n')
+        str6 = '[SoilRoot]\n'
+        str7 = '*** water uptake parameter information ***\n'
+        str8 = 'RRRM\tRRRY\tRVRL\n'
+        str9 = (f'{dict_setup["cultivar"]["rrrm"]:.2f}\t'
+                f'{dict_setup["cultivar"]["rrry"]:.2f}\t'
+                f'{dict_setup["cultivar"]["rvrl"]:.2f}\n')
+        str10 = 'ALPM\tALPY\tRTWL\tRtMinWtPerUnitArea\n'
+        str11 = (f'{dict_setup["cultivar"]["alpm"]:.2f}\t'
+                 f'{dict_setup["cultivar"]["alpy"]:.2f}\t'
+                 f'{dict_setup["cultivar"]["trwl"]:.7f}\t'
+                 f'{dict_setup["cultivar"]["rtminwtperunitarea"]:.4f}\n')
+        str12 = '[RootDiff]\n'
+        str13 = '*** root mover parameter information ***\n'
+        str14 = 'EPSI\tlUpW\tCourMax\n'
+        str15 = (f'{dict_setup["cultivar"]["epsi"]:.0f}\t'
+                 f'{dict_setup["cultivar"]["lupw"]:.0f}\t'
+                 f'{dict_setup["cultivar"]["courmax"]:.0f}\n')
+        str16 = 'Diffusivity and geotrophic velocity\n'
+        str17 = (f'{dict_setup["cultivar"]["diffgeo1"]:.1f}\t'
+                 f'{dict_setup["cultivar"]["diffgeo2"]:.1f}\t'
+                 f'{dict_setup["cultivar"]["diffgeo3"]:.1f}\n')
+        str18 = '[SoilNitrogen]\n'
+        str19 = '*** nitrogen root uptake parameter infromation ***\n'
+        str20 = 'ISINK\tRroot\n'
+        str21 = (f'{dict_setup["cultivar"]["isink"]:.0f}\t'
+                 f'{dict_setup["cultivar"]["rroot"]:.2f}\n')
+        str22 = 'ConstI\tConstk\tCmin0\n'
+        str23 = (f'{dict_setup["cultivar"]["consti_1"]:.2f}\t'
+                 f'{dict_setup["cultivar"]["constk_1"]:.2f}\t'
+                 f'{dict_setup["cultivar"]["cmin0_1"]:.2f}\t')
+        str24 = (f'{dict_setup["cultivar"]["consti_2"]:.2f}\t'
+                 f'{dict_setup["cultivar"]["constk_2"]:.2f}\t'
+                 f'{dict_setup["cultivar"]["cmin0_2"]:.2f}\t')
+        str25 = '[Gas_Exchange Species Parameters]\n'
+        str26 = '*** for photosynthesis calculations ***\n'
+        str27 = ('EaVP\tEaVc\tEaj\tHj\tSj\t'
+                 'Vpm25\tVcm25\tJm25\tRd25\tEar\tg0\tg1\n')
+        str28 = (f'{dict_setup["cultivar"]["eavp"]:.0f}\t'
+                 f'{dict_setup["cultivar"]["eavc"]:.0f}\t'
+                 f'{dict_setup["cultivar"]["eaj"]:.0f}\t'
+                 f'{dict_setup["cultivar"]["hj"]:.0f}\t'
+                 f'{dict_setup["cultivar"]["sj"]:.0f}\t'
+                 f'{vpm_25:.0f}\t'
+                 f'{vcm_25:.0f}\t'
+                 f'{dict_setup["cultivar"]["jm_25"]:.0f}\t'
+                 f'{dict_setup["cultivar"]["rd_25"]:.0f}\t'
+                 f'{dict_setup["cultivar"]["ear"]:.0f}\t'
+                 f'{dict_setup["cultivar"]["g0"]:.2f}\t'
+                 f'{g1:.2f}\n'
+        str29 = '*** second set of parameters for photosynthesis ***\n'
+        str30 = 'f\tscatt\tKc_25\tKo_25\tKp_25\tgbs\tgi\tgamma1\n'
+        str31 = (f'{dict_setup["cultivar"]["f"]:.2f}\t'
+                 f'{dict_setup["cultivar"]["scatt"]:.2f}\t'
+                 f'{dict_setup["cultivar"]["Kc_25"]:.0f}\t'
+                 f'{dict_setup["cultivar"]["Ko_25"]:.0f}\t'
+                 f'{dict_setup["cultivar"]["Kp_25"]:.0f}\t'
+                 f'{dict_setup["cultivar"]["gbs"]:.3f}\t'
+                 f'{dict_setup["cultivar"]["gi"]:.2f}\t'
+                 f'{dict_setup["cultivar"]["gamma1"]:.2f}\n')
+        str32 = '*** third set of photosynthesis parameters ***\n'
+        str33 = ('gamma_gsw\tsensitivity (sf)\tref_potential (phyla, bars)\t'
+                 'stoma_ratio\twidfct\tleaf_wid (m)\n')
+        str34 = (f'{dict_setup["cultivar"]["gamma_gsw"]:.1f}\t'
+                 f'{dict_setup["cultivar"]["sf"]:.1f}\t'
+                 f'{ref_potential:.1f}\t'
+                 f'{dict_setup["cultivar"]["stomata_ratio"]:.1f}\t'
+                 f'{dict_setup["cultivar"]["widfct"]:.2f}\t'
+                 f'{dict_setup["cultivar"]["leaf_wid"]:.2f}\n')
+        str35 = '**** seconday parameters for miscelanioius equations ****\n'
+        str36 = 'Ci/Ca\tSC_param\tBLC_param\n'
+        str37 = (f'{dict_setup["cultivar"]["cica_ratio"]:.1f}\t'
+                 f'{dict_setup["cultivar"]["SC_param"]:.2f}\t'
+                 f'{dict_setup["cultivar"]["BLC_param"]:.1f}\n')
+        str38 = '[Leaf Parameters]\n'
+
+        strings = [str1, str2, str3, str4, str5, str6, str7, str8,
+                   str9, str10, str11, str12, str13, str14, str15, str16,
+                   str17, str18, str19, str20, str21, str22, str23, str24,
+                   str25, str26, str27, str28, str29, str30, str31, str32,
+                   str33, str34, str35, str36, str37, str38]
+        cvar_txt.writelines(strings)
+
+
 def make_runs(run_name, yamlfile=None, cont_cvars=True):
     """
     Create run.txt files in corresponding directories for experiment.
 
     Parameters
     ----------
-    run_name: str
+    run_name : str
         run name for batch of experiments.
-    yamlfile: str
+    yamlfile : str
         default None - function reads init_runame.yml file in project dirct.
         a testing yamlfile path need to be passed for testing purposes.
-    cont_cvars: Bool
-        Default True
+    cont_cvars : Bool
+        Default True.
         How yaml file stores simulation cvars info.
         True: stored single number representing the total number of cultivas.
         Fals: stored specific cultivars (testing purposes).
@@ -427,7 +563,6 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
     """
     dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
     dirct_project = dict_setup['path_project']
-
     dirct_runs = os.path.join(dirct_project, 'runs', run_name)
 
     # only execute if no run files already exist
@@ -580,12 +715,8 @@ def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
         Fals: stored specific cultivars (testing purposes).
 
     """
-    # read in setup yaml file
     dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
-    # setup project directory
     dirct_project = dict_setup['path_project']
-
-    # point to jobs directory
     dirct_jobs = os.path.join(dirct_project, 'jobs', run_name)
 
     # only execute if no run files already exist
@@ -680,13 +811,10 @@ def make_subjobs(run_name, yamlfile=None):
         a testing yamlfile path need to be passed for testing purposes.
 
     """
-    # read in setup yaml file
     dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
-    # setup project directory
     dirct_project = dict_setup['path_project']
-
-    # point to jobs directory
     dirct_jobs = os.path.join(dirct_project, 'jobs')
+
     subjobs = 'subjobs_' + run_name + '.sh'
 
     if not os.path.exists(os.path.join(dirct_jobs, subjobs)):
