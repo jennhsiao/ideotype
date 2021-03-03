@@ -1,0 +1,25 @@
+name: ideotype_test
+channels:
+  - conda-forge
+dependencies:
+  - flake8
+  - numpy
+  - pandas
+  - pytest
+  - pytest-cov
+  - pingouin
+  - pyyaml
+  - scipy
+  - scikit-learn 
+  - setuptools_scm
+  - sqlalchemy
+  - SALib
+  - wheel
+  - xarray
+  - line_profiler
+  - pip
+  - pip:
+      - pytest-cases
+      - flake8-docstrings
+      - flake8-pytest
+      

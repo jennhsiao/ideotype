@@ -12,7 +12,7 @@ setup_args = {
     "scripts": glob.glob("scripts/*"),
     "use_scm_version": True,
     "include_package_data": True,
-    "install_requires": ["pandas", "pyyaml", "setuptools_scm"]
+    "install_requires": ["pandas", "pyyaml", "setuptools_scm", "sqlalchemy"]
     # TODO: add more install_requires here
 }
 
