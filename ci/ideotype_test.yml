@@ -17,6 +17,7 @@ dependencies:
   - wheel
   - xarray
   - line_profiler
+  - timezonefinder
   - pip
   - pip:
       - pytest-cases
