@@ -45,7 +45,7 @@ jobs:
         run: |
           python -m pytest --cov=ideotype --cov-config=.coveragerc --cov-report xml:./coverage.xml --junitxml=test-reports/xunit.xml
       - uses: codecov/codecov-action@master
-        if: success()
+        #if: success()
         with:
           token: ${{secrets.CODECOV_TOKEN}} #required
           file: ./coverage.xml #optional
