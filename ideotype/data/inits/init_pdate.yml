@@ -50,7 +50,7 @@ init:
   co2: -1
   soil: false
   start_date: 03/01/
-  plant_date: 04/01/
+  plant_date: dynamic
   end_date: 12/31/
   timestep: 60
   alt: 0
