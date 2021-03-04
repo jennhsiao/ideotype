@@ -13,6 +13,8 @@ from .utils import *  # noqa
 from .log import * # noqa
 from .sql_declarative import *  # noqa
 from .sql_insert import *  # noqa
+from .sql_altertable import *  # noqa
+from .sql_index import * # noqa
 from .wflow_setup import * # noqa
 
 try:
