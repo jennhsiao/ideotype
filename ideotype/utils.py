@@ -4,7 +4,6 @@ import os
 import pandas as pd
 import numpy as np
 import pytz
-from timezonefinder import TimezoneFinder
 
 
 def fold(val, min, max):
@@ -126,6 +125,8 @@ def find_zone(site, siteinfo):
     zone:
 
     """
+    from timezonefinder import TimezoneFinder
+
     lat = float(siteinfo[siteinfo.site == site].lat)
     lon = float(siteinfo[siteinfo.site == site].lon)
     tf = TimezoneFinder()
