@@ -32,7 +32,7 @@ def setup_and_teardown_package():
     global test_engine
 
     # point to test DB
-    fpath_db = '~/upscale/db/test.db'
+    fpath_db = os.path.expanduser('~/upscale/db/test.db')
     # create table function in sql_declarative returns engine
     test_engine = ideotype.create_table(fpath_db)
     # bind metadata with engine
