@@ -1,6 +1,7 @@
 name: ideotype_test
 channels:
   - conda-forge
+  - defaults
 dependencies:
   - numpy
   - pandas
@@ -9,8 +10,4 @@ dependencies:
   - pyyaml
   - setuptools_scm
   - sqlalchemy
-  - timezonefinder
-  - pip
-  - pip:
-      - pytest-cases
-    
+  - timezonefinder    
