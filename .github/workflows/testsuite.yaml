@@ -43,6 +43,8 @@ jobs:
           pip install .
       - name: Run Tests
         run: |
+          mkdir ~/upscale
+          mkdir ~/upscale/db
           python -m pytest --cov=ideotype --cov-config=.coveragerc --cov-report xml:./coverage.xml --junitxml=test-reports/xunit.xml
       - uses: codecov/codecov-action@master
         #if: success()
