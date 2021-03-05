@@ -1,15 +1,15 @@
 """Testing DB insert values."""
+import os
 from numpy import genfromtxt
 
 from ideotype import WeaData, Sims, Params
+from ideotype.data import DATA_PATH
 
 # point to test files
-fpath_wea = ('/home/disk/eos8/ach315/ideotype/ideotype/data'
-             '/test_data/wea/725300_1964.txt')
-fpath_sim = ('/home/disk/eos8/ach315/ideotype/ideotype/data'
-             '/test_data/sims/test/1964/var_6/out1_725300_1964_var_6.txt')
-fpath_param = ('/home/disk/eos8/ach315/ideotype/ideotype/data'
-               '/test_data/params/param_test.csv')
+fpath_wea = os.path.join(DATA_PATH, 'test_data', 'wea', '725300_1964.txt')
+fpath_sim = os.path.join(DATA_PATH, 'test_data', 'sims', 'test', '1964',
+                         'var_6', 'out1_725300_1964_var_6.txt')
+fpath_param = os.path.join(DATA_PATH, 'test_data', 'params', 'param_test.csv')
 
 
 def test_insert_params(ideotype_session):
