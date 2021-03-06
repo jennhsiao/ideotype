@@ -1,14 +1,14 @@
 setup:
   run_name: test
   path_project: tmp_path
-  path_wea: /home/disk/eos8/ach315/ideotype/ideotype/data/test_data/wea/
+  path_wea: ~/ideotype/ideotype/data/test_data/wea/
   path_init_standards: tmp_path/inits/standards/test/
   path_init_soils: tmp_path/inits/soils/
-  path_params: /home/disk/eos8/ach315/ideotype/ideotype/data/test_data/params/
-  path_maizsim: /home/disk/eos8/ach315/MAIZSIM
-  siteyears: /home/disk/eos8/ach315/ideotype/ideotype/data/test_data/sites/siteyears_filtered.csv
-  site_info: /home/disk/eos8/ach315/ideotype/ideotype/data/test_data/sites/stations_info_9110.csv
-  site_summary: /home/disk/eos8/ach315/ideotype/ideotype/data/test_data/sites/site_summary.csv
+  path_params: ~/ideotype/ideotype/data/test_data/params/
+  path_maizsim: ~/MAIZSIM
+  siteyears: ~/ideotype/ideotype/data/test_data/sites/siteyears_filtered.csv # this line causing errors
+  site_info: ~/ideotype/ideotype/data/test_data/sites/stations_info_9110.csv
+  site_summary: ~/ideotype/ideotype/data/test_data/sites/site_summary.csv
 specs:
   years:
   - 1964
