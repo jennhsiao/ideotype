@@ -143,7 +143,7 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
                                        'customs',
                                        run_name)
 
-    data = genfromtxt(dict_setup['siteyears'],
+    data = genfromtxt(os.path.expanduser(dict_setup['siteyears']),
                       delimiter=',',
                       skip_header=1,
                       usecols=(0, 1),
@@ -249,14 +249,14 @@ def make_inits(run_name, yamlfile=None):
     dirct_init = os.path.join(dirct_project, 'inits', 'customs', run_name)
 
     # only execute if no run files already exist
-    filelist = get_filelist(dirct_init)
+    filelist = get_filelist(os.path.expanduser(dirct_init))
     if len(filelist) == 0:
         # read in site_info & siteyears info
         df_siteinfo, df_siteyears = read_siteinfo(dict_setup['site_info'],
                                                   dict_setup['siteyears'])
 
         # fetch site-years info
-        data = genfromtxt(dict_setup['siteyears'],
+        data = genfromtxt(os.path.expanduser(dict_setup['siteyears']),
                           delimiter=',',
                           skip_header=1,
                           usecols=(0, 1),
@@ -453,7 +453,7 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
     dirct_cvars = os.path.join(dirct_project, 'inits', 'cultivars', run_name)
     df_params = pd.read_csv(dict_setup['path_params'])
 
-    filelist = get_filelist(dirct_cvars)
+    filelist = get_filelist(os.path.expanduser(dirct_cvars))
     if len(filelist) == 0:
         if cont_cvars is True:
             cvars = np.arange(dict_setup['specs']['cvars'][0])
@@ -540,7 +540,8 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
                      f'{dict_setup["cultivar"]["gi"]:.2f}\t'
                      f'{dict_setup["cultivar"]["gamma1"]:.2f}\n')
             str32 = '*** third set of photosynthesis parameters ***\n'
-            str33 = ('gamma_gsw\tsensitivity (sf)\tref_potential (phyla, bars)\t'
+            str33 = ('gamma_gsw\tsensitivity (sf)\t'
+                     'ref_potential (phyla, bars)\t'
                      'stoma_ratio\twidfct\tleaf_wid (m)\n')
             str34 = (f'{dict_setup["cultivar"]["gamma_gsw"]:.1f}\t'
                      f'{dict_setup["cultivar"]["sf"]:.1f}\t'
@@ -548,7 +549,8 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
                      f'{dict_setup["cultivar"]["stomata_ratio"]:.1f}\t'
                      f'{dict_setup["cultivar"]["widfct"]:.2f}\t'
                      f'{dict_setup["cultivar"]["leaf_wid"]:.2f}\n')
-            str35 = '**** seconday parameters for miscelanioius equations ****\n'
+            str35 = ('**** seconday parameters for '
+                     'miscelanioius equations ****\n')
             str36 = 'Ci/Ca\tSC_param\tBLC_param\n'
             str37 = (f'{dict_setup["cultivar"]["cica_ratio"]:.1f}\t'
                      f'{dict_setup["cultivar"]["SC_param"]:.2f}\t'
@@ -590,10 +592,10 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
     dirct_runs = os.path.join(dirct_project, 'runs', run_name)
 
     # only execute if no run files already exist
-    filelist = get_filelist(dirct_runs)
+    filelist = get_filelist(os.path.expanduser(dirct_runs))
     if len(filelist) == 0:
         # read in dict_setup to fetch site-years info
-        data = genfromtxt(dict_setup['siteyears'],
+        data = genfromtxt(os.path.expanduser(dict_setup['siteyears']),
                           delimiter=',',
                           skip_header=1,
                           usecols=(0, 1),
@@ -744,7 +746,7 @@ def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
     dirct_jobs = os.path.join(dirct_project, 'jobs', run_name)
 
     # only execute if no run files already exist
-    filelist = get_filelist(dirct_jobs)
+    filelist = get_filelist(os.path.expanduser(dirct_jobs))
     if len(filelist) == 0:
         years = dict_setup['specs']['years']  # fetch from init_runame.yml
         cvars = dict_setup['specs']['cvars']  # fetch from init_runame.yml
