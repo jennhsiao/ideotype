@@ -21,8 +21,6 @@ import atexit  # noqa
 
 import numpy as np
 import pandas as pd
-import line_profiler  # noqa
-import sqlalchemy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -158,7 +156,6 @@ def _time_estimate(time_list, count_list, nfiles, fname):
     """
     time_perloop = (time_list[-1] - time_list[0])/count_list[-1]
     count = count_list[-1]
-#    estimated_time = (nfiles - count)/time_perloop
     estimated_time = (nfiles - count) * time_perloop
     unit = 's'
     if estimated_time > 60:
@@ -507,42 +504,8 @@ def insert_loginit(fpath_log, fpath_db, session=None):
 
 
 def insert_logmaizsim():
-    """
-    """
+    """Insert maizsim logs."""
     pass
-
-
-
-# TODO: split into two funcions
-# 1. things updated per run
-# 2. one off things to import
-def insert_all():
-    """
-    Combines individual insert_table functions create DB.
-
-    Single-time execution.
-
-    """
-    pass
-    # TODO: call function input parameters from yaml file
-    # most of the function parameters need file paths or directories
-    # to get to the data needed to build the database
-
-    # WeaData
-
-    # Sims
-
-    # Params
-
-    # SiteInfo
-
-    # LogInit
-
-    # LogMAIZSIM
-
-    # NASSYield
-
-    # SoilClass
 
 
 def insert_update():
