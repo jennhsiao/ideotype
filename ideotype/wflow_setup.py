@@ -603,7 +603,16 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
     filelist = get_filelist(os.path.expanduser(dirct_runs))
     if len(filelist) == 0:
         # read in dict_setup to fetch site-years info
-        data = genfromtxt(os.path.expanduser(dict_setup['siteyears']),
+
+        if os.path.expanduser('~/') == '/home/disk/eos8/ach315/':
+            read_siteyears = os.path.expanduser(dict_setup['siteyears'])
+        else:
+            # TODO: this is still a very patch-work approach
+            # TODO: to address issues interfacing with CI
+            read_siteyears = os.path.join(DATA_PATH, 'test_data',
+                                          'sites', 'siteyears_filtered.csv')
+
+        data = genfromtxt(read_siteyears,
                           delimiter=',',
                           skip_header=1,
                           usecols=(0, 1),
