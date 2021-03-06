@@ -4,14 +4,16 @@ import os
 import pytest
 import yaml
 from shutil import copyfile
-
-from ideotype.utils import get_filelist
 from ideotype.data import DATA_PATH
 from ideotype.wflow_setup import (make_dircts, make_runs,
                                   make_jobs, make_subjobs)
 
 # setup pointer to some default init files
-dirct_default_init = '/home/disk/eos8/ach315/upscale/inits/'
+if os.path.expanduser('~/') == '/home/disk/eos8/ach315/':
+    dirct_default_init = '/home/disk/eos8/ach315/upscale/inits/'
+else:
+    # TODO: think about how to address this
+    dirct_default_init = os.path.join(DATA_PATH, 'test_data', 'inits')
 
 
 @pytest.fixture(scope='module')
@@ -70,7 +72,7 @@ def make_testyaml(tmp_path_factory):
                    'soil.txt',
                    'solute.txt']
 
-    # copy all standard init files to temp directory
+    # copy all standard soil files to temp directory
     for fname in fname_soils:
         copyfile(
             os.path.join(dirct_default_soil, fname),
@@ -111,7 +113,6 @@ def test_make_dircts(make_testyaml):
                 cont_cvars=False)  # make test directories
 
     # code to test directories are correct
-    #get_filelist()
 
 
 def test_make_runs(make_testyaml):
