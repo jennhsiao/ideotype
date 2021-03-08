@@ -1,5 +1,4 @@
 ![tests](https://github.com/jennhsiao/ideotype/workflows/Tests/badge.svg)
-
 [![codecov](https://codecov.io/gh/jennhsiao/ideotype/branch/main/graph/badge.svg?token=O47AEZGM6U)](https://codecov.io/gh/jennhsiao/ideotype)
 
 # ideotype
