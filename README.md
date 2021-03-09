@@ -10,15 +10,13 @@ We use a process-based crop simulation model (MAIZSIM) to explore how different 
 
 ## Approach
 ### Identify key crop trait and management
-
 *Parameter selection:*
 We selected several key model parameters that describe physiological, morphology, and phenological traits within a maize plant, as well as management practices such as planting dates and planting density. We set biologically reasonable ranges for the parameters and sampled within the boundaries following the Latin hypercube sampling method to create ensemble simulations of 1000 different parameter combinations.
 
 *Sensitivity analysis:*
 We use a sensitivity analysis framework to identify critical parameters in the MAIZSIM model through two complementary methods - by calculating the partial correlation coefficient (PCC), and by performing the Fourier amplitude sensitivity test (FAST). 
 
-### Identify trait-yield combinations with high yield and low volatility
-
+### Identify trait-management combinations with high yield and low volatility
 By calculating mean yield over years normalized by yield variance over years due to natural climate variability, we identify key trait-management combinations that lead to high yield and low yield volatility for different maize-growing resgions within the US.
 
 ### Ideotype under current vs. future climate
