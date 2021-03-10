@@ -23,6 +23,7 @@ By calculating mean yield over years normalized by yield variance over years due
 We ran the MAIZSIM model with past climate as well as idealized projections of 2050 future climate to identify how ideotypes may shift with a changing climate. 
 
 ## Simulation sites
+![](/docs/sites_obsyield.png)
 <p align="left">
-  <img src="https://github.com/jennhsiao/ideotype/docs/sites_obsyield.png" width ="400">
+  <img src="docs/sites_obsyield.png" width ="400">
 </p>
