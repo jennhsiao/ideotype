@@ -195,19 +195,32 @@ def df_agg(df, groups, how):
     """
     list_groupindex = []
     for group in groups:
-        list_groupindex.append(list(set(df[group])))
+        # find set in index, turn to list
+        # since order gets messed up when turned into list
+        # so re-order and turn back to list again
+        list_groupindex.append(list(np.sort(list(set(df[group])))))
 
     lens = []
-    for index in range(len(groups)):
-        lens.append(len(list_groupindex[index]))
+    for item in range(len(groups)):
+        lens.append(len(list_groupindex[item]))
 
+    # create empty matrix to store final aggregated data
     mx_data = np.empty(shape=lens)
     mx_data[:] = np.nan
 
     if how == 'mean':
         df_grouped = df.groupby(groups).mean().dm_ear
-        for count, index in enumerate(list_groupindex[0]):
-            mx_data[count] = df_grouped.loc[(index,)]
+        for count, item in enumerate(list_groupindex[0]):
+            # create empty array to store data for each row in matrix
+            a_rows = np.empty(lens[1])
+            a_rows[:] = np.nan
+
+            list1 = list_groupindex[1]
+            list2 = list(df_grouped.loc[(item,)].index)  # TODO: tricky to fix!
+            a_rows_index = [list1.index(item) for item in list2]  # TODO: test this
+
+            a_rows[a_rows_index] = df_grouped.loc[(item,)].values
+            mx_data[count] = a_rows
 
     if how == 'variance':
         df_grouped = df.groupby(groups).var().dm_ear
@@ -221,9 +234,10 @@ def df_agg(df, groups, how):
 
     return mx_data
 
+
+    def df_import(yamlfile):
     # TODO: make yaml file that points to all these .csv files
     # TODO: and update path accordingly
-    def df_import(yamlfile):
         """
         Read and process relevant data into dataframe.
 
