@@ -143,8 +143,8 @@ def utc_to_local(times, zone):
     local_datetime = list()
 
     for time in times:
-        utctime = utc.localize(time) # adding UTC timezone to datetime
-        localtime = utctime.astimezone(pytz.timezone(zone)) 
+        utctime = utc.localize(time)  # adding UTC timezone to datetime
+        localtime = utctime.astimezone(pytz.timezone(zone))
         datetime = pd.to_datetime(localtime)
         local_datetime.append(datetime)
 
@@ -159,6 +159,7 @@ def calc_gdd(temps):
     - calculated values divided by 24 to correspond to daily values
     - function returns count of point in which gdd exceeds 100
       which can then be used to identify date in which GDD=100 is reached
+    - citation: the solar corridor crop system
 
     """
     gdd = 0
@@ -171,3 +172,47 @@ def calc_gdd(temps):
             else:
                 gdd += (temp-8)/24
     return(count)
+
+
+def df_agg(df, groups, how):
+    """
+    Aggregate simulation yield output.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+    groups : list of pd columns to group by on
+        - ['cvar', 'site']
+    how : {'mean', 'variance', 'std'}, default 'mean'
+        Type of aggregation method to be performed.
+        - std: standard deviation
+
+    Returns:
+    --------
+    np.matrix
+        matrix of aggregated data.
+
+    """
+    lens = []
+    for group in groups:
+        lens.append(len(set(df[group])))
+
+    data_matrix = np.empty(shape=lens)
+    data_matrix[:] = np.nan
+
+    if how == 'mean':
+        df_grouped = df.groupby(groups).mean().dm_ear
+        for index in np.arange(lens[0]):
+            data_matrix[index] = df_grouped.loc[(index,)]
+
+    if how == 'variance':
+        df_grouped = df.groupby(groups).var().dm_ear
+        for index in np.arange(lens[0]):
+            data_matrix[index] = df_grouped.loc[(index,)]
+
+    if how == 'std':
+        df_grouped = df.groupby(groups).agg(np.std).dm_ear
+        for index in np.arange(lens[0]):
+            data_matrix[index] = df_grouped.loc[(index,)]
+
+    return data_matrix
