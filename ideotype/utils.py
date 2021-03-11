@@ -220,3 +220,56 @@ def df_agg(df, groups, how):
             mx_data[count] = df_grouped.loc[(index,)]
 
     return mx_data
+
+    # TODO: make yaml file that points to all these .csv files
+    # TODO: and update path accordingly
+    def df_import(yamlfile):
+        """
+        Read and process relevant data into dataframe.
+
+        Parameters
+        ----------
+        yaml : str
+            path to yaml file that points to relevant data files
+
+        Returns
+        -------
+        - df_sims
+        - df_sites
+        - df_wea
+        - df_params
+        - df_all
+        - df_matured
+
+        """
+    # 1. maizsim outputs
+    df_sims = pd.read_csv('/home/disk/eos8/ach315/upscale/data/sims_6105.csv',
+                          dtype={'site': 'str'})
+
+    # 2. site & site-years
+    df_sites_all = pd.read_csv('/home/disk/eos8/ach315/upscale/weadata/site_summary.csv',
+                               dtype={'site': str})
+    siteyears = pd.read_csv('/home/disk/eos8/ach315/upscale/weadata/siteyears_filtered.csv',
+                            dtype={'site': str})
+    df_sites = df_sites_all[df_sites_all.site.isin(siteyears.site)]
+    df_sites.reset_index(inplace=True, drop=True)
+
+    # 3. weather
+    df_wea = pd.read_csv('/home/disk/eos8/ach315/upscale/weadata/wea_summary.csv',
+                         dtype={'site': 'str'}, index_col=0)
+    df_wea.reset_index(inplace=True, drop=True)
+
+    # 4. parameter
+    df_params = pd.read_csv('/home/disk/eos8/ach315/upscale/params/param_opt.csv')
+    df_params = df_params.drop(['rmax_ltar'], axis=1)
+    df_params['cvar'] = df_params.index
+
+    # 5. merge all
+    df_sims_params = pd.merge(df_sims, df_params, on='cvar')
+    df_sims_params_sites = pd.merge(df_sims_params, df_sites, on='site')
+    df_all = pd.merge(df_sims_params_sites, df_wea, on=['site','year'])
+
+    # 6. data with simulations that reached maturity only
+    df_matured = df_all[df_all.note == '"Matured"']
+
+    return(df_sims, df_sites, df_wea, df_params, df_all, df_matured)
