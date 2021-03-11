@@ -193,26 +193,30 @@ def df_agg(df, groups, how):
         matrix of aggregated data.
 
     """
-    lens = []
+    list_groupindex = []
     for group in groups:
-        lens.append(len(set(df[group])))
+        list_groupindex.append(list(set(df[group])))
 
-    data_matrix = np.empty(shape=lens)
-    data_matrix[:] = np.nan
+    lens = []
+    for index in range(len(groups)):
+        lens.append(len(list_groupindex[index]))
+
+    mx_data = np.empty(shape=lens)
+    mx_data[:] = np.nan
 
     if how == 'mean':
         df_grouped = df.groupby(groups).mean().dm_ear
-        for index in np.arange(lens[0]):
-            data_matrix[index] = df_grouped.loc[(index,)]
+        for count, index in enumerate(list_groupindex[0]):
+            mx_data[count] = df_grouped.loc[(index,)]
 
     if how == 'variance':
         df_grouped = df.groupby(groups).var().dm_ear
-        for index in np.arange(lens[0]):
-            data_matrix[index] = df_grouped.loc[(index,)]
+        for count, index in enumerate(list_groupindex[0]):
+            mx_data[count] = df_grouped.loc[(index,)]
 
     if how == 'std':
         df_grouped = df.groupby(groups).agg(np.std).dm_ear
-        for index in np.arange(lens[0]):
-            data_matrix[index] = df_grouped.loc[(index,)]
+        for count, index in enumerate(list_groupindex[0]):
+            mx_data[count] = df_grouped.loc[(index,)]
 
-    return data_matrix
+    return mx_data
