@@ -6,25 +6,26 @@ import pandas as pd
 import numpy as np
 
 
-def read_sims(files):
+def read_sims(dirct_sims):
     """
-    For the given file path of maizsim model output .txt files.
+    Read and condense all maizsim raw output.
 
-    - 1. slightly resets column names for model output
-    - 2. fetches year/site/cvar info from file name
-    - 3. reads in last line of model output
-    - 4. documents files with abnormal line output length and does not read them
-    - 5. compiles year/site/cvar info & last line of model output into pd.DataFrame
-    - 6. issues compiled into pd.DataFrame as well
-    - 7. returns: df_sims & df_issues
+    1. Reset column names for model output
+    2. Fetch year/site/cvar info from file name
+    3. Read in last line of model output
+    4. Document files with abnormal line output length and does not read them
+    5. Compile year/site/cvar info & last line of model output
+    6. Compile issues
 
     Parameters
     ----------
-
-
+    files : str
+        Root directory of all simulation outputs.
 
     Returns
     -------
+    df_sims : 
+    df_issues : 
 
     """
     cols = ['year', 'cvar', 'site', 'date', 'jday', 'time',
@@ -46,7 +47,7 @@ def read_sims(files):
     return cols  # TODO: continue working on this
 
 
-def import_data(yamlfile):
+def read_data(yamlfile):
     """
     Read and process relevant data into dataframe.
 
@@ -146,26 +147,23 @@ def agg_sims(df, groups, how):
 
     if how == 'mean':
         df_grouped = df.groupby(groups).mean().dm_ear
-        for count, item in enumerate(list_groupindex[0]):
-            # create empty array to store data for each row in matrix
-            a_rows = np.empty(lens[1])
-            a_rows[:] = np.nan
-
-            list1 = list_groupindex[1]
-            list2 = list(df_grouped.loc[(item,)].index)  # TODO: tricky to fix!
-            a_rows_index = [list1.index(item) for item in list2]  # TODO: test this
-
-            a_rows[a_rows_index] = df_grouped.loc[(item,)].values
-            mx_data[count] = a_rows
 
     if how == 'variance':
         df_grouped = df.groupby(groups).var().dm_ear
-        for count, index in enumerate(list_groupindex[0]):
-            mx_data[count] = df_grouped.loc[(index,)]
 
     if how == 'std':
         df_grouped = df.groupby(groups).agg(np.std).dm_ear
-        for count, index in enumerate(list_groupindex[0]):
-            mx_data[count] = df_grouped.loc[(index,)]
+
+    for count, item in enumerate(list_groupindex[0]):
+        # create empty array to store data for each row in matrix
+        a_rows = np.empty(lens[1])
+        a_rows[:] = np.nan
+
+        list1 = list_groupindex[1]
+        list2 = list(df_grouped.loc[(item,)].index)
+        a_rows_index = [list1.index(item) for item in list2]
+
+        a_rows[a_rows_index] = df_grouped.loc[(item,)].values
+        mx_data[count] = a_rows
 
     return mx_data
