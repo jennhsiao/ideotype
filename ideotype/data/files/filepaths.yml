@@ -1,0 +1,6 @@
+run_name: opt
+sims: sims_6105.csv
+sites: site_summary.csv
+siteyears: siteyears_filtered.csv
+wea: wea_summary.csv
+params: params_opt.csv
