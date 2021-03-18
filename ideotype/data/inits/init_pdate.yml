@@ -1,13 +1,14 @@
 setup:
   run_name: pdate
   path_project: /home/disk/eos8/ach315/upscale/
+  base_path: /home/disk/eos8/ach315/upscale/
   path_wea: /home/disk/eos8/ach315/upscale/weadata/data/control/
   path_init_standards: /home/disk/eos8/ach315/upscale/inits/standards/
   path_init_soils: /home/disk/eos8/ach315/upscale/inits/soils/soils_1/
   path_params: /home/disk/eos8/ach315/upscale/params/param_opt.csv
   path_maizsim: /home/disk/eos8/ach315/MAIZSIM
-  siteyears: /home/disk/eos8/ach315/upscale/weadata/siteyears_filtered.csv
-  site_info: /home/disk/eos8/ach315/upscale/weadata/stations_info_9110.csv
+  siteyears: ['weadata', 'siteyears_filtered.csv']
+  site_info: ['weadata', 'stations_info_9110.csv']
   site_summary: /home/disk/eos8/ach315/upscale/weadata/site_summary.csv
 specs:
   years:
