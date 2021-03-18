@@ -5,8 +5,9 @@ import pytest
 import yaml
 from shutil import copyfile
 from ideotype.data import DATA_PATH
-from ideotype.wflow_setup import (make_dircts, make_runs,
-                                  make_jobs, make_subjobs)
+from ideotype.wflow_setup import (make_dircts,
+                                  make_inits, make_cultivars,
+                                  make_runs, make_jobs, make_subjobs)
 
 # setup pointer to some default init files
 if os.path.expanduser('~/') == '/home/disk/eos8/ach315/':
@@ -115,6 +116,23 @@ def test_make_dircts(make_testyaml):
     # code to test directories are correct
 
 
+def test_make_inits(make_testyaml):
+    """Make test init.txt within temp directories."""
+    run_name = 'test'
+    yamlfile = make_testyaml
+    make_inits(run_name,
+               yamlfile=yamlfile)
+
+
+def test_make_cultivars(make_testyaml):
+    """Make test cvar.txt within temp directories."""
+    run_name = 'test'
+    yamlfile = make_testyaml
+    make_cultivars(run_name,
+                   yamlfile=yamlfile,
+                   cont_cvars=False)
+
+
 def test_make_runs(make_testyaml):
     """Make test run.txt within temporary directories."""
     run_name = 'test'
@@ -127,6 +145,7 @@ def test_make_runs(make_testyaml):
 
 
 def test_make_jobs(make_testyaml):
+    """Make test job.txt within temp directories."""
     run_name = 'test'
     yamlfile = make_testyaml
     make_jobs(run_name,
@@ -138,6 +157,7 @@ def test_make_jobs(make_testyaml):
 
 
 def test_make_subjobs(make_testyaml):
+    """Make test subjobs.sh within temp directory."""
     run_name = 'test'
     yamlfile = make_testyaml
     make_subjobs(run_name,
