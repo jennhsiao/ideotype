@@ -24,8 +24,9 @@ def read_sims(dirct_sims):
 
     Returns
     -------
-    df_sims : 
-    df_issues : 
+    DataFrame
+        df_sims : df with all simulated yield.
+        df_issues : df recording failed site-year recordings.
 
     """
     cols = ['year', 'cvar', 'site', 'date', 'jday', 'time',
