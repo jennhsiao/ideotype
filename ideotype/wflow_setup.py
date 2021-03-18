@@ -14,8 +14,8 @@ import numpy as np
 import pandas as pd
 import yaml
 from numpy import genfromtxt
-from ideotype.utils import get_filelist
 
+from ideotype.utils import get_filelist
 from ideotype.data import DATA_PATH
 
 
@@ -143,15 +143,15 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
                                        'customs',
                                        run_name)
 
-    if os.path.expanduser('~/') == '/home/disk/eos8/ach315/':
-        read_siteyears = os.path.expanduser(dict_setup['siteyears'])
+    if dict_setup['base_path'] == 'testing':
+        basepath = DATA_PATH
+        fpath_siteyears = os.path.join(basepath,
+                                       *dict_setup['siteyears'])
     else:
-        # TODO: this is still a very patch-work approach
-        # TODO: to address issues interfacing with CI
-        read_siteyears = os.path.join(DATA_PATH, 'test_data',
-                                      'sites', 'siteyears_filtered.csv')
+        fpath_siteyears = os.path.join(dict_setup['path_project'],
+                                       *dict_setup['siteyears'])
 
-    data = genfromtxt(read_siteyears,
+    data = genfromtxt(fpath_siteyears,
                       delimiter=',',
                       skip_header=1,
                       usecols=(0, 1),
@@ -260,11 +260,25 @@ def make_inits(run_name, yamlfile=None):
     filelist = get_filelist(os.path.expanduser(dirct_init))
     if len(filelist) == 0:
         # read in site_info & siteyears info
-        df_siteinfo, df_siteyears = read_siteinfo(dict_setup['site_info'],
-                                                  dict_setup['siteyears'])
+
+        if dict_setup['base_path'] == 'testing':
+            basepath = DATA_PATH
+            fpath_siteinfo = os.path.join(basepath,
+                                          *dict_setup['site_info'])
+            fpath_siteyears = os.path.join(basepath,
+                                           *dict_setup['siteyears'])
+
+        else:
+            fpath_siteinfo = os.path.join(dict_setup['path_project'],
+                                          *dict_setup['site_info'])
+            fpath_siteyears = os.path.join(dict_setup['path_project'],
+                                           *dict_setup['siteyears'])
+
+        df_siteinfo, df_siteyears = read_siteinfo(fpath_siteinfo,
+                                                  fpath_siteyears)
 
         # fetch site-years info
-        data = genfromtxt(os.path.expanduser(dict_setup['siteyears']),
+        data = genfromtxt(fpath_siteyears,
                           delimiter=',',
                           skip_header=1,
                           usecols=(0, 1),
@@ -449,7 +463,7 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
         Default True.
         How yaml file stores simulation cvars info.
         True: stored single number representing the total number of cultivas.
-        Fals: stored specific cultivars (testing purposes).
+        False: stored specific cultivars (testing purposes).
 
     Returns
     -------
@@ -577,6 +591,10 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
                          f'for run name: "{run_name}"!')
 
 
+# TODO: include a basepath argument in function
+# TODO: + update how paths are listed in init yaml files
+# TODO: work towards relative paths to give more flexibility
+# TODO: especially to work with tests
 def make_runs(run_name, yamlfile=None, cont_cvars=True):
     """
     Create run.txt files in corresponding directories for experiment.
@@ -603,16 +621,15 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
     filelist = get_filelist(os.path.expanduser(dirct_runs))
     if len(filelist) == 0:
         # read in dict_setup to fetch site-years info
-
-        if os.path.expanduser('~/') == '/home/disk/eos8/ach315/':
-            read_siteyears = os.path.expanduser(dict_setup['siteyears'])
+        if dict_setup['base_path'] == 'testing':
+            basepath = DATA_PATH
+            fpath_siteyears = os.path.join(basepath,
+                                           *dict_setup['siteyears'])
         else:
-            # TODO: this is still a very patch-work approach
-            # TODO: to address issues interfacing with CI
-            read_siteyears = os.path.join(DATA_PATH, 'test_data',
-                                          'sites', 'siteyears_filtered.csv')
+            fpath_siteyears = os.path.join(dict_setup['path_project'],
+                                           *dict_setup['siteyears'])
 
-        data = genfromtxt(read_siteyears,
+        data = genfromtxt(fpath_siteyears,
                           delimiter=',',
                           skip_header=1,
                           usecols=(0, 1),
