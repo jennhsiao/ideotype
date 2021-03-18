@@ -473,7 +473,14 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
     dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
     dirct_project = dict_setup['path_project']
     dirct_cvars = os.path.join(dirct_project, 'inits', 'cultivars', run_name)
-    df_params = pd.read_csv(dict_setup['path_params'])
+
+    if dict_setup['base_path'] == 'testing':
+        fpath_params = os.path.join(DATA_PATH, *dict_setup['path_params'])
+    else:
+        fpath_params = os.path.join(dict_setup['path_project'],
+                                    *dict_setup['path_params'])
+
+    df_params = pd.read_csv(fpath_params)
 
     filelist = get_filelist(os.path.expanduser(dirct_cvars))
     if len(filelist) == 0:

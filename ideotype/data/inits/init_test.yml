@@ -5,7 +5,7 @@ setup:
   path_wea: ~/ideotype/ideotype/data/test_data/wea/
   path_init_standards: tmp_path/inits/standards/test/
   path_init_soils: tmp_path/inits/soils/
-  path_params: ~/ideotype/ideotype/data/test_data/params/param_test.csv
+  path_params: ['test_data', 'params', 'param_test.csv']
   path_maizsim: ~/MAIZSIM
   siteyears: ['test_data', 'sites', 'siteyears_filtered.csv']
   site_info: ['test_data', 'sites', 'stations_info_9110.csv']

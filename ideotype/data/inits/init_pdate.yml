@@ -5,7 +5,7 @@ setup:
   path_wea: /home/disk/eos8/ach315/upscale/weadata/data/control/
   path_init_standards: /home/disk/eos8/ach315/upscale/inits/standards/
   path_init_soils: /home/disk/eos8/ach315/upscale/inits/soils/soils_1/
-  path_params: /home/disk/eos8/ach315/upscale/params/param_opt.csv
+  path_params: ['params', 'param_opt.csv']
   path_maizsim: /home/disk/eos8/ach315/MAIZSIM
   siteyears: ['weadata', 'siteyears_filtered.csv']
   site_info: ['weadata', 'stations_info_9110.csv']
