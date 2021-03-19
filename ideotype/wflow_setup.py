@@ -403,13 +403,14 @@ def make_inits(run_name, yamlfile=None):
                     f'{dict_setup["climate"]["bwind"]}\t'
                     f'{dict_setup["climate"]["bir"]}\n')
             str9 = 'average values for the site\n'
-            str10 = (f'{dict_setup["climate"]["winda"]}\t'
+            str10 = 'WINDA\tIRAV\tConc\tCO2\n'
+            str11 = (f'{dict_setup["climate"]["winda"]}\t'
                      f'{dict_setup["climate"]["irav"]}\t'
                      f'{dict_setup["climate"]["conc"]}\t'
                      f'{dict_setup["climate"]["co2"]}\n')
 
             strings = [str1, str2, str3, str4, str5,
-                       str6, str7, str8, str9, str10]
+                       str6, str7, str8, str9, str10, str11]
             climate_txt.writelines(strings)
             climate_txt.close()
 
