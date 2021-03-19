@@ -316,7 +316,7 @@ def make_inits(run_name, yamlfile=None):
             # set up init.txt text strings
             str1 = '*** initialization data ***\n'
             str2 = ('poprow\trowsp\tplant_density\trowang\t'
-                    'x_seed\ty_seed\ttab\tCEC\teomult\n')
+                    'x_seed\ty_seed\ttab\tCEC\teomult\tco2\n')
             str3 = (f'{dict_setup["init"]["poprow"]:.1f}\t'
                     f'{dict_setup["init"]["rowsp"]:.1f}\t'
                     f'{dict_setup["init"]["plant_density"]:.1f}\t'
@@ -324,7 +324,8 @@ def make_inits(run_name, yamlfile=None):
                     f'{dict_setup["init"]["x_seed"]:.1f}\t'
                     f'{dict_setup["init"]["y_seed"]:.1f}\t'
                     f'{dict_setup["init"]["cec"]:.2f}\t'
-                    f'{dict_setup["init"]["eomult"]:.2f}\n')
+                    f'{dict_setup["init"]["eomult"]:.2f}\t'
+                    f'{dict_setup["init"]["co2"]:.0f}\n')
             str4 = 'latitude\tlongitude\taltitude\n'
             str5 = (f'{lat:.2f}\t'
                     f'{lon:.2f}\t'
