@@ -305,13 +305,17 @@ def make_inits(run_name, yamlfile=None):
                                      (df_siteyears.year == year)].iloc[0, 3]
                 pdate_month = pdate.split('-')[1]
                 pdate_day = pdate.split('-')[2]
-                sowing = f'"{pdate_month}/{pdate_day}/{year}"'
+                sowing = f'{pdate_month}/{pdate_day}/{year}'
+                sowing = "'" + sowing + "'"  # intput requires single quotes
             else:
                 sowing = f'"{dict_setup["init"]["plant_date"]}{year}"'
+                sowing = "'" + sowing + "'"
 
             # customized parameters: timing
-            start = f'"{dict_setup["init"]["start_date"]}{year}"'
-            end = f'"{dict_setup["init"]["end_date"]}{year}"'
+            start = f'{dict_setup["init"]["start_date"]}{year}'
+            start = "'" + start + "'"
+            end = f'{dict_setup["init"]["end_date"]}{year}'
+            end = "'" + end + "'"
 
             # set up init.txt text strings
             str1 = '*** initialization data ***\n'
@@ -405,9 +409,9 @@ def make_inits(run_name, yamlfile=None):
             str9 = 'average values for the site\n'
             str10 = 'WINDA\tIRAV\tConc\tCO2\n'
             str11 = (f'{dict_setup["climate"]["winda"]}\t'
-                     f'{dict_setup["climate"]["irav"]}\t'
-                     f'{dict_setup["climate"]["conc"]}\t'
-                     f'{dict_setup["climate"]["co2"]}\n')
+#                     f'{dict_setup["climate"]["irav"]}\t'
+                     f'{dict_setup["climate"]["conc"]}\n')
+#                     f'{dict_setup["climate"]["co2"]}\n')
 
             strings = [str1, str2, str3, str4, str5,
                        str6, str7, str8, str9, str10, str11]
