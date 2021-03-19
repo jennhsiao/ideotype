@@ -308,7 +308,7 @@ def make_inits(run_name, yamlfile=None):
                 sowing = f'{pdate_month}/{pdate_day}/{year}'
                 sowing = "'" + sowing + "'"  # intput requires single quotes
             else:
-                sowing = f'"{dict_setup["init"]["plant_date"]}{year}"'
+                sowing = f'{dict_setup["init"]["plant_date"]}{year}'
                 sowing = "'" + sowing + "'"
 
             # customized parameters: timing
@@ -422,11 +422,11 @@ def make_inits(run_name, yamlfile=None):
             management_txt = open(os.path.join(dirct, 'management.txt'), 'w')
 
             # addressing N application date according to dynamic pdate
-            sowing_date = pd.to_datetime(sowing, format='"%m/%d/%Y"')
+            sowing_date = pd.to_datetime(sowing, format="'%m/%d/%Y'")
             appl_date1 = sowing_date + pd.DateOffset(days=14)
             appl_date2 = sowing_date + pd.DateOffset(days=14+30)
-            appl_time1 = appl_date1.strftime('"%m/%d/%Y"')
-            appl_time2 = appl_date2.strftime('"%m/%d/%Y"')
+            appl_time1 = appl_date1.strftime("'%m/%d/%Y'")
+            appl_time2 = appl_date2.strftime("'%m/%d/%Y'")
 
             # put together txt strings
             str1 = '*** script for chemical application module ***\n'
