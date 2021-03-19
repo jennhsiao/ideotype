@@ -354,12 +354,12 @@ def make_inits(run_name, yamlfile=None):
             # set up text strings
             str1 = '*** synchronizer information ***\n'
             str2 = 'initial time\tdt\tdtmin\tdmul1\tdmul2\ttfin\n'
-            str3 = (f'{dict_setup["init"]["start_date"]}\t'
+            str3 = (f'"{dict_setup["init"]["start_date"] + str(year)}"\t'
                     f'{dict_setup["time"]["dt"]}\t'
                     f'{dict_setup["time"]["dt_min"]}\t'
                     f'{dict_setup["time"]["dmul1"]}\t'
                     f'{dict_setup["time"]["dmul2"]}\t'
-                    f'{dict_setup["init"]["end_date"]}\n')
+                    f'"{dict_setup["init"]["end_date"] + str(year)}"\n')
             str4 = 'output variables, 1 if true\tDaily\tHourly\n'
             if dict_setup['time']['output_timestep'] == 'hourly':
                 output_timestep = '0\t1\n'
