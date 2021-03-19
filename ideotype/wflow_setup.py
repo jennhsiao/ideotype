@@ -598,10 +598,6 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
                          f'for run name: "{run_name}"!')
 
 
-# TODO: include a basepath argument in function
-# TODO: + update how paths are listed in init yaml files
-# TODO: work towards relative paths to give more flexibility
-# TODO: especially to work with tests
 def make_runs(run_name, yamlfile=None, cont_cvars=True):
     """
     Create run.txt files in corresponding directories for experiment.
@@ -734,7 +730,7 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
                                                   'inits',
                                                   'cultivars',
                                                   run_name,
-                                                  cultivar) + '\n',
+                                                  f'{cultivar}.txt') + '\n',
                             **dict_standard_loop,
                             **dict_soils_loop,
                             **dict_custom_loop,
