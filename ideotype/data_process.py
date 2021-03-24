@@ -5,6 +5,8 @@ import yaml
 import pandas as pd
 import numpy as np
 
+from ideotype.utils import get_filelist
+
 
 def read_sims(dirct_sims):
     """
@@ -45,7 +47,61 @@ def read_sims(dirct_sims):
             'roil_rt', 'mx_rootdept',
             'available_water', 'soluble_c', 'note']
 
-    return cols  # TODO: continue working on this
+    data_all = []
+    issues = []
+
+    sim_files = get_filelist(dirct_sims)
+
+    for sim_fname in sim_files:
+        # extrating basic file info
+        year = int(sim_fname.split('/')[-3])
+        site = sim_fname.split('/')[-1].split('_')[1]
+        cvar = int(sim_fname.split('/')[-1].split('_')[-1].split('.')[0])
+
+        # reading in file and setting up structure
+        with open(sim_fname, 'r') as f:
+            try:
+                f.seek(0, os.SEEK_END)
+                # moving the pointer to the very end of the file
+                # * f.seek(offset, whence)
+                # * Position computed from adding offset to a reference point,
+                # * the reference point is selected by the whence argument.
+                # * os.SEEK_SET (=0)
+                # * os.SEEK_CUR (=1)
+                # * os.SEEK_END (=2)
+                f.seek(f.tell() - 3000, os.SEEK_SET)
+                # finding the current position -
+                # (should be at the very end of the file)
+                # and counting back a few positions
+                # and reading forward from there
+                # * f.tell() returns an integer giving the file object’s
+                # * current position in the file represented as number of bytes
+                # * from the beginning of the file when in binary mode
+                # * and an opaque number when in text mode.
+                for line in f:
+                    f_content = f.readlines()
+
+                if len(f_content[-1]) == 523:  # normal output length
+                    sim_output = list(f_content[-1].split(','))
+                    data = [i.strip() for i in sim_output]
+                    data.insert(0, year)
+                    data.insert(1, cvar)
+                    data.insert(2, site)
+                    data_all.append(data)
+
+                else:
+                    issues.append(
+                        sim_fname.split('/')[-1] + str(', len_error'))
+
+            except ValueError:
+                issues.append(sim_fname.split('/')[-1] + str(', value_error'))
+
+    df_sims = pd.DataFrame(data_all, columns=cols)
+    df_sims.dm_total = df_sims.dm_total.astype(float)
+    df_sims.dm_ear = df_sims.dm_ear.astype(float)
+    df_issues = pd.Series(issues, dtype='str')
+
+    return df_sims, df_issues
 
 
 def read_data(yamlfile):
