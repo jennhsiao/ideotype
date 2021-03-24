@@ -1,24 +1,50 @@
 setup:
-  run_name: pdate  # ** run name should match name of yaml file
-  path_inits: /home/disk/eos8/ach315/upscale/inits/
-  path_params: /home/disk/eos8/ach315/upscale/params/
-  path_jobs: /home/disk/eos8/ach315/upscale/jobs/
-  path_sims: /home/disk/eos8/ach315/upscale/sims/
+  run_name: opt
+  path_project: /home/disk/eos8/ach315/upscale/
+  path_wea: /home/disk/eos8/ach315/upscale/weadata/data/control/
+  path_init_standards: /home/disk/eos8/ach315/upscale/standards/ # TODO: finish these paths
+  path_init_soils: /home/disk/eos8/ach315/upscale/soils/ # TODO: finish these paths
+  path_sims: /home/disk/eos8/ach315/upscale/sims/opt/
+  path_params: /home/disk/eos8/ach315/upscale/params/param_opt.csv
   path_maizsim: /home/disk/eos8/ach315/MAIZSIM
   siteyears: /home/disk/eos8/ach315/upscale/weadata/siteyears_filtered.csv
   site_info: /home/disk/eos8/ach315/upscale/weadata/stations_info_9110.csv
-  params: 
-    juv_leaves: [15,25]
-    stayGreen: [3,8]
-    rmax_ltir: [0.5,1.5]
-    phyllo: [2,4]
-    LM_min: [80, 120]
-    Vcmax: [60,80]
-    Vpmax: [60,120]
-    g1: [1,10]
-    ref_potential: [-4,-1]
-    rmax_ltar: [] # rmax_ltar = rmax_ltir/2
-
+  site_summary: /home/disk/eos8/ach315/upscale/weadata/site_summary.csv
+specs:
+  years:
+  - 1961
+  - 2005
+  cvars:
+  - 100
+params: 
+  juv_leaves:
+  - 15
+  - 25
+  stayGreen:
+  - 3
+  - 8
+  rmax_ltir:
+  - 0.5
+  - 1.5
+  phyllo:
+  - 2
+  - 4
+  LM_min:
+  - 80
+  - 120
+  Vcmax:
+  - 60
+  - 80
+  Vpmax:
+  - 60
+  - 120
+  g1:
+  - 1
+  - 10
+  ref_potential:
+  - -4
+  - -1
+  rmax_ltar: '0.5*rmax_ltir'
 init:
   poprow: 7.5 # plants/meter of row
   rowsp: 75 # row spacing (cm)
@@ -30,13 +56,12 @@ init:
   eomult: 0.5
   co2: -1
   soil: False
-  start_date: 03/01/
+  start_date: 04/01/
   plant_date: 04/01/
   end_date: 12/31/
   timestep: 60
   alt: 0
   irrigate: 0
-
 time:
   dt: 0.0001
   dt_min: 1e-7
@@ -44,7 +69,6 @@ time:
   dmul2: 0.3
   input_timestep: hourly
   output_timestep: hourly
-  
 climate:
   bsolar: 3600
   btemp: 1
@@ -57,7 +81,6 @@ climate:
   irav: 1
   conc: 0
   co2: 400
-
 management:
   appl_num: 2 # number of applications
   appl_mg: 100
