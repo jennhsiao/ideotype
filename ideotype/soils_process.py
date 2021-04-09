@@ -1,4 +1,4 @@
-"""Process SSURGO soil database to create site-specific soil files"""
+"""Process SSURGO soil database to create site-specific soil files."""
 
 import numpy as np
 import pandas as pd
