@@ -6,7 +6,7 @@ from collections import Counter
 from itertools import compress
 
 
-def texture_profile(df_soils, depth):
+def texture_profile(df_soils):
     """
     Assign mean texture profile for soil categories.
 
@@ -26,17 +26,13 @@ def texture_profile(df_soils, depth):
     Parameters
     ----------
     df_soils : pd.DataFrame
-    depth : int
-        Soil depth category.
-        0.0, 50.0, 100.0, 150.0, 200.0
 
     Returns
     -------
     df_texture : pd.DataFrame
 
     """
-    df_soils_depth = df_soils.query(f'depth_category == "{depth}"').dropna()
-    df_texture = df_soils_depth.groupby('texture').mean()
+    df_texture = df_soils.groupby('texture').mean()
     df_texture = df_texture[['sand', 'silt', 'clay',
                              'OM', 'dbthirdbar', 'th33']]
 
