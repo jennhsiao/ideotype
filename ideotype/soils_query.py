@@ -9,6 +9,9 @@ def soilquery(latitude, longitude):
     """
     Query for NRCS SSURGO soil database (code modified from Maura, USDA ARS).
 
+    Info on SSURGO database:
+    https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/geo/?cid=nrcs142p2_053631
+
     - awc_r:
       The amount of water that an increment of soil depth,
       inclusive of fragments, can store that is available to plants.
