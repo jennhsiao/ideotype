@@ -5,21 +5,22 @@
 library('soiltexture')
 library('dplyr')
 
-df_soil <- read.csv('soiltexture_nass.csv')
+df_soil <- read.csv('soils_nass.csv')
 df_soil <- rename(df_soil, SAND = sand)
 df_soil <- rename(df_soil, SILT = silt)
 df_soil <- rename(df_soil, CLAY = clay)
 
-df_soilstocat <- data.frame(
+df_soilstoclassify <- data.frame(
   'CLAY' = c(df_soil['CLAY']),
   'SILT' = c(df_soil['SILT']),
   'SAND' = c(df_soil['SAND'])
 )
 
-df_soiltext <-
+df_soilclass <-
   TT.points.in.classes(
-    tri.data = df_soilstocat,
+    tri.data = df_soilstoclassify,
     class.sys = 'USDA.TT'
   )
 
-# output as textures.csv
+# output as soils_nass_texture.csv
+write.csv(df_soilclass, 'soils_nass_texture.csv')
