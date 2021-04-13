@@ -32,38 +32,42 @@ def texture_profile(df_soils):
     df_texture : pd.DataFrame
 
     """
-    df_texture = df_soils.groupby('texture').mean()
+    df_texture = df_soils.groupby(['texture', 'depth_category']).mean()
     df_texture = df_texture[['sand', 'silt', 'clay',
                              'OM', 'dbthirdbar', 'th33']]
 
     return df_texture
 
 
-def texture_prevalence(df_soils, depth, sort_column='cokey'):
+def texture_prevalence(df_soils, depth1, depth2, sort_column='cokey'):
     """
     Order soil texture based on texture prevalence.
 
     Parameters
     ----------
     df_soils : pd.DataFrame
-    depth : int
-        Soil depth category.
+    depth1 : int
+        First soil depth category to include.
+        0.0, 50.0, 100.0, 150.0, 200.0
+    depth2 : int
+        Second soil depth category to include.
         0.0, 50.0, 100.0, 150.0, 200.0
 
     Returns
     -------
-    df_texture_ordered : pd.DataFrame
+    df_texture_prevalence : pd.DataFrame
 
     """
-    df_soils_depth = df_soils.query(f'depth_category == "{depth}"').dropna()
+    df_soils_depth = df_soils.query(
+        f'(depth_category == {depth1}) | (depth_category == {depth2})')
     df_texture_count = df_soils_depth.groupby('texture').count()
-    df_texture_ordered = pd.DataFrame(df_texture_count.sort_values(
+    df_texture_prevalence = pd.DataFrame(df_texture_count.sort_values(
         by=sort_column, axis=0, ascending=False).index)
 
-    return df_texture_ordered
+    return df_texture_prevalence
 
 
-def assign_texture(df_soils, df_sites, depth, n_nearbysites):
+def assign_texture(df_soils, df_sites, depth1, depth2, n_nearbysites):
     """
     Assign soil texture for each simulation site.
 
@@ -71,8 +75,11 @@ def assign_texture(df_soils, df_sites, depth, n_nearbysites):
     ----------
     df_soils : pd.DataFrame
     df_sites : pd.DataFrame
-    depth : int
-        Soil depth category.
+    depth1 : int
+        First soil depth category to include.
+        0.0, 50.0, 100.0, 150.0, 200.0
+    depth2 : int
+        Second soil depth category to include.
         0.0, 50.0, 100.0, 150.0, 200.0
     n_nearbysites : int
 
@@ -83,10 +90,11 @@ def assign_texture(df_soils, df_sites, depth, n_nearbysites):
 
     """
     sites = df_sites.site
-    df_soils_depth = df_soils.query(f'depth_category == "{depth}"').dropna()
+    df_soils_depth = df_soils.query(
+        f'(depth_category == {depth1}) | (depth_category == {depth2})')
     list_texture = []
 
-    df_texture_ordered = texture_prevalence(df_soils, depth)
+    df_texture_ordered = texture_prevalence(df_soils, depth1, depth2)
 
     for site in sites:
         lat = float(df_sites[df_sites.site == site].lat)
