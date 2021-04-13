@@ -7,7 +7,7 @@ from ideotype import DATA_PATH
 from ideotype.soils_query import soilquery
 
 # Read in filepaths
-file_paths = os.path.join(DATA_PATH, 'files', 'filepaths_fixpd.yml')
+file_paths = os.path.join(DATA_PATH, 'files', 'filepaths_soils.yml')
 with open(file_paths, 'r') as pfile:
     dict_files = yaml.safe_load(pfile)
 
