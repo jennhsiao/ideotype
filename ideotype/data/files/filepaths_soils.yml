@@ -1,0 +1,5 @@
+sites: site_summary.csv
+soils: soils_nass.csv
+soiltexture: soils_nass_texture.csv
+nass_yield: nass_yield.csv
+nass_siteinfo: nass_siteinfo.csv
