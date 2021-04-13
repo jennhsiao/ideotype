@@ -358,12 +358,12 @@ def make_inits(run_name, yamlfile=None):
             # set up text strings
             str1 = '*** synchronizer information ***\n'
             str2 = 'initial time\tdt\tdtmin\tdmul1\tdmul2\ttfin\n'
-            str3 = (f'"{dict_setup["init"]["start_date"] + str(year)}"\t'
+            str3 = (start + '\t' +
                     f'{dict_setup["time"]["dt"]}\t'
                     f'{dict_setup["time"]["dt_min"]}\t'
                     f'{dict_setup["time"]["dmul1"]}\t'
-                    f'{dict_setup["time"]["dmul2"]}\t'
-                    f'"{dict_setup["init"]["end_date"] + str(year)}"\n')
+                    f'{dict_setup["time"]["dmul2"]}\t' +
+                    end + '\n')
             str4 = 'output variables, 1 if true\tDaily\tHourly\n'
             if dict_setup['time']['output_timestep'] == 'hourly':
                 output_timestep = '0\t1\n'
@@ -409,9 +409,7 @@ def make_inits(run_name, yamlfile=None):
             str9 = 'average values for the site\n'
             str10 = 'WINDA\tIRAV\tConc\tCO2\n'
             str11 = (f'{dict_setup["climate"]["winda"]}\t'
-#                     f'{dict_setup["climate"]["irav"]}\t'
                      f'{dict_setup["climate"]["conc"]}\n')
-#                     f'{dict_setup["climate"]["co2"]}\n')
 
             strings = [str1, str2, str3, str4, str5,
                        str6, str7, str8, str9, str10, str11]
