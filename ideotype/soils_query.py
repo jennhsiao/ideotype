@@ -6,9 +6,27 @@ import pandas as pd
 
 def soilquery(latitude, longitude):
     """
-    Query for NRCS SSURGO soil database.
+    Query for NRCS SSURGO soil database (code modified from Maura, USDA ARS).
 
-    ** Code modified from Maura, USDA ARS **
+    - awc_r:
+      The amount of water that an increment of soil depth,
+      inclusive of fragments, can store that is available to plants.
+      AWC is expressed as a volume fraction,
+      and is commonly estimated as the difference between
+      the water contents at 1/10 or 1/3 bar (field capacity)
+      and 15 bars (permanent wilting point) tension
+      and adjusted for salinity, and fragments.
+    - dbthirdbar_r:
+      The oven dry weight of the less than 2 mm soil material
+      per unit volume of soil at a water tension of 1/3 bar.
+    - wthirdbar_r:
+      The volumetric content of soil water retained
+      at a tension of 1/3 bar (33 kPa),
+      expressed as a percentage of the whole soil (need to divide by 100).
+    - wfifteenbar_r:
+      The volumetric content of soil water retained at
+      a tension of 15 bars (1500 kPa),
+      expressed as a percentage of the whole soil.
 
     """
     lat = str(latitude)
