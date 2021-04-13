@@ -6,6 +6,57 @@ from collections import Counter
 from itertools import compress
 
 
+def bin_depth(df_soils):
+    """
+    Bin soil into 5 depth categories.
+
+    Parameters
+    ----------
+    df_soils : pd.DataFrame
+
+    """
+    depths = [[-1, 0],
+              [0, 50],
+              [50, 100],
+              [100, 150],
+              [150, 250]]
+    depth_categories = [0, 50, 100, 150, 200]
+    df_soils['depth_category'] = np.nan
+
+    for depth, depth_category in zip(depths, depth_categories):
+        df_soils.loc[
+            (df_soils.depth > depth[0]) & (df_soils.depth <= depth[1]),
+            'depth_category'] = depth_category
+
+    return df_soils
+
+
+def merge_texture(df_soils, df_textures):
+    """
+    Merge texture info (from R) into main soil file.
+
+    Parameters
+    ----------
+    df_soils : pd.DataFrame
+    df_texture : pd.DataFrame
+
+    """
+    textures = []
+    for i in np.arange(df_textures.shape[0]):
+        texture = df_textures.iloc[i]
+        try:
+            texture = texture[texture == 1].index[0]
+            textures.append(texture)
+        except IndexError:
+            texture = 'ambiguous'
+            textures.append(texture)
+
+    df_soils_copy = df_soils.copy()
+    df_soils_copy['texture'] = textures
+
+    return df_soils_copy
+
+
 def texture_profile(df_soils):
     """
     Assign mean texture profile for soil categories.
