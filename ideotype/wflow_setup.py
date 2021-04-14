@@ -623,6 +623,7 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
     dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
     dirct_project = dict_setup['path_project']
     dirct_runs = os.path.join(dirct_project, 'runs', run_name)
+    df_sites = pd.read_csv(dict_setup['site_summary'])
 
     # only execute if no run files already exist
     filelist = get_filelist(os.path.expanduser(dirct_runs))
@@ -666,7 +667,6 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
         # setup up directories
         dirct_init_wea = dict_setup['path_wea']
         dirct_init_stand = dict_setup['path_init_standards']
-        dirct_init_soils = dict_setup['path_init_soils']
 
         dict_standard = {int(3): 'biology',
                          int(5): 'nitrogen',
@@ -674,39 +674,48 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
                          int(10): 'water',
                          int(11): 'waterbound',
                          int(16): 'massbl'}
-        dict_soils = {int(14): 'grid',
-                      int(15): 'nod',
-                      int(7): 'soil',
-                      int(6): 'solute'}
         dict_custom = {int(2): 'time',
                        int(4): 'climate',
                        int(8): 'management',
                        int(12): 'init'}
+        dict_soils = {int(14): 'grid',
+                      int(15): 'nod',
+                      int(7): 'soil',
+                      int(6): 'solute'}
 
         # itemize dictionary items into paths
         dict_standard_loop = dict_standard.copy()
-        dict_soils_loop = dict_soils.copy()
         for key, value in dict_standard_loop.items():
             dict_standard_loop[key] = os.path.join(
                 dirct_init_stand, f'{value}.txt') + '\n'
-        for key, value in dict_soils_loop.items():
-            dict_soils_loop[key] = os.path.join(
-                dirct_init_soils, f'{value}.txt') + '\n'
 
         # loop through siteyears
         for siteyear in siteyears:
-            # setup siteyear-specific directory
+            # setup siteyear-specific custom directory
             dirct_init_custom = os.path.join(dirct_project,
                                              'inits',
                                              'customs',
                                              run_name,
                                              siteyear)
 
-            # itemize dictionary items into paths
+            # itemize dict_custom items into paths
             dict_custom_loop = dict_custom.copy()
             for key, value in dict_custom_loop.items():
                 dict_custom_loop[key] = os.path.join(
                     dirct_init_custom, f'{value}.txt') + '\n'
+
+            # setup site-specific soil directory
+            site = siteyear.split('_')[0]  # identify site
+            texture = df_sites.query(
+                f'site == {site}').texture.item()  # identify texture
+            dirct_init_soils = os.path.join(dict_setup['path_init_soils'],
+                                            texture)
+
+            # itemize dict_soils items into paths
+            dict_soils_loop = dict_soils.copy()
+            for key, value in dict_soils_loop.items():
+                dict_soils_loop[key] = os.path.join(
+                    dirct_init_soils, f'{value}.txt') + '\n'
 
             # loop through cultivars
             for cultivar in cultivars:
