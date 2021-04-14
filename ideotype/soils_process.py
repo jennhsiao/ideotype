@@ -85,7 +85,10 @@ def texture_profile(df_soils):
     """
     df_texture = df_soils.groupby(['texture', 'depth_category']).mean()
     df_texture = df_texture[['sand', 'silt', 'clay',
-                             'OM', 'dbthirdbar', 'th33']]
+                             'OM', 'dbthirdbar', 'th33', 'th1500']]
+    df_texture.OM = df_texture['OM']/100
+    df_texture.th33 = df_texture['th33']/100
+    df_texture.th1500 = df_texture['th1500']/100
 
     return df_texture
 
