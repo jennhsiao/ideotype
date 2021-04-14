@@ -1,23 +1,37 @@
-"""Determine soil texture class for each simulation site."""
+"""Process and assing soil texture for each simulation site."""
 
 import os
 import yaml
 import pandas as pd
 from ideotype import DATA_PATH
-from ideotype.soils_process import assign_texture
+from ideotype.soils_process import (bin_depth,
+                                    merge_texture,
+                                    texture_profile,
+                                    assign_texture)
 
 # Read in filepaths
-file_paths = os.path.join(DATA_PATH, 'files', 'filepaths_fixpd.yml')
+file_paths = os.path.join(DATA_PATH, 'files', 'filepaths_soils.yml')
 with open(file_paths, 'r') as pfile:
     dict_files = yaml.safe_load(pfile)
 
 # Set up relevant files
-file_soil = os.path.join(DATA_PATH, 'files', dict_files['soils'])
 file_sites = os.path.join(DATA_PATH, 'files', dict_files['sites'])
+file_soils = os.path.join(DATA_PATH, 'files', dict_files['soils'])
+file_soiltextures = os.path.join(DATA_PATH, 'files', dict_files['soiltexture'])
 
 # Read in files into dataframes
-df_soils = pd.read_csv(file_soil, index_col=0, dtype={'sgroup': str})
 df_sites = pd.read_csv(file_sites, dtype={'site': str})
+df_soils = pd.read_csv(file_soils, dtype={'sgroup': str})
+df_soiltextures = pd.read_csv(file_soiltextures)
+
+# Bin soil into 5 soil depth categories
+df_soils = bin_depth(df_soils)
+
+# Include soil texture info into df_soils
+df_soils = merge_texture(df_soils, df_soiltextures)
+
+# Create texture profile for all soil texture groups
+df_textureprofile = texture_profile(df_soils)
 
 # Exclude sand & clay from df_soils
 df_soils = df_soils.query('(texture != "Cl") & (texture != "Sa")')
@@ -34,4 +48,6 @@ texture_sites = assign_texture(
 df_sites_copy = df_sites.copy()
 df_sites_copy['texture'] = texture_sites
 
-#df_sites_copy.to_csv('~/upscale/weadata/site_summary.csv', index=False)
+# Save out relevant files
+#df_textureprofile.to_csv('~/upscale/weadata/soils_textureprofile.csv')  # noqa
+#df_sites_copy.to_csv('~/upscale/weadata/site_summary.csv', index=False)  # noqa
