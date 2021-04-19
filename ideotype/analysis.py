@@ -4,6 +4,26 @@ import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from SALib.analyze import rbd_fast
+
+
+def run_rbdfast(problem, X, Y):
+    """
+    Sensitivity analysis through RBD-FAST method.
+
+    Parameters
+    ----------
+    problem : dict
+        SALib parameter problem definition.
+    X : np.matrix
+        parameter inputs.
+    Y : np.matrix
+        model outputs.
+
+    """
+    Si = rbd_fast.analyze(problem, X, Y, print_to_consol=False)
+
+    return Si
 
 
 def run_pca(df, n):
