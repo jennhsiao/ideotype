@@ -118,8 +118,6 @@ def summarize_nass():
     # subset to include only years 1961-2005
     df_nass_sub = df_nass.query('year>=1961 & year<=2005')
     df_nass_sub.reset_index(drop=True, inplace=True)
-#    years_int = df_nass_sub.year.astype(int)
-#    df_nass_sub.year = years_int
 
     # Group df_nass to get max maize planting area & mean yield for maize
     df_nass_maxarea = df_nass_sub.groupby(
