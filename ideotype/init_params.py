@@ -10,26 +10,23 @@ def params_sample(N_sample):
     """
     Sample parameter through LSH.
 
-    - Phenology:
-        - juv_leaves: 15-25 (Padilla and Otegui, 2005)
-        - staygreen: 3-8 (still looking for a literature-based value)
-        - rmax_ltar: 0.53 (leaves/day) (Kim et al., 2012)
-            * note that rmax_ltir should be 2*rmax_ltar
-            * check out (Padilla and Otegui, 2005) for value range
-    - Morphology:
-        - LM_min: Length characteristic of longest leaf in canopy (cm)
-        - LAF: leaf angle factor for corn leaves (1.37)
     - Physiology:
         - g1: Ball-Berry slope
-            * 10.055 (Yang et al., 2009)
             * 3.06-3.23 (Miner et al., 2017, Table 1 - BB model)
-            * 6.502-9.482 (Miner et al., 2017, Table 1 - BBL model)
-        - psi_potential:
-        - Topt:
+        - vcmax:
+        - jmax:
+        - phyf:
+    - Phenology:
+        - staygreen:
+        - juv_leaves:
+        - rmax_ltar:
+            * note that rmax_ltir should be 2*rmax_ltar
+    - Morphology:
+        - lm_min: Length characteristic of longest leaf in canopy (cm)
+        - laf: leaf angle factor for corn leaves (1.37)
     - Management:
         - gdd: growing degree days accumulated before sowing
-        - row_space: distance between planting rows (m)
-        - population: plants/m2
+        - pop: plants/m2
 
     Parameters
     ----------
@@ -37,32 +34,30 @@ def params_sample(N_sample):
 
     """
     problem = {
-        'num_vars': 12,  # TODO: still need to finalize
-        'names': ['juv_leaves',
+        'num_vars': 11,  # TODO: still need to finalize
+        'names': ['g1',
+                  'vcmax',
+                  'jmax',
+                  'phyf'
                   'staygreen',
-                  'rmax_ltir',
-                  'LM_min',
-                  'LAF',
-                  'g1',
-                  'psi_potential',
-                  'Q10',
-                  'Topt',
+                  'juv_leaves',
+                  'rmax_ltar',
+                  'lm_min',
+                  'laf',
                   'gdd',
-                  'row_space',
-                  'population'
+                  'pop'
                   ],
-        'bounds': [[15, 25],  # juv_leaves
-                   [3, 8],  # staygreen
-                   [1, 3],  # rmax_ltar
+        'bounds': [[2, 6],  # g1
+                   [65, 80]  # Vcmax
+                   [350, 420]  # Jmax
+                   [-3, -1]  # phyf
+                   [2, 6],  # staygreen
+                   [11, 25],  # juv_leaves
+                   [0.4, 0.8],  # rmax_ltar
                    [80, 120],  # LM_min
-                   [1, 5],  # LAF  # TODO: verify
-                   [1, 10],  # g1
-                   [-4, -1],  # psi_potential  # TODO: verify
-                   [1.2, 3],  # Q10  # TODO: verify
-                   [30, 35],  # Topt  # TODO: verify
-                   [100, 200],  # gdd  # TODO: verify
-                   [0.5, 1.5],  # row_space  # TODO: verify
-                   [6, 12],  # population  # TODO: verify
+                   [0.9, 1.4],  # LAF
+                   [80, 160],  # gdd
+                   [6, 14],  # population
                    ]
     }
 
