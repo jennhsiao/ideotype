@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import numpy as np
 import pytz
+from sklearn.linear_model import LinearRegression
 
 
 def fold(val, min, max):
@@ -95,7 +96,7 @@ def CC_VPD(temp, rh):
     """
     # constant parameters
     Tref = 273.15  # reference temperature
-#    Es_Tref = 6.11 # saturation vapor pressure at reference temperature (mb)
+    # Es_Tref = 6.11 # saturation vapor pressure at reference temperature (mb)
     Es_Tref = 0.611  # saturation vapor pressure at reference temperature (kPa)
     Lv = 2.5e+06  # latent heat of vaporation (J/kg)
     Rv = 461  # gas constant for moist air (J/kg)
@@ -172,3 +173,28 @@ def calc_gdd(temps):
             else:
                 gdd += (temp-8)/24
     return(count)
+
+
+def stomata_waterstress():
+    """
+    Estimate sf from phyf via linear function.
+
+    Data from Tuzet, Perrier, and Leuning, 2003, Plant Cell Environ.
+    Fig. 6a - Difference in stomata water stress response curve.
+    sf: sensitivity parameter
+    phyf: reference potential
+
+    Returns
+    -------
+    mod_intercept
+    mod_coef
+
+    """
+    x = [[-1.2], [-1.9], [-2.6]]
+    y = [[4.9], [3.2], [2.3]]
+    mod = LinearRegression()
+    mod.fit(x, y)
+    mod_intercept = mod.intercept_[0]
+    mod_coef = mod.coef_[0][0]
+
+    return mod_intercept, mod_coef
