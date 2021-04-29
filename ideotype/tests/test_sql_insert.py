@@ -17,7 +17,7 @@ def test_insert_params(ideotype_session):
     query = ideotype_session.query(Params).filter(
         Params.run_name == 'test').filter(
             Params.cvar == 6).filter(
-                Params.param == 'stayGreen')
+                Params.param == 'staygreen')
     results = query.all()
 
     data = genfromtxt(fpath_param,
@@ -26,7 +26,7 @@ def test_insert_params(ideotype_session):
                       names=True,
                       dtype=(float))
 
-    assert results[0].value == data[6]['stayGreen']
+    assert results[0].value == data[6]['staygreen']
 
 
 def test_insert_weadata(ideotype_session):
