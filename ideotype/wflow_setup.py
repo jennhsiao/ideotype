@@ -158,8 +158,8 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
         raise ValueError(f'directory {dirct_jobs} already exists!')
 
     # /inits/customs, /runs & /sims
-    for folder in (['inits/customs', 'runs', 'sims']):
-        dirct_folder = os.path.join(dirct_project, folder, run_name)
+    for folder in (['inits', 'customs'], ['runs'], ['sims']):
+        dirct_folder = os.path.join(dirct_project, *folder, run_name)
         years = dict_setup['specs']['years']  # fetch from init_runame.yml
         cvars = dict_setup['specs']['cvars']  # fetch from init_runame.yml
 
