@@ -815,6 +815,7 @@ def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
     dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
     dirct_project = dict_setup['path_project']
     dirct_jobs = os.path.join(dirct_project, 'jobs', run_name)
+    path_maizsim = dict_setup['path_maizsim']
 
     # only execute if no run files already exist
     filelist = get_filelist(os.path.expanduser(dirct_jobs))
@@ -873,12 +874,12 @@ def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
                 str12 = '\n'
                 str13 = 'for file in $FILES\n'
                 str14 = 'do\n'
-                str15 = '    fname=$(echo $file)\n'  # grab file name
-                str16 = ('    maizsim_hash='  # grab git hash
+                str15 = '\tfname=$(echo $file)\n'  # grab file name
+                str16 = ('\tmaizsim_hash='  # grab git hash
                          '$(git describe --dirty --always --tags)\n')
-                str17 = f'    echo $fname,$maizsim_hash >> {logfile}\n'
-                str18 = '    cd /home/disk/eos8/ach315/MAIZSIM\n'
-                str19 = '    timeout 20m maizsim $file\n'
+                str17 = f'\techo $fname,$maizsim_hash >> {logfile}\n'
+                str18 = f'\tcd {path_maizsim}\n'
+                str19 = '\ttimeout 20m maizsim $file\n'
                 str20 = 'done\n'
 
                 strings = [str1, str2, str3, str4, str5, str6,
