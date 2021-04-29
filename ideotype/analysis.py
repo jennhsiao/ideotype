@@ -36,7 +36,9 @@ def run_rbdfast(N_sample, run_name):
     X = genfromtxt(fpath_read, delimiter=',', skip_header=1)
 
     # TODO: still need code that reads in Y here
+    Y = []
 
+    # Calculate sensitivity index
     Si = rbd_fast.analyze(problem, X, Y, print_to_consol=False)
 
     return Si
