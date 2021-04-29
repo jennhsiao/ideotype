@@ -137,38 +137,6 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
     # setup project directory
     dirct_project = dict_setup['path_project']
 
-    # /inits - customs
-    dirct_inits_customs = os.path.join(dirct_project,
-                                       'inits',
-                                       'customs',
-                                       run_name)
-
-    if dict_setup['base_path'] == 'testing':
-        basepath = DATA_PATH
-        fpath_siteyears = os.path.join(basepath,
-                                       *dict_setup['siteyears'])
-    else:
-        fpath_siteyears = os.path.join(dict_setup['path_project'],
-                                       *dict_setup['siteyears'])
-
-    data = genfromtxt(fpath_siteyears,
-                      delimiter=',',
-                      skip_header=1,
-                      usecols=(0, 1),
-                      dtype=('U6', int, int, 'U10'))
-
-    siteyears = []
-    for row in data:
-        siteyears.append(str(row[0]) + '_' + str(row[1]))
-
-    # Check if folder exits, only execute if not
-    if not os.path.isdir(dirct_inits_customs):
-        os.mkdir(dirct_inits_customs)
-        for siteyear in siteyears:
-            os.mkdir(os.path.join(dirct_inits_customs, siteyear))
-    else:
-        raise ValueError(f'directory {dirct_inits_customs} already exists!')
-
     # /inits - cultivars
     dirct_inits_cultivars = os.path.join(dirct_project,
                                          'inits',
@@ -189,8 +157,8 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
     else:
         raise ValueError(f'directory {dirct_jobs} already exists!')
 
-    # /runs & /sims
-    for folder in (['runs', 'sims']):
+    # /inits/customs, /runs & /sims
+    for folder in (['inits/customs', 'runs', 'sims']):
         dirct_folder = os.path.join(dirct_project, folder, run_name)
         years = dict_setup['specs']['years']  # fetch from init_runame.yml
         cvars = dict_setup['specs']['cvars']  # fetch from init_runame.yml
