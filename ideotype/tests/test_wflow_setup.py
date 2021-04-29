@@ -121,7 +121,8 @@ def test_make_inits(make_testyaml):
     run_name = 'test'
     yamlfile = make_testyaml
     make_inits(run_name,
-               yamlfile=yamlfile)
+               yamlfile=yamlfile,
+               cont_cvars=False)
 
 
 def test_make_cultivars(make_testyaml):
