@@ -644,7 +644,6 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
     dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
     dirct_project = dict_setup['path_project']
     dirct_runs = os.path.join(dirct_project, 'runs', run_name)
-    df_sites = pd.read_csv(dict_setup['site_summary'])
 
     # only execute if no run files already exist
     filelist = get_filelist(os.path.expanduser(dirct_runs))
@@ -654,10 +653,16 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
             basepath = DATA_PATH
             fpath_siteyears = os.path.join(basepath,
                                            *dict_setup['siteyears'])
+            fpath_sitesummary = os.path.join(DATA_PATH,
+                                             *dict_setup['site_summary'])
+
         else:
             fpath_siteyears = os.path.join(dict_setup['path_project'],
                                            *dict_setup['siteyears'])
+            fpath_sitesummary = os.path.join(dict_setup['path_project'],
+                                             *dict_setup['site_summary'])
 
+        df_sites = pd.read_csv(fpath_sitesummary)
         data = genfromtxt(fpath_siteyears,
                           delimiter=',',
                           skip_header=1,
@@ -751,7 +756,7 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
                                int(20): 'out4',
                                int(21): 'out5',
                                int(22): 'out6',
-                               int(23): 'massbl',
+                               int(23): 'massbl' + siteyear + '_' + cultivar,
                                int(24): 'runoff'}
 
                 for key, value in dict_output.items():
