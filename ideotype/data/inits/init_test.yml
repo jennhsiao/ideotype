@@ -79,7 +79,7 @@ climate:
   atemp: 0
   erain: 0.1
   bwind: 1
-  bir: 1
+  bir: 0.1
   winda: 3
   irav: 1
   conc: 0
@@ -94,6 +94,7 @@ management:
   residue_N: 0
 cultivar:
   daylen_sen: 0
+  phyllo: 3
   rrrm: 166.7
   rrry: 31.3
   rvrl: 0.73
@@ -124,6 +125,7 @@ cultivar:
   eaj: 32800
   hj: 220000
   sj: 702.6
+  vpm_25: 70
   jm_25: 300
   rd_25: 2
   ear: 39800
@@ -144,3 +146,11 @@ cultivar:
   cica_ratio: 0.7
   SC_param: 1.57
   BLC_param: 1.36
+  Q10MR: 2.0
+  Q10Senescence: 2.0
+  WLRATIO: 0.106
+  A_LW: 0.75
+  T_base: 8.0
+  T_opt: 32.1
+  T_ceil: 43.7
+  T_opt_GDD: 34.0
