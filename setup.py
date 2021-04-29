@@ -17,7 +17,8 @@ setup_args = {
                          "pyyaml",
                          "setuptools_scm",
                          "sqlalchemy",
-                         "timezonefinder"]
+                         "timezonefinder",
+                         "sklearn"]
     # TODO: add more install_requires here
 }
 
