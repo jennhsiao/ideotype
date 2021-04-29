@@ -9,7 +9,7 @@ setup:
   path_maizsim: ~/MAIZSIM
   siteyears: ['test_data', 'sites', 'siteyears_filtered.csv']
   site_info: ['test_data', 'sites', 'stations_info_9110.csv']
-  site_summary: ~/ideotype/ideotype/data/test_data/sites/site_summary.csv
+  site_summary: ['test_data', 'sites', 'site_summary.csv']
 specs:
   years:
   - 1964

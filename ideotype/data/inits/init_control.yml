@@ -9,7 +9,7 @@ setup:
   path_maizsim: /home/disk/eos8/ach315/MAIZSIM_v142
   siteyears: ['weadata', 'siteyears_filtered.csv']
   site_info: ['weadata', 'stations_info_9110.csv']
-  site_summary: /home/disk/eos8/ach315/upscale/weadata/site_summary.csv
+  site_summary: ['weadata', 'site_summary.csv']
 specs:
   years:
   - 1961
