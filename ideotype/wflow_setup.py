@@ -15,7 +15,7 @@ import pandas as pd
 import yaml
 from numpy import genfromtxt
 
-from ideotype.utils import get_filelist
+from ideotype.utils import get_filelist, stomata_waterstress
 from ideotype.data import DATA_PATH
 
 
@@ -478,6 +478,9 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
     dirct_project = dict_setup['path_project']
     dirct_cvars = os.path.join(dirct_project, 'inits', 'cultivars', run_name)
 
+    # set up linear mod to estimate sf from phyf
+    mod_intercept, mod_coef = stomata_waterstress()
+
     if dict_setup['base_path'] == 'testing':
         fpath_params = os.path.join(DATA_PATH, *dict_setup['path_params'])
     else:
@@ -494,9 +497,12 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
             cvars = dict_setup['specs']['cvars']
 
         for cvar in cvars:
-            [juv_leaves, staygreen, rmax_ltir,
-             phyllo, LM_min, vcm_25,
-             vpm_25, g1, ref_potential, rmax_ltar] = df_params.iloc[cvar, :]
+            [
+                g1, vcmax, jmax, phyf,  # physiology
+                staygreen, juv_leaves, rmax_ltar,  # phenology
+                lm_min, laf,  # morphology
+                gdd, pop  # management
+            ] = df_params.iloc[cvar, :]
 
             cvar_txt = open(os.path.join(dirct_cvars,
                             'var_' + str(cvar) + '.txt'), 'w')
@@ -509,10 +515,10 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
             str5 = (f'{juv_leaves:.0f}\t'
                     f'{dict_setup["cultivar"]["daylen_sen"]:.0f}\t'
                     f'{staygreen:.2f}\t'
-                    f'{LM_min:.0f}\t'
+                    f'{lm_min:.0f}\t'
                     f'{rmax_ltar:.2f}\t'
-                    f'{rmax_ltir:.2f}\t'
-                    f'{phyllo:.0f}\n')
+                    f'{rmax_ltar*2:.2f}\t'
+                    f'{dict_setup["cultivar"]["phyllo"]:.0f}\n')
             str6 = '[SoilRoot]\n'
             str7 = '*** water uptake parameter information ***\n'
             str8 = 'RRRM\tRRRY\tRVRL\n'
@@ -555,9 +561,9 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
                      f'{dict_setup["cultivar"]["eaj"]:.0f}\t'
                      f'{dict_setup["cultivar"]["hj"]:.0f}\t'
                      f'{dict_setup["cultivar"]["sj"]:.0f}\t'
-                     f'{vpm_25:.0f}\t'
-                     f'{vcm_25:.0f}\t'
-                     f'{dict_setup["cultivar"]["jm_25"]:.0f}\t'
+                     f'{dict_setup["cultivar"]["vpm_25"]:.0f}\t'
+                     f'{vcmax:.0f}\t'
+                     f'{jmax:.0f}\t'
                      f'{dict_setup["cultivar"]["rd_25"]:.0f}\t'
                      f'{dict_setup["cultivar"]["ear"]:.0f}\t'
                      f'{dict_setup["cultivar"]["g0"]:.2f}\t'
@@ -577,8 +583,8 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
                      'ref_potential (phyla, bars)\t'
                      'stoma_ratio\twidfct\tleaf_wid (m)\n')
             str34 = (f'{dict_setup["cultivar"]["gamma_gsw"]:.1f}\t'
-                     f'{dict_setup["cultivar"]["sf"]:.1f}\t'
-                     f'{ref_potential:.1f}\t'
+                     f'{mod_intercept+phyf*mod_coef:.1f}\t'
+                     f'{phyf:.1f}\t'
                      f'{dict_setup["cultivar"]["stomata_ratio"]:.1f}\t'
                      f'{dict_setup["cultivar"]["widfct"]:.2f}\t'
                      f'{dict_setup["cultivar"]["leaf_wid"]:.2f}\n')
@@ -588,13 +594,28 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
             str37 = (f'{dict_setup["cultivar"]["cica_ratio"]:.1f}\t'
                      f'{dict_setup["cultivar"]["SC_param"]:.2f}\t'
                      f'{dict_setup["cultivar"]["BLC_param"]:.1f}\n')
-            str38 = '[Leaf Parameters]\n'
+            str38 = '*** Q10 params for respiration and leaf senescence ***\n'
+            str39 = 'Q10MR\tQ10LeafSenescence\n'
+            str40 = (f'{dict_setup["cultivar"]["Q10MR"]:.1f}\t'
+                     f'{dict_setup["cultivar"]["Q10Senescence"]:.1f}\n')
+            str41 = '*** Leaf morphology factors ***\n'
+            str42 = 'LAF\tWLRATIO\tA_LW\n'
+            str43 = (f'{laf:.2f}\t'
+                     f'{dict_setup["cultivar"]["WLRATIO"]:.3f}\t'
+                     f'{dict_setup["cultivar"]["A_LW"]:.2f}\n')
+            str44 = '*** temperature factors for growth ***\n'
+            str45 = 'T_base\tT_opt\tT_ceil\tT_opt_GDD\n'
+            str46 = (f'{dict_setup["cultivar"]["T_base"]:.1f}\t'
+                     f'{dict_setup["cultivar"]["T_opt"]:.1f}\t'
+                     f'{dict_setup["cultivar"]["T_ceil"]:.1f}\t'
+                     f'{dict_setup["cultivar"]["T_opt_GDD"]:.1f}\n')
 
             strings = [str1, str2, str3, str4, str5, str6, str7, str8,
                        str9, str10, str11, str12, str13, str14, str15, str16,
                        str17, str18, str19, str20, str21, str22, str23, str24,
                        str25, str26, str27, str28, str29, str30, str31, str32,
-                       str33, str34, str35, str36, str37, str38]
+                       str33, str34, str35, str36, str37, str38, str39, str40,
+                       str41, str42, str43, str44, str45, str46]
             cvar_txt.writelines(strings)
 
     else:
@@ -857,7 +878,7 @@ def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
                          '$(git describe --dirty --always --tags)\n')
                 str17 = f'    echo $fname,$maizsim_hash >> {logfile}\n'
                 str18 = '    cd /home/disk/eos8/ach315/MAIZSIM\n'
-                str19 = '    timeout 15m maizsim $file\n'
+                str19 = '    timeout 20m maizsim $file\n'
                 str20 = 'done\n'
 
                 strings = [str1, str2, str3, str4, str5, str6,
