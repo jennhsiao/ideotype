@@ -117,8 +117,6 @@ def insert_params(fpath_params, fpath_db, run_name, session=None):
         )
 
     # parse out run_name from parameter file name
-    # TODO: need to make sure parameter file name is generated systematically
-    # TODO: is there a way to write a test to always check for this?
     runame = run_name
     # fetch parameters
     params = data.dtype.names
