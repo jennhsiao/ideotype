@@ -722,21 +722,9 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
 
         # loop through siteyears
         for siteyear in siteyears:
-            # setup siteyear-specific custom directory
-            dirct_init_custom = os.path.join(dirct_project,  # TODO: needs update
-                                             'inits',
-                                             'customs',
-                                             run_name,
-                                             siteyear)
-
-            # itemize dict_custom items into paths
-            dict_custom_loop = dict_custom.copy()
-            for key, value in dict_custom_loop.items():
-                dict_custom_loop[key] = os.path.join(
-                    dirct_init_custom, f'{value}.txt') + '\n'
-
             # setup site-specific soil directory
-            site = siteyear.split('_')[0]  # identify site
+            site = siteyear.split('_')[0]
+            year = siteyear.split('_')[1]
             texture = df_sites.query(
                 f'site == {site}').texture.item()  # identify texture
             dirct_init_soils = os.path.join(dict_setup['path_init_soils'],
@@ -750,10 +738,25 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
 
             # loop through cultivars
             for cultivar in cultivars:
+                # set up custom directory
+                dirct_init_custom = os.path.join(dirct_project,
+                                                 'inits',
+                                                 'customs',
+                                                 run_name,
+                                                 year,
+                                                 cultivar)
+
+                # itemize dict_custom items into paths
+                dict_custom_loop = dict_custom.copy()
+                for key, value in dict_custom_loop.items():
+                    dict_custom_loop[key] = os.path.join(
+                        dirct_init_custom, f'{value}.txt') + '\n'
+
+                # set up output directory
                 dirct_output = os.path.join(dirct_project,
                                             'sims',
                                             run_name,
-                                            siteyear.split('_')[1],
+                                            year,
                                             cultivar)
                 dict_output = {int(17): 'out1_' + siteyear + '_' + cultivar,
                                int(18): 'out2_' + siteyear + '_' + cultivar,
@@ -761,7 +764,7 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
                                int(20): 'out4',
                                int(21): 'out5',
                                int(22): 'out6',
-                               int(23): 'massbl' + siteyear + '_' + cultivar,
+                               int(23): 'massbl_' + siteyear + '_' + cultivar,
                                int(24): 'runoff'}
 
                 for key, value in dict_output.items():
