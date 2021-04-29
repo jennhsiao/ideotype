@@ -38,7 +38,7 @@ def params_sample(N_sample):
         'names': ['g1',
                   'vcmax',
                   'jmax',
-                  'phyf'
+                  'phyf',
                   'staygreen',
                   'juv_leaves',
                   'rmax_ltar',
@@ -48,9 +48,9 @@ def params_sample(N_sample):
                   'pop'
                   ],
         'bounds': [[2, 6],  # g1
-                   [65, 80]  # Vcmax
-                   [350, 420]  # Jmax
-                   [-3, -1]  # phyf
+                   [65, 80],  # Vcmax
+                   [350, 420],  # Jmax
+                   [-3, -1],  # phyf
                    [2, 6],  # staygreen
                    [11, 25],  # juv_leaves
                    [0.4, 0.8],  # rmax_ltar
