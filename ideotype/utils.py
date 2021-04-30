@@ -1,5 +1,6 @@
 """Misc utility functions."""
 import os
+from datetime import datetime
 
 import pandas as pd
 import numpy as np
@@ -152,7 +153,7 @@ def utc_to_local(times, zone):
     return local_datetime
 
 
-def calc_gdd(temps):
+def calc_gdd(temps, gdd_threshold=100, temp_base=8):
     """
     Maize growing season GDD calculation.
 
@@ -162,17 +163,74 @@ def calc_gdd(temps):
       which can then be used to identify date in which GDD=100 is reached
     - citation: the solar corridor crop system
 
+    Parameters
+    ----------
+    temps : list
+        List of hourly temp for gdd accumulation.
+    gdd_threshold : int
+        GDD threshold for planting.
+    temp_base : int
+        Base temperature for gdd accumulation.
+
+    Returns
+    -------
+    count : int
+        The number count in which gdd is reached.
+
     """
     gdd = 0
     for count, temp in enumerate(temps):
-        if gdd > 100:
+        if gdd > gdd_threshold:
             break
         else:
-            if temp-8 < 0:
+            if temp-temp_base < 0:
                 gdd += 0
             else:
-                gdd += (temp-8)/24
+                gdd += (temp-temp_base)/24
     return(count)
+
+
+def estimate_pdate(basepath, site, year, perturbed, gdd_threshold=100):
+    """
+    Estimate planting date for specified location.
+
+    Parameters
+    ----------
+    basepath : str
+        basepath to fetch weather data.
+    site : str
+        site_id for specified site-year
+    year : int
+        year for specified site-year
+    perturbed : bool
+        True: estimate based on perturbed gdd
+        False: estimate based on default gdd
+    gdd_threshold : int
+        gdd threshold for planting date estimation
+
+    """
+    fpath_wea = os.path.join(basepath, f'{site}_{year}.txt')
+    df_wea = pd.read_csv(fpath_wea)
+    temps = list(df_wea.temp)
+
+    if perturbed is True:
+        loc = calc_gdd(temps, gdd_threshold)
+    else:
+        loc = calc_gdd(temps)
+
+    jday_plant = df_wea.loc[loc, 'jday']
+    jday_start = jday_plant - 14  # start date 2 weeks prior to planting
+
+    # cap earliest start date as Feb 1st
+    if jday_plant < 32:
+        jday_plant = 32
+
+    date_plant = datetime.strptime(
+        f'{year}-{jday_plant}', '%Y-%j').strftime('%m/%d/%Y')
+    date_start = datetime.strptime(
+        f'{year}-{jday_start}', '%Y-%j').strftime('%m/%d/%Y')
+
+    return date_start, date_plant
 
 
 def stomata_waterstress():
