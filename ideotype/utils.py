@@ -153,7 +153,7 @@ def utc_to_local(times, zone):
     return local_datetime
 
 
-def calc_gdd(temps, gdd_threshold=100, temp_base=8):
+def calc_gdd(temps, temp_base=8, gdd_threshold=100):
     """
     Maize growing season GDD calculation.
 
@@ -167,10 +167,10 @@ def calc_gdd(temps, gdd_threshold=100, temp_base=8):
     ----------
     temps : list
         List of hourly temp for gdd accumulation.
-    gdd_threshold : int
-        GDD threshold for planting.
     temp_base : int
         Base temperature for gdd accumulation.
+    gdd_threshold : int
+        GDD threshold for planting.
 
     Returns
     -------
@@ -190,34 +190,34 @@ def calc_gdd(temps, gdd_threshold=100, temp_base=8):
     return(count)
 
 
-def estimate_pdate(basepath, site, year, perturbed, gdd_threshold=100):
+def estimate_pdate(basepath, site, year, gdd_threshold=100):
     """
     Estimate planting date for specified location.
 
     Parameters
     ----------
     basepath : str
-        basepath to fetch weather data.
+        Base path to fetch weather data.
     site : str
-        site_id for specified site-year
+        site_id for specified site-year.
     year : int
-        year for specified site-year
-    perturbed : bool
-        True: estimate based on perturbed gdd
-        False: estimate based on default gdd
+        Year for specified site-year.
     gdd_threshold : int
-        gdd threshold for planting date estimation
+        GDD threshold for planting date estimation.
+
+    Returns
+    -------
+    date_start : str
+        Simulation start date in maizsim format.
+    date_plant : str
+        Simulation plant date in for maizsim format.
 
     """
     fpath_wea = os.path.join(basepath, f'{site}_{year}.txt')
     df_wea = pd.read_csv(fpath_wea)
     temps = list(df_wea.temp)
 
-    if perturbed is True:
-        loc = calc_gdd(temps, gdd_threshold)
-    else:
-        loc = calc_gdd(temps)
-
+    loc = calc_gdd(temps, gdd_threshold)
     jday_plant = df_wea.loc[loc, 'jday']
     jday_start = jday_plant - 14  # start date 2 weeks prior to planting
 
@@ -226,9 +226,9 @@ def estimate_pdate(basepath, site, year, perturbed, gdd_threshold=100):
         jday_plant = 32
 
     date_plant = datetime.strptime(
-        f'{year}-{jday_plant}', '%Y-%j').strftime('%m/%d/%Y')
+        f'{year}-{jday_plant}', '%Y-%j').strftime("'%m/%d/%Y'")
     date_start = datetime.strptime(
-        f'{year}-{jday_start}', '%Y-%j').strftime('%m/%d/%Y')
+        f'{year}-{jday_start}', '%Y-%j').strftime("'%m/%d/%Y'")
 
     return date_start, date_plant
 
