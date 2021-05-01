@@ -15,7 +15,9 @@ import pandas as pd
 import yaml
 from numpy import genfromtxt
 
-from ideotype.utils import get_filelist, stomata_waterstress
+from ideotype.utils import (get_filelist,
+                            stomata_waterstress,
+                            estimate_pdate)
 from ideotype.data import DATA_PATH
 
 
@@ -237,6 +239,8 @@ def make_inits(run_name, yamlfile=None, cont_cvars=True):
                                            *dict_setup['siteyears'])
             fpath_params = os.path.join(basepath,
                                         *dict_setup['path_params'])
+            fpath_weas = os.path.join(basepath,
+                                      *dict_setup['path_wea'])
 
         else:
             fpath_siteinfo = os.path.join(dict_setup['path_project'],
@@ -245,6 +249,8 @@ def make_inits(run_name, yamlfile=None, cont_cvars=True):
                                            *dict_setup['siteyears'])
             fpath_params = os.path.join(dict_setup['path_project'],
                                         *dict_setup['path_params'])
+            fpath_weas = os.path.join(dict_setup['path_project'],
+                                      *dict_setup['path_wea'])
 
         df_siteinfo, df_siteyears = read_siteinfo(fpath_siteinfo,
                                                   fpath_siteyears)
@@ -291,24 +297,27 @@ def make_inits(run_name, yamlfile=None, cont_cvars=True):
                                              cultivar,
                                              'init.txt'), 'w')
 
+                # Dynamic pdate but gdd not perturbed
                 if dict_setup['init']['plant_date'] == 'dynamic':
-                    # TODO: need a function to generate this on the fly
-                    pdate = df_siteyears[(df_siteyears.site == site) &
-                                         (df_siteyears.year == year)].iloc[0, 3]
-                    pdate_month = pdate.split('-')[1]
-                    pdate_day = pdate.split('-')[2]
-                    sowing = f'{pdate_month}/{pdate_day}/{year}'
-                    sowing = "'" + sowing + "'"  # requires single quotes
+                    # use default gdd_threhold value
+                    date_start, date_plant = estimate_pdate(fpath_weas,
+                                                            site,
+                                                            year)
+                # Dynamic pdate with perturbed gdd
                 elif dict_setup['init']['plant_date'] == 'dynamic_perturbed':
-                    pass  # TODO: need to fix
+                    # use perturbed gdd value
+                    gdd = df_params.loc[int(cultivar.split('_')[-1]), 'gdd']
+                    date_start, date_plant = estimate_pdate(fpath_weas,
+                                                            site,
+                                                            year,
+                                                            gdd_threshold=gdd)
+                # Standard pdate across asll sites
                 else:
                     sowing = f'{dict_setup["init"]["plant_date"]}{year}'
-                    sowing = "'" + sowing + "'"
+                    sowing = "'" + sowing + "'"  # requires single quote
+                    start = f'{dict_setup["init"]["start_date"]}{year}'
+                    start = "'" + start + "'"
 
-                # customized parameters: timing
-                # TODO: might need to be based on sowing date
-                start = f'{dict_setup["init"]["start_date"]}{year}'
-                start = "'" + start + "'"
                 end = f'{dict_setup["init"]["end_date"]}{year}'
                 end = "'" + end + "'"
 
@@ -660,12 +669,16 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
                                            *dict_setup['siteyears'])
             fpath_sitesummary = os.path.join(DATA_PATH,
                                              *dict_setup['site_summary'])
+            dirct_init_wea = os.path.join(DATA_PATH,
+                                          *dict_setup['path_wea'])
 
         else:
             fpath_siteyears = os.path.join(dict_setup['path_project'],
                                            *dict_setup['siteyears'])
             fpath_sitesummary = os.path.join(dict_setup['path_project'],
                                              *dict_setup['site_summary'])
+            dirct_init_wea = os.path.join(dict_setup['path_project'],
+                                          *dict_setup['path_wea'])
 
         df_sites = pd.read_csv(fpath_sitesummary)
         data = genfromtxt(fpath_siteyears,
@@ -696,7 +709,6 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
             cultivars.append(cultivar)
 
         # setup up directories
-        dirct_init_wea = dict_setup['path_wea']
         dirct_init_stand = dict_setup['path_init_standards']
 
         dict_standard = {int(3): 'biology',
