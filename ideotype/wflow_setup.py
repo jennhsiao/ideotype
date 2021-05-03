@@ -873,8 +873,6 @@ def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
         # within that year
         for year in years_iter:
             for cvar in cultivars:
-                logfile = str(year) + '_' + cvar + '.log'
-
                 str1 = '#!/bin/bash\n'
                 str2 = '#PBS -l nodes=1:ppn=1\n'
                 str3 = '#PBS -l walltime=12:00:00\n'
@@ -890,26 +888,14 @@ def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
                                                cvar,
                                                '*') + '\n'
                 str9 = '\n'
-                str10 = 'cd ' + os.path.join(dirct_project,
-                                             'sims',
-                                             run_name,
-                                             str(year),
-                                             cvar) + '\n'
-                str11 = 'touch ' + logfile + '\n'
-                str12 = '\n'
-                str13 = 'for file in $FILES\n'
-                str14 = 'do\n'
-                str15 = '\tfname=$(echo $file)\n'  # grab file name
-                str16 = ('\tmaizsim_hash='  # grab git hash
-                         '$(git describe --dirty --always --tags)\n')
-                str17 = f'\techo $fname,$maizsim_hash >> {logfile}\n'
-                str18 = f'\tcd {path_maizsim}\n'
-                str19 = '\ttimeout 20m maizsim $file\n'
-                str20 = 'done\n'
+                str10 = 'for file in $FILES\n'
+                str11 = 'do\n'
+                str12 = f'\tcd {path_maizsim}\n'
+                str13 = '\ttimeout 20m maizsim $file\n'
+                str14 = 'done\n'
 
-                strings = [str1, str2, str3, str4, str5, str6,
-                           str7, str8, str9, str10, str11, str12, str13,
-                           str14, str15, str16, str17, str18, str19, str20]
+                strings = [str1, str2, str3, str4, str5, str6, str7, 
+                           str8, str9, str10, str11, str12, str13, str14]
 
                 jobs = open(os.path.join(dirct_jobs,
                                          str(year) + '_' + cvar + '.job'), 'w')
