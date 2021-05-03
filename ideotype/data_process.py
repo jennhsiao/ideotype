@@ -159,8 +159,11 @@ def read_data(yamlfile):
     # 5. merge all
     df_sims_params = pd.merge(df_sims, df_params, on='cvar')
     df_sims_params_sites = pd.merge(df_sims_params, df_sites, on='site')
+
+    df_wea_sub = df_wea.loc[:, [
+        'site', 'year', 'temp', 'rh', 'precip', 'solrad', 'vpd']]
     df_all = pd.merge(df_sims_params_sites,
-                      df_wea, on=['site', 'year'])
+                      df_wea_sub, on=['site', 'year'])
 
     # 6. data with simulations that reached maturity only
     df_matured = df_all[df_all.note == '"Matured"']
