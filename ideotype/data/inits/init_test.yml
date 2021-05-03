@@ -2,9 +2,9 @@ setup:
   run_name: test
   path_project: tmp_path
   base_path: testing
-  path_wea: ~/ideotype/ideotype/data/test_data/wea/
-  path_init_standards: tmp_path/inits/standards/test/
-  path_init_soils: tmp_path/inits/soils/
+  path_wea: ['test_data', 'wea']
+  path_init_standards: ['inits', 'standards', 'test']
+  path_init_soils: ['inits', 'soils']
   path_params: ['test_data', 'params', 'param_test.csv']
   path_maizsim: ~/MAIZSIM
   siteyears: ['test_data', 'sites', 'siteyears_filtered.csv']
