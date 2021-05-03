@@ -8,7 +8,6 @@ from setuptools_scm import get_version
 from pathlib import Path
 from pkg_resources import get_distribution, DistributionNotFound
 
-from .read_sims import *  # noqa
 from .utils import *  # noqa
 from .log import * # noqa
 from .sql_declarative import *  # noqa
