@@ -637,7 +637,7 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
                          f'for run name: "{run_name}"!')
 
 
-def make_runs(run_name, yamlfile=None, cont_cvars=True):
+def make_runs(run_name, yamlfile=None, cont_cvars=True, dynamic_soil=True):
     """
     Create run.txt files in corresponding directories for experiment.
 
@@ -653,6 +653,9 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
         How yaml file stores simulation cvars info.
         True: stored single number representing the total number of cultivas.
         Fals: stored specific cultivars (testing purposes).
+    dynamic_soil : Bool
+        Default True, assigning each sim location a specified soil file.
+        If False, assigns all sim sites the same soil file.
 
     """
     dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
@@ -671,6 +674,10 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
                                              *dict_setup['site_summary'])
             dirct_init_wea = os.path.join(DATA_PATH,
                                           *dict_setup['path_wea'])
+            dirct_init_soils = os.path.join(DATA_PATH,
+                                            *dict_setup['path_init_soils'])
+            dirct_init_stand = os.path.join(DATA_PATH,
+                                            *dict_setup['path_init_standards'])
 
         else:
             fpath_siteyears = os.path.join(dict_setup['path_project'],
@@ -679,6 +686,10 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
                                              *dict_setup['site_summary'])
             dirct_init_wea = os.path.join(dict_setup['path_project'],
                                           *dict_setup['path_wea'])
+            dirct_init_soils = os.path.join(dict_setup['path_project'],
+                                            *dict_setup['path_init_soils'])
+            dirct_init_stand = os.path.join(dict_setup['path_project'],
+                                            *dict_setup['path_init_standards'])
 
         df_sites = pd.read_csv(fpath_sitesummary)
         data = genfromtxt(fpath_siteyears,
@@ -709,8 +720,6 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
             cultivars.append(cultivar)
 
         # setup up directories
-        dirct_init_stand = dict_setup['path_init_standards']
-
         dict_standard = {int(3): 'biology',
                          int(5): 'nitrogen',
                          int(9): 'drip',
@@ -737,16 +746,21 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True):
             # setup site-specific soil directory
             site = siteyear.split('_')[0]
             year = siteyear.split('_')[1]
-            texture = df_sites.query(
-                f'site == {site}').texture.item()  # identify texture
-            dirct_init_soils = os.path.join(dict_setup['path_init_soils'],
-                                            texture)
+
+            if dynamic_soil is True:
+                # identify texture
+                texture = df_sites.query(
+                    f'site == {site}').texture.item()
+            else:
+                texture = 'soils_1'
+
+            dirct_init_soiltexture = os.path.join(dirct_init_soils, texture)
 
             # itemize dict_soils items into paths
             dict_soils_loop = dict_soils.copy()
             for key, value in dict_soils_loop.items():
                 dict_soils_loop[key] = os.path.join(
-                    dirct_init_soils, f'{value}.txt') + '\n'
+                    dirct_init_soiltexture, f'{value}.txt') + '\n'
 
             # loop through cultivars
             for cultivar in cultivars:
@@ -894,7 +908,7 @@ def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
                 str13 = '\ttimeout 20m maizsim $file\n'
                 str14 = 'done\n'
 
-                strings = [str1, str2, str3, str4, str5, str6, str7, 
+                strings = [str1, str2, str3, str4, str5, str6, str7,
                            str8, str9, str10, str11, str12, str13, str14]
 
                 jobs = open(os.path.join(dirct_jobs,
