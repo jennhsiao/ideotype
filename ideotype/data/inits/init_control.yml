@@ -2,9 +2,9 @@ setup:
   run_name: control
   path_project: /home/disk/eos8/ach315/upscale/
   base_path: /home/disk/eos8/ach315/upscale/
-  path_wea: /home/disk/eos8/ach315/upscale/weadata/data/control/
-  path_init_standards: /home/disk/eos8/ach315/upscale/inits/standards/control/
-  path_init_soils: /home/disk/eos8/ach315/upscale/inits/soils/
+  path_wea: ['weadata', 'data', 'control']
+  path_init_standards: ['inits', 'standards', 'control']
+  path_init_soils: ['inits', 'soils']
   path_params: ['params', 'param_control.csv']
   path_maizsim: /home/disk/eos8/ach315/MAIZSIM_v142
   siteyears: ['weadata', 'siteyears_filtered.csv']
@@ -17,32 +17,19 @@ specs:
   cvars:
   - 0
 params:
-  juv_leaves:
-  - 15
-  - 25
-  stayGreen:
-  - 3
-  - 8
-  rmax_ltar: []
-  LM_min:
-  - 80
-  - 120
-  Vcmax:
-  - 60
-  - 80
-  Vpmax:
-  - 60
-  - 120
-  g1:
-  - 1
-  - 10
-  ref_potential:
-  - -4
-  - -1
+  g1: 4
+  vcmax: 65
+  jmax: 350
+  phyf: -1.9
+  staygreen: 3
+  juv_leaves: 19
+  rmax_ltar: 0.5
+  lm_min: 115
+  laf: 1.37
+  gdd: 100
+  pop: 8
 init:
-  poprow: 7.5
   rowsp: 75
-  plant_density: 8
   rowang: 0
   x_seed: 0
   y_seed: 195
@@ -50,7 +37,7 @@ init:
   eomult: 0.5
   co2: -1
   soil: false
-  start_date: 04/01/
+  start_date: 03/15/
   plant_date: 04/01/
   end_date: 12/31/
   timestep: 60
@@ -85,7 +72,7 @@ management:
   appl_num: 2
   appl_time1: 
   appl_time2: 
-  appl_mg: 100
+  appl_mg: 37.5
   appl_depth: 5
   residue_C: 0
   residue_N: 0
