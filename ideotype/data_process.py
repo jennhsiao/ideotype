@@ -1,6 +1,7 @@
 """Compilation of functions used for data processing."""
 import os
 import yaml
+from itertools import compress
 
 import pandas as pd
 import numpy as np
@@ -8,7 +9,7 @@ import numpy as np
 from ideotype.utils import get_filelist
 
 
-def read_sims(dirct_sims):
+def read_sims(path):
     """
     Read and condense all maizsim raw output.
 
@@ -31,11 +32,18 @@ def read_sims(dirct_sims):
         df_issues : df recording failed site-year recordings.
 
     """
+    fpaths = get_filelist(path)
+
+    fpaths_select = [
+        (fpath.split('/')[-1].split('_')[0] == 'out1') and
+        (fpath.split('/')[-1].split('.')[-1] == 'txt') for fpath in fpaths]
+    fpath_sims = list(compress(fpaths, fpaths_select))
+
     cols = ['year', 'cvar', 'site', 'date', 'jday', 'time',
             'leaves', 'mature_lvs', 'drop_lvs', 'LA', 'LA_dead', 'LAI',
             'RH', 'leaf_WP', 'PFD', 'Solrad',
-            'temp_soil', 'temp_air', 'temp_can', 'ET_dmd', 'ET_suply',
-            'Pn', 'Pg', 'resp', 'av_gs',
+            'temp_soil', 'temp_air', 'temp_can',
+            'ET_dmd', 'ET_suply', 'Pn', 'Pg', 'resp', 'av_gs',
             'LAI_sunlit', 'LAI_shaded',
             'PFD_sunlit', 'PFD_shaded',
             'An_sunlit', 'An_shaded',
@@ -50,38 +58,35 @@ def read_sims(dirct_sims):
     data_all = []
     issues = []
 
-    sim_files = get_filelist(dirct_sims)
-
-    for sim_fname in sim_files:
+    for fpath_sim in fpath_sims:
         # extrating basic file info
-        year = int(sim_fname.split('/')[-3])
-        site = sim_fname.split('/')[-1].split('_')[1]
-        cvar = int(sim_fname.split('/')[-1].split('_')[-1].split('.')[0])
+        year = int(fpath_sim.split('/')[-3])
+        site = fpath_sim.split('/')[-1].split('_')[1]
+        cvar = int(fpath_sim.split('/')[-1].split('_')[-1].split('.')[0])
 
         # reading in file and setting up structure
-        with open(sim_fname, 'r') as f:
+        with open(fpath_sim, 'r') as f:
+            f.seek(0, os.SEEK_END)  # move pointer to end of file
+            # * f.seek(offset, whence)
+            # * Position computed from adding offset to a reference point,
+            # * the reference point is selected by the whence argument.
+            # * os.SEEK_SET (=0)
+            # * os.SEEK_CUR (=1)
+            # * os.SEEK_END (=2)
+
             try:
-                f.seek(0, os.SEEK_END)
-                # moving the pointer to the very end of the file
-                # * f.seek(offset, whence)
-                # * Position computed from adding offset to a reference point,
-                # * the reference point is selected by the whence argument.
-                # * os.SEEK_SET (=0)
-                # * os.SEEK_CUR (=1)
-                # * os.SEEK_END (=2)
+                # find current position (now at the end of file)
+                # and count back a few positions and read forward from there
                 f.seek(f.tell() - 3000, os.SEEK_SET)
-                # finding the current position -
-                # (should be at the very end of the file)
-                # and counting back a few positions
-                # and reading forward from there
                 # * f.tell() returns an integer giving the file object’s
                 # * current position in the file represented as number of bytes
                 # * from the beginning of the file when in binary mode
                 # * and an opaque number when in text mode.
+
                 for line in f:
                     f_content = f.readlines()
 
-                if len(f_content[-1]) == 523:  # normal output length
+                if len(f_content[-1]) == 523:  # normal character length
                     sim_output = list(f_content[-1].split(','))
                     data = [i.strip() for i in sim_output]
                     data.insert(0, year)
@@ -90,11 +95,10 @@ def read_sims(dirct_sims):
                     data_all.append(data)
 
                 else:
-                    issues.append(
-                        sim_fname.split('/')[-1] + str(', len_error'))
+                    issues.append(fpath_sim)
 
             except ValueError:
-                issues.append(sim_fname.split('/')[-1] + str(', value_error'))
+                issues.append(fpath_sim.split('/')[-1] + str(', value_error'))
 
     df_sims = pd.DataFrame(data_all, columns=cols)
     df_sims.dm_total = df_sims.dm_total.astype(float)
