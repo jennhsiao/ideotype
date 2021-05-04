@@ -2,6 +2,7 @@
 import os
 import yaml
 from itertools import compress
+from datetime import datetime
 
 import pandas as pd
 import numpy as np
@@ -173,6 +174,45 @@ def read_data(yamlfile):
     df_matured = df_all[df_all.note == '"Matured"']
 
     return(df_sims, df_sites, df_wea, df_params, df_all, df_matured)
+
+
+def parse_mature(df_all):
+    """
+    Further parse maturity in sims.
+
+    Parameters
+    ----------
+    df_all : pd.DataFrame
+        df_all processed through read_data()
+
+    Returns
+    -------
+    df_extended : pd.DataFrame
+        Sims that ended without reaching maturity because
+        simulations extended out of growing season 11/29 cut off.
+    df_stuck : pd.DataFrame
+        Sims that ended without reaching maturity because
+        simulations took longer than time cut off.
+
+    """
+    # Filter out non-matured sims
+    df_notmature = df_all[df_all.note != '"Matured"']
+    end_dates = df_notmature.date
+
+    # Extended sims
+    # 11/29 = jday 333 or 334 depending on leap year or not
+    df_select_extended = [int(
+        datetime.strptime(
+            date, '%m/%d/%Y').strftime('%j')) >= 333 for date in end_dates]
+    df_extended = df_notmature[df_select_extended]
+
+    # Stuck sims
+    df_select_stuck = [int(
+        datetime.strptime(
+            date, '%m/%d/%Y').strftime('%j')) < 333 for date in end_dates]
+    df_stuck = df_notmature[df_select_stuck]
+
+    return (df_extended, df_stuck)
 
 
 def agg_sims(df, groups, how):
