@@ -525,52 +525,51 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
             str2 = f'cultivar: {cvar}\n'
             str3 = ('juv_leaf\tdaylen_sen\tstaygreen\t'
                     'LM_min\tRmax_LTAR\tRmax_LTIR\tphyllo\n')
-            str4 = '\n'
-            str5 = (f'{juv_leaves:.0f}\t'
+            str4 = (f'{juv_leaves:.0f}\t'
                     f'{dict_setup["cultivar"]["daylen_sen"]:.0f}\t'
                     f'{staygreen:.2f}\t'
                     f'{lm_min:.0f}\t'
                     f'{rmax_ltar:.2f}\t'
                     f'{rmax_ltar*2:.2f}\t'
                     f'{dict_setup["cultivar"]["phyllo"]:.0f}\n')
-            str6 = '[SoilRoot]\n'
-            str7 = '*** water uptake parameter information ***\n'
-            str8 = 'RRRM\tRRRY\tRVRL\n'
-            str9 = (f'{dict_setup["cultivar"]["rrrm"]:.2f}\t'
+            str5 = '[SoilRoot]\n'
+            str6 = '*** water uptake parameter information ***\n'
+            str7 = 'RRRM\tRRRY\tRVRL\n'
+            str8 = (f'{dict_setup["cultivar"]["rrrm"]:.2f}\t'
                     f'{dict_setup["cultivar"]["rrry"]:.2f}\t'
                     f'{dict_setup["cultivar"]["rvrl"]:.2f}\n')
-            str10 = 'ALPM\tALPY\tRTWL\tRtMinWtPerUnitArea\n'
-            str11 = (f'{dict_setup["cultivar"]["alpm"]:.2f}\t'
+            str9 = 'ALPM\tALPY\tRTWL\tRtMinWtPerUnitArea\n'
+            str10 = (f'{dict_setup["cultivar"]["alpm"]:.2f}\t'
                      f'{dict_setup["cultivar"]["alpy"]:.2f}\t'
                      f'{dict_setup["cultivar"]["rtwl"]:.7f}\t'
                      f'{dict_setup["cultivar"]["rtminwtperunitarea"]:.4f}\n')
-            str12 = '[RootDiff]\n'
-            str13 = '*** root mover parameter information ***\n'
-            str14 = 'EPSI\tlUpW\tCourMax\n'
-            str15 = (f'{dict_setup["cultivar"]["epsi"]:.0f}\t'
+            str11 = '[RootDiff]\n'
+            str12 = '*** root mover parameter information ***\n'
+            str13 = 'EPSI\tlUpW\tCourMax\n'
+            str14 = (f'{dict_setup["cultivar"]["epsi"]:.0f}\t'
                      f'{dict_setup["cultivar"]["lupw"]:.0f}\t'
                      f'{dict_setup["cultivar"]["courmax"]:.0f}\n')
-            str16 = 'Diffusivity and geotrophic velocity\n'
-            str17 = (f'{dict_setup["cultivar"]["diffgeo1"]:.1f}\t'
+            str15 = 'Diffusivity and geotrophic velocity\n'
+            str16 = (f'{dict_setup["cultivar"]["diffgeo1"]:.1f}\t'
                      f'{dict_setup["cultivar"]["diffgeo2"]:.1f}\t'
                      f'{dict_setup["cultivar"]["diffgeo3"]:.1f}\n')
-            str18 = '[SoilNitrogen]\n'
-            str19 = '*** nitrogen root uptake parameter infromation ***\n'
-            str20 = 'ISINK\tRroot\n'
-            str21 = (f'{dict_setup["cultivar"]["isink"]:.0f}\t'
+            str17 = '[SoilNitrogen]\n'
+            str18 = '*** nitrogen root uptake parameter infromation ***\n'
+            str19 = 'ISINK\tRroot\n'
+            str20 = (f'{dict_setup["cultivar"]["isink"]:.0f}\t'
                      f'{dict_setup["cultivar"]["rroot"]:.2f}\n')
-            str22 = 'ConstI\tConstk\tCmin0\n'
-            str23 = (f'{dict_setup["cultivar"]["consti_1"]:.2f}\t'
+            str21 = 'ConstI\tConstk\tCmin0\n'
+            str22 = (f'{dict_setup["cultivar"]["consti_1"]:.2f}\t'
                      f'{dict_setup["cultivar"]["constk_1"]:.2f}\t'
                      f'{dict_setup["cultivar"]["cmin0_1"]:.2f}\n')
-            str24 = (f'{dict_setup["cultivar"]["consti_2"]:.2f}\t'
+            str23 = (f'{dict_setup["cultivar"]["consti_2"]:.2f}\t'
                      f'{dict_setup["cultivar"]["constk_2"]:.2f}\t'
                      f'{dict_setup["cultivar"]["cmin0_2"]:.2f}\n')
-            str25 = '[Gas_Exchange Species Parameters]\n'
-            str26 = '*** for photosynthesis calculations ***\n'
-            str27 = ('EaVP\tEaVc\tEaj\tHj\tSj\t'
+            str24 = '[Gas_Exchange Species Parameters]\n'
+            str25 = '*** for photosynthesis calculations ***\n'
+            str26 = ('EaVP\tEaVc\tEaj\tHj\tSj\t'
                      'Vpm25\tVcm25\tJm25\tRd25\tEar\tg0\tg1\n')
-            str28 = (f'{dict_setup["cultivar"]["eavp"]:.0f}\t'
+            str27 = (f'{dict_setup["cultivar"]["eavp"]:.0f}\t'
                      f'{dict_setup["cultivar"]["eavc"]:.0f}\t'
                      f'{dict_setup["cultivar"]["eaj"]:.0f}\t'
                      f'{dict_setup["cultivar"]["hj"]:.0f}\t'
@@ -582,9 +581,9 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
                      f'{dict_setup["cultivar"]["ear"]:.0f}\t'
                      f'{dict_setup["cultivar"]["g0"]:.2f}\t'
                      f'{g1:.2f}\n')
-            str29 = '*** second set of parameters for photosynthesis ***\n'
-            str30 = 'f\tscatt\tKc_25\tKo_25\tKp_25\tgbs\tgi\tgamma1\n'
-            str31 = (f'{dict_setup["cultivar"]["f"]:.2f}\t'
+            str28 = '*** second set of parameters for photosynthesis ***\n'
+            str29 = 'f\tscatt\tKc_25\tKo_25\tKp_25\tgbs\tgi\tgamma1\n'
+            str30 = (f'{dict_setup["cultivar"]["f"]:.2f}\t'
                      f'{dict_setup["cultivar"]["scatt"]:.2f}\t'
                      f'{dict_setup["cultivar"]["Kc_25"]:.0f}\t'
                      f'{dict_setup["cultivar"]["Ko_25"]:.0f}\t'
@@ -592,34 +591,40 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
                      f'{dict_setup["cultivar"]["gbs"]:.3f}\t'
                      f'{dict_setup["cultivar"]["gi"]:.2f}\t'
                      f'{dict_setup["cultivar"]["gamma1"]:.2f}\n')
-            str32 = '*** third set of photosynthesis parameters ***\n'
-            str33 = ('gamma_gsw\tsensitivity (sf)\t'
+            str31 = '*** third set of photosynthesis parameters ***\n'
+            str32 = ('gamma_gsw\tsensitivity (sf)\t'
                      'ref_potential (phyla, bars)\t'
                      'stoma_ratio\twidfct\tleaf_wid (m)\n')
-            str34 = (f'{dict_setup["cultivar"]["gamma_gsw"]:.1f}\t'
+            str33 = (f'{dict_setup["cultivar"]["gamma_gsw"]:.1f}\t'
                      f'{mod_intercept+phyf*mod_coef:.1f}\t'
                      f'{phyf:.1f}\t'
                      f'{dict_setup["cultivar"]["stomata_ratio"]:.1f}\t'
                      f'{dict_setup["cultivar"]["widfct"]:.2f}\t'
                      f'{dict_setup["cultivar"]["leaf_wid"]:.2f}\n')
-            str35 = ('**** seconday parameters for '
-                     'miscelanioius equations ****\n')
-            str36 = 'Ci/Ca\tSC_param\tBLC_param\n'
-            str37 = (f'{dict_setup["cultivar"]["cica_ratio"]:.1f}\t'
+            str34 = ('*** seconday parameters for '
+                     'miscelanioius equations ***\n')
+            str35 = 'Ci/Ca\tSC_param\tBLC_param\n'
+            str36 = (f'{dict_setup["cultivar"]["cica_ratio"]:.1f}\t'
                      f'{dict_setup["cultivar"]["SC_param"]:.2f}\t'
                      f'{dict_setup["cultivar"]["BLC_param"]:.1f}\n')
-            str38 = '*** Q10 params for respiration and leaf senescence ***\n'
-            str39 = 'Q10MR\tQ10LeafSenescence\n'
-            str40 = (f'{dict_setup["cultivar"]["Q10MR"]:.1f}\t'
+            str37 = '*** Q10 params for respiration and leaf senescence ***\n'
+            str38 = 'Q10MR\tQ10LeafSenescence\n'
+            str39 = (f'{dict_setup["cultivar"]["Q10MR"]:.1f}\t'
                      f'{dict_setup["cultivar"]["Q10Senescence"]:.1f}\n')
-            str41 = '*** Leaf morphology factors ***\n'
-            str42 = 'LAF\tWLRATIO\tA_LW\n'
-            str43 = (f'{laf:.2f}\t'
+            str40 = '*** Leaf rank and morphology parameters ***\n'
+            str41 = 'a1\tb1\ta2\tb2\n'
+            str42 = (f'{dict_setup["cultivar"]["a1"]:.3f}\t'
+                     f'{dict_setup["cultivar"]["b1"]:.2f}\t'
+                     f'{dict_setup["cultivar"]["a2"]:.3f}\t'
+                     f'{dict_setup["cultivar"]["b2"]:.3f}\n')
+            str43 = '*** Leaf morphology factors ***\n'
+            str44 = 'LAF\tWLRATIO\tA_LW\n'
+            str45 = (f'{laf:.2f}\t'
                      f'{dict_setup["cultivar"]["WLRATIO"]:.3f}\t'
                      f'{dict_setup["cultivar"]["A_LW"]:.2f}\n')
-            str44 = '*** temperature factors for growth ***\n'
-            str45 = 'T_base\tT_opt\tT_ceil\tT_opt_GDD\n'
-            str46 = (f'{dict_setup["cultivar"]["T_base"]:.1f}\t'
+            str46 = '*** temperature factors for growth ***\n'
+            str47 = 'T_base\tT_opt\tT_ceil\tT_opt_GDD\n'
+            str48 = (f'{dict_setup["cultivar"]["T_base"]:.1f}\t'
                      f'{dict_setup["cultivar"]["T_opt"]:.1f}\t'
                      f'{dict_setup["cultivar"]["T_ceil"]:.1f}\t'
                      f'{dict_setup["cultivar"]["T_opt_GDD"]:.1f}\n')
@@ -629,7 +634,7 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
                        str17, str18, str19, str20, str21, str22, str23, str24,
                        str25, str26, str27, str28, str29, str30, str31, str32,
                        str33, str34, str35, str36, str37, str38, str39, str40,
-                       str41, str42, str43, str44, str45, str46]
+                       str41, str42, str43, str44, str45, str46, str47, str48]
             cvar_txt.writelines(strings)
 
     else:
