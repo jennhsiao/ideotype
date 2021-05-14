@@ -113,6 +113,43 @@ def CC_VPD(temp, rh):
     return(vpd)
 
 
+def CC_RH(temp, temp_dew):
+    """
+    Calculate RH with temperature and dew point temperatuer.
+
+    Based on Clausius-Clapeyron relation.
+
+    Parameter
+    ---------
+    temp : Float
+        Temperature in ˚C.
+    temp_dew : Float
+        Dew point temperature in ˚C.
+
+    Returns
+    -------
+    RH : Float
+        Relative humidity in fraction between 0-1.
+
+    """
+    # constant parameters
+    Tref = 273.15  # reference temperature
+    Es_Tref = float(6.11)  # saturation vapor pressure at Tref (mb)
+    Lv = 2.5e+06  # latent heat of vaporation (J/kg)
+    Rv = 461  # gas constant for moist air (J/K*kg)
+
+    # transformed temperature inputs
+    Tair = temp + Tref
+    Tdew = temp_dew + Tref
+
+    # Clausius-Clapeyron relation
+    es = Es_Tref*np.exp((Lv/Rv)*(1/Tref - 1/Tair))
+    e = Es_Tref*np.exp((Lv/Rv)*(1/Tref - 1/Tdew))
+    rh = round(e/es, 4)
+
+    return(rh)
+
+
 def find_zone(site, siteinfo):
     """
     Find time zone for specific sites.
