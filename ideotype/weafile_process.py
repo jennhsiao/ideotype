@@ -238,12 +238,14 @@ def read_wea(year_start, year_end):
         df_precip_sites.columns = siteid_all
         df_precip_sites.sort_index(axis=1, inplace=True)
 
-        # Concatenate single-year data to DataFrame for all years
-        df_temp_all = pd.concat([df_temp_all, df_temp_sites], sort=True)
-        df_rh_all = pd.concat([df_rh_all, df_rh_sites], sort=True)
-        df_precip_all = pd.concat([df_precip_all, df_precip_sites], sort=True)
-
-    return(df_temp_all, df_rh_all, df_precip_all)
+        # Output data for each year
+        # TODO: add some check to see if file exists already first
+        df_temp_sites.to_csv(
+            f'/home/disk/eos8/ach315/upscale/test/temp_{year}.csv')
+        df_rh_sites.to_csv(
+            f'/home/disk/eos8/ach315/upscale/test/rh_{year}.csv')
+        df_precip_sites.to_csv(
+            f'/home/disk/eos8/ach315/upscale/test/precip_{year}.csv')
 
 
 def read_solrad(year_start, year_end):
@@ -264,6 +266,22 @@ def read_solrad(year_start, year_end):
 
     """
     pass
+
+
+def combine_wea():
+    """
+    Combine weather data from all individual years.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    """
+    df_temp_all = pd.concat(map(pd.read_csv, glob.glob('data/*.csv')))
+
+    return(df_temp_all)
 
 
 def summarize_wea():
