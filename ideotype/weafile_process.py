@@ -27,9 +27,9 @@ def read_wea(year_start, year_end):
 
     Returns
     -------
-    - temp_all.csv  # TODO: is this the form I want to return?
-    - precip_all.csv
-    - rh_all.csv
+    df_temp_all : pd.DataFrame
+    df_rh_all : pd.DataFrame
+    df_precip_all : pd.DataFrame
 
     """
     # setting up np.read_fwf arguments
@@ -54,7 +54,7 @@ def read_wea(year_start, year_end):
     # Read in info on conversion between WBAN & USAF id numbering system
     fpath_id_conversion = os.path.join(DATA_PATH,
                                        *dict_fpaths['id_conversion'])
-    df_stations = pd.read_csv(fpath_id_conversion)
+    df_stations = pd.read_csv(fpath_id_conversion, header=None, dtype=str)
     df_stations.columns = ['WBAN', 'USAF']
 
     # Set up years
@@ -65,6 +65,11 @@ def read_wea(year_start, year_end):
 
     # Set up date parser for pandas
     dateparser = lambda dates: [datetime.strptime(d, '%Y%m%d%H') for d in dates]  # noqa
+
+    # Initiate dataframes for all data
+    df_temp_all = pd.DataFrame()
+    df_rh_all = pd.DataFrame()
+    df_precip_all = pd.DataFrame()
 
     # Loop through years to read in data
     for year in years:
@@ -77,9 +82,12 @@ def read_wea(year_start, year_end):
                               f'{season_end + str(year)} 23:00:00',
                               freq='1H')
 
-        df_temp_sites = pd.DataFrame(index=times)  # TODO: try arrays instead?
-        df_rh_sites = pd.DataFrame(index=times)
-        df_precip_sites = pd.DataFrame(index=times)
+        arr_temp_sites = np.zeros(shape=(len(times),))
+        arr_rh_sites = np.zeros(shape=(len(times),))
+        arr_precip_sites = np.zeros(shape=(len(times),))
+
+        # initiate empty list to store all site ids (USAF)
+        siteid_all = []
 
         # For years 1961-1990
         if year < 1991:
@@ -123,12 +131,14 @@ def read_wea(year_start, year_end):
 
         for name in fnames:
             # site_id
-            siteid_wban = name.split('/')[-1].split('-')[0]
-            siteid_usaf = name.split('/')[-1].split('-')[1]
+            siteid_usaf = name.split('/')[-1].split('-')[0]
+            siteid_wban = name.split('/')[-1].split('-')[1]
 
             if siteid_usaf == '999999':
                 siteid_usaf = df_stations.query(
-                    f'WBAN == {siteid_wban}').USAF.item()
+                    f'WBAN == "{siteid_wban}"').USAF.item()
+
+            siteid_all.append(siteid_usaf)
 
             # Read in fixed width weather data
             df = pd.read_fwf(name,
@@ -144,8 +154,9 @@ def read_wea(year_start, year_end):
             # Remove duplicated hours, keeping only first occurrence
             # keep = 'first': marks duplicate as True
             # except for first occurrence
-            df_index = df.index.drop_duplicates(keep='first')
-            df = df.loc[df_index]
+            # ~: not selecting for True ends up selecting
+            # for the non-duplicated indexes
+            df = df[~df.index.duplicated(keep='first')]
 
             # Add in missing time values
             # Correct for leap years
@@ -206,18 +217,33 @@ def read_wea(year_start, year_end):
             if df[df.rh > 100].rh.sum() > 100:
                 print('rh > 100: ', year, name)
 
-            # combining weather data into individual dataframes
-            df_temp = pd.DataFrame({siteid_usaf: df.temp}, index=times)
-            df_rh = pd.DataFrame({siteid_usaf: df.rh}, index=times)
-            df_precip = pd.DataFrame(
-                {siteid_usaf: df.precip_perhr}, index=times)
+            arr_temp_sites = np.vstack([arr_temp_sites, df.temp])
+            arr_rh_sites = np.vstack([arr_rh_sites, df.rh])
+            arr_precip_sites = np.vstack([arr_precip_sites, df.precip])
 
-            df_temp_sites = pd.concat(
-                [df_temp_sites, df_temp], axis=1, sort=True)
-            df_rh_sites = pd.concat(
-                [df_rh_sites, df_rh], axis=1, sort=True)
-            df_precip_sites = pd.concat(
-                [df_precip_sites, df_precip], axis=1, sort=True)
+        # Convert all data for single year into pd.DataFrame
+        df_temp_sites = pd.DataFrame(arr_temp_sites.transpose(), index=times)
+        df_temp_sites.drop(df_temp_sites.columns[0], axis=1, inplace=True)
+        df_temp_sites.columns = siteid_all
+        df_temp_sites.sort_index(axis=1, inplace=True)
+
+        df_rh_sites = pd.DataFrame(arr_rh_sites.transpose(), index=times)
+        df_rh_sites.drop(df_rh_sites.columns[0], axis=1, inplace=True)
+        df_rh_sites.columns = siteid_all
+        df_rh_sites.sort_index(axis=1, inplace=True)
+
+        df_precip_sites = pd.DataFrame(
+            arr_precip_sites.transpose(), index=times)
+        df_precip_sites.drop(df_precip_sites.columns[0], axis=1, inplace=True)
+        df_precip_sites.columns = siteid_all
+        df_precip_sites.sort_index(axis=1, inplace=True)
+
+        # Concatenate single-year data to DataFrame for all years
+        df_temp_all = pd.concat([df_temp_all, df_temp_sites], sort=True)
+        df_rh_all = pd.concat([df_rh_all, df_rh_sites], sort=True)
+        df_precip_all = pd.concat([df_precip_all, df_precip_sites], sort=True)
+
+    return(df_temp_all, df_rh_all, df_precip_all)
 
 
 def read_solrad(year_start, year_end):
