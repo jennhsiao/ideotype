@@ -57,6 +57,9 @@ def read_wea(year_start, year_end):
     df_stations = pd.read_csv(fpath_id_conversion, header=None, dtype=str)
     df_stations.columns = ['WBAN', 'USAF']
 
+    # Set up basepath
+    basepath = dict_fpaths['basepath']
+
     # Set up years
     if year_start == year_end:
         years = [year_start]
@@ -66,14 +69,13 @@ def read_wea(year_start, year_end):
     # Set up date parser for pandas
     dateparser = lambda dates: [datetime.strptime(d, '%Y%m%d%H') for d in dates]  # noqa
 
-    # Initiate dataframes for all data
-    df_temp_all = pd.DataFrame()
-    df_rh_all = pd.DataFrame()
-    df_precip_all = pd.DataFrame()
-
     # Loop through years to read in data
     for year in years:
         print(year)  # track progress
+
+        # Check first if file exists already
+        if os.path.isfile(os.path.join(basepath, f'temp_{year}.csv')):
+            raise ValueError(f'temp_{year}.csv exists!')
 
         # Set up default timeline
         season_start = '02-01-'
@@ -172,10 +174,10 @@ def read_wea(year_start, year_end):
                     'ADDAA1').str.get(1).str.slice(2, 6).astype(float)
             df.precip_quality = df[
                 df['precip'].str.find('ADDAA1') != -1]['precip'].str.split(
-                    'ADDAA1').str.get(1).str.slice(7, 8).astype(float)
+                    'ADDAA1').str.get(1).str.slice(7, 8)
 
             # Filter out weather data based on quality code (data manual p.26)
-            # Remove data with:
+            # Masking unqualified data with NANs:
             # code 3 (Erroneous) &
             # code 7 (Erroneous, data originated from an NCEI data source)
             # *** temp
@@ -239,13 +241,9 @@ def read_wea(year_start, year_end):
         df_precip_sites.sort_index(axis=1, inplace=True)
 
         # Output data for each year
-        # TODO: add some check to see if file exists already first
-        df_temp_sites.to_csv(
-            f'/home/disk/eos8/ach315/upscale/test/temp_{year}.csv')
-        df_rh_sites.to_csv(
-            f'/home/disk/eos8/ach315/upscale/test/rh_{year}.csv')
-        df_precip_sites.to_csv(
-            f'/home/disk/eos8/ach315/upscale/test/precip_{year}.csv')
+        df_temp_sites.to_csv(os.path.join(basepath, f'temp_{year}.csv'))
+        df_rh_sites.to_csv(os.path.join(basepath, f'rh_{year}.csv'))
+        df_precip_sites.to_csv(os.path.join(basepath, f'precip_{year}.csv'))
 
 
 def read_solrad(year_start, year_end):
@@ -268,7 +266,7 @@ def read_solrad(year_start, year_end):
     pass
 
 
-def combine_wea():
+def combine_wea(basepath):
     """
     Combine weather data from all individual years.
 
@@ -279,7 +277,11 @@ def combine_wea():
     -------
 
     """
-    df_temp_all = pd.concat(map(pd.read_csv, glob.glob('data/*.csv')))
+    df_temp_all = pd.concat(
+        map(pd.read_csv, glob.glob(os.path.join(basepath, 'temp_*.csv'))))
+    df_temp_all.rename(columns={'Unnamed: 0': 'datetime'}, inplace=True)
+    df_temp_all.set_index('datetime', inplace=True)
+    df_temp_all.sort_index(axis=0, inplace=True)
 
     return(df_temp_all)
 
