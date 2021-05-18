@@ -25,12 +25,6 @@ def read_wea(year_start, year_end):
     year_start : int
     year_end : int
 
-    Returns
-    -------
-    df_temp_all : pd.DataFrame
-    df_rh_all : pd.DataFrame
-    df_precip_all : pd.DataFrame
-
     """
     # setting up np.read_fwf arguments
     colnames = ['time',
@@ -263,7 +257,170 @@ def read_solrad(year_start, year_end):
     df_solrad
 
     """
-    pass
+    # Read in relevant file paths
+    fpaths_wea = os.path.join(DATA_PATH, 'files', 'filepaths_wea.yml')
+    with open(fpaths_wea) as pfile:
+        dict_fpaths = yaml.safe_load(pfile)
+
+    # Set up basepath
+    basepath = dict_fpaths['basepath']
+
+    # Read in info on conversion between WBAN & USAF id numbering system
+    fpath_id_conversion = os.path.join(DATA_PATH,
+                                       *dict_fpaths['id_conversion'])
+    df_stations = pd.read_csv(fpath_id_conversion, header=None, dtype=str)
+    df_stations.columns = ['WBAN', 'USAF']
+    stations_usaf = df_stations.USAF
+
+    # Set up years
+    if year_start == year_end:
+        years = [year_start]
+    else:
+        years = np.arange(year_start, year_end+1)
+
+    # Dataframe setup for years 1961-1990
+    colnames = ['year', 'month', 'day', 'hour', 'solrad']
+    colspecs = [(1, 3), (4, 6), (7, 9), (10, 12), (23, 27)]
+
+    # Loop through years to read in data
+    for year in years:
+        print(year)  # track progress
+
+        # Check first if file exists already
+        if os.path.isfile(os.path.join(basepath, f'solrad_{year}.csv')):
+            raise ValueError(f'solrad_{year}.csv exists!')
+
+        # Set up default timeline
+        season_start = '02-01-'
+        season_end = '11-30-'
+        datetimes_season = pd.date_range(
+            f'{season_start + str(year)}',
+            f'{season_end + str(year)} 23:00:00', freq='1H')
+
+        # Initiate empty array to store data
+        arr_solrad_sites = np.zeros(shape=len(datetimes_season),)
+
+        # initiate empty list to store all site ids (USAF)
+        siteid_all = []
+
+        # Fetch all file names within year
+        fnames = glob.glob(
+            os.path.join(os.path.expanduser('~'),
+                         'data', 'ISH_NSRD', str(year), '*'))
+
+        # For years 1961-1990
+        if year < 1991:
+            for name in fnames:
+                siteid_wban = name.split('/')[-1].split('_')[0]
+                siteid_usaf = df_stations.query(
+                    f'WBAN == "{siteid_wban}"').USAF.item()
+
+                siteid_all.append(siteid_usaf)
+
+                # Read in fixed-width data
+                df = pd.read_fwf(name,
+                                 skiprows=[0],
+                                 header=None,
+                                 names=colnames,
+                                 colspecs=colspecs)
+
+                # Structure date-time info
+                datetimes = df.apply(lambda row: datetime(
+                    year, row['month'], row['day'], row['hour']-1), axis=1)
+
+                # Fetch solrad - Global Horizontal Radiation (Wh/m2)
+                df_solrad = pd.DataFrame(df.solrad)
+                df_solrad.index = datetimes
+
+                # Remove duplicated hours, keeping only first occurrence
+                # keep = 'first': marks duplicate as True
+                # except for first occurrence
+                # ~: not selecting for True ends up selecting
+                # for the non-duplicated indexes
+                df_solrad = df_solrad[
+                    ~df_solrad.index.duplicated(keep='first')]
+
+                # Add in missing time values
+                # Correct for leap years
+                # Filter only for growing season
+                df_solrad = df_solrad.reindex(datetimes_season,
+                                              fill_value=np.nan)
+
+                # Replace missing data with NaN
+                df_solrad.solrad = df_solrad.replace({9999: np.nan})
+
+                arr_solrad_sites = np.vstack(
+                    [arr_solrad_sites, df_solrad.solrad])
+
+            # Convert all data for single year into pd.DataFrame
+            df_solrad_sites = pd.DataFrame(
+                arr_solrad_sites.transpose(), index=datetimes_season)
+            df_solrad_sites.drop(
+                df_solrad_sites.columns[0], axis=1, inplace=True)
+            df_solrad_sites.columns = siteid_all
+            df_solrad_sites.sort_index(axis=1, inplace=True)
+
+            # Output data for each year
+            df_solrad_sites.to_csv(
+                os.path.join(basepath, f'solrad_{year}.csv'))
+
+        # For years 1991-2010:
+        else:
+            for station in stations_usaf:
+                # Search for specified year-site data
+                fname = glob.glob(os.path.join(
+                    os.path.expanduser('~'),
+                    'data', 'ISH_NSRD', str(year), f'{station}_*.csv'))
+
+                if len(fname) == 1:
+                    # Read in file
+                    df = pd.read_csv(fname[0])
+                else:
+                    print('multiple files!', fname)
+
+                # Format date-time info
+                dates = df['YYYY-MM-DD']
+                hours = df['HH:MM (LST)']
+                hours = [int(hour.split(':')[0])-1 for hour in hours]
+                datetimes = [datetime.strptime(
+                    dates[item] + '-' + str(hours[item]),
+                    '%Y-%m-%d-%H') for item in np.arange(df.shape[0])]
+
+                # Fetch solrad - Global Horizontal Radiation (Wh/m2)
+                df_solrad = pd.DataFrame(df['METSTAT Glo (Wh/m^2)'])
+                df_solrad.index = datetimes
+
+                # Remove duplicated hours, keeping only first occurrence
+                # keep = 'first': marks duplicate as True
+                # except for first occurrence
+                # ~: not selecting for True ends up selecting
+                # for the non-duplicated indexes
+                df_solrad = df_solrad[
+                    ~df_solrad.index.duplicated(keep='first')]
+
+                # Add in missing time values
+                # Correct for leap years
+                # Filter only for growing season
+                df_solrad = df_solrad.reindex(datetimes_season,
+                                              fill_value=np.nan)
+
+                # Replace missing data with NaN
+                df_solrad.solrad = df_solrad.replace({9999: np.nan})
+
+                arr_solrad_sites = np.vstack(
+                    [arr_solrad_sites, df_solrad.solrad])
+
+            # Convert all data for single year into pd.DataFrame
+            df_solrad_sites = pd.DataFrame(
+                arr_solrad_sites.transpose(), index=datetimes_season)
+            df_solrad_sites.drop(
+                df_solrad_sites.columns[0], axis=1, inplace=True)
+            df_solrad_sites.columns = siteid_all
+            df_solrad_sites.sort_index(axis=1, inplace=True)
+
+            # Output data for each year
+            df_solrad_sites.to_csv(
+                os.path.join(basepath, f'solrad_{year}.csv'))
 
 
 def combine_wea(basepath):
@@ -277,13 +434,24 @@ def combine_wea(basepath):
     -------
 
     """
-    df_temp_all = pd.concat(
-        map(pd.read_csv, glob.glob(os.path.join(basepath, 'temp_*.csv'))))
-    df_temp_all.rename(columns={'Unnamed: 0': 'datetime'}, inplace=True)
-    df_temp_all.set_index('datetime', inplace=True)
-    df_temp_all.sort_index(axis=0, inplace=True)
+    # initiate empty dataframes
+    df_temp = pd.DataFrame()
+    df_rh = pd.DataFrame()
+    df_precip = pd.DataFrame()
+    df_solrad = pd.DataFrame()
 
-    return(df_temp_all)
+    dfs = [df_temp, df_rh, df_precip, df_solrad]
+    csv_files = ['temp_*.csv', 'rh_*.csv', 'precip_*.csv', 'solrad_*.csv']
+
+    for item, csvs in enumerate(csv_files):
+        df = pd.concat(
+            map(pd.read_csv, glob.glob(os.path.join(basepath, csvs))))
+        df.rename(columns={'Unnamed: 0': 'datetime'}, inplace=True)
+        df.set_index('datetime', inplace=True)
+        df.sort_index(axis=0, inplace=True)
+        dfs[item] = df
+
+    return()
 
 
 def summarize_wea():
