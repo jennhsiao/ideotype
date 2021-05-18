@@ -96,7 +96,7 @@ cultivar:
   wa: 1
   wr: 2
   wb: 10
-  isink: 0
+  isink: 1
   rroot: 0.017
   consti_1: 35.0
   constk_1: 0.50
@@ -131,6 +131,10 @@ cultivar:
   BLC_param: 1.36
   Q10MR: 2.0
   Q10Senescence: 2.0
+  a1: -10.61
+  b1: 0.25
+  a2: -5.99
+  b2: 0.27
   WLRATIO: 0.106
   A_LW: 0.75
   T_base: 8.0
