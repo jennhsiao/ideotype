@@ -19,6 +19,7 @@ def read_wea(year_start, year_end):
     - Data source: NOAA Integrated Surface Hourly Database
     - Link: https://www.ncdc.noaa.gov/isd
     - Weather data: temperature, RH, precipitation
+    - Output csv files stored: ~/upscale/weadata/process/
 
     Parameters
     ----------
@@ -253,15 +254,26 @@ def read_solrad(year_start, year_end):
 
     - Data source: NSRDB
     - Source: https://nsrdb.nrel.gov/about/u-s-data.html
+    - METSTAT Glo (Wh/m2):
+      Total amount of direct and diffuse solar radiation (METSTAT-modeled)
+      received on a horizontal surface during the 60-minute period
+      ending at the timestamp (refer to NSRDB data manla p.15 Table 3)
+    - Output csv files stored: ~/upscale/weadata/process/
+
+    * note:
+    For years 1991-2010, only select data from class 1
+    (refer to NSRDB manual p.7-8 for more details)
+    - class 1: have complete period of record of 1991-2010.
+    - class 2: have complete period of record but with
+      significant periods of interpolated, filler,
+      or otherwise low-quality input data for solar models.
+    - class 3: have have some gaps in the period of record
+      but have at least 3 years of data.
 
     Parameters
     ----------
     year_start : int
     year_end : int
-
-    Returns
-    -------
-    df_solrad
 
     """
     # Read in relevant file paths
@@ -445,12 +457,9 @@ def combine_wea(basepath):
         path where all weather data csv files are stored.
 
     """
-    csv_files = ['temp_*.csv', 'rh_*.csv', 
-                 #'precip_*.csv', 
-                 'solrad_*.csv']
+    csv_files = ['temp_*.csv', 'rh_*.csv', 'precip_*.csv', 'solrad_*.csv']
     csv_names = ['temp_all.csv', 'rh_all.csv',
-                 #'precip_all.csv', 
-                 'solrad_all.csv']
+                 'precip_all.csv', 'solrad_all.csv']
 
     for csvs, csv_name in zip(csv_files, csv_names):
         print(csv_name)
@@ -458,13 +467,10 @@ def combine_wea(basepath):
         df_all = pd.concat([pd.read_csv(name, index_col=0) for name in fnames])
         df_all.sort_index(axis=1, inplace=True)
 
-        print(df_all.head())
-        print(df_all.tail())
-
-#        if os.path.isfile(os.path.join(basepath, csv_name)):
-#            print(f'{csv_name} exists already!')
-#        else:
-#            df_all.to_csv(os.path.join(basepath, csv_name))
+        if os.path.isfile(os.path.join(basepath, csv_name)):
+            print(f'{csv_name} exists already!')
+        else:
+            df_all.to_csv(os.path.join(basepath, csv_name))
 
 
 def summarize_wea():
