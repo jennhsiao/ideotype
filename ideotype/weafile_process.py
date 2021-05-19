@@ -303,13 +303,13 @@ def read_solrad(year_start, year_end):
         # initiate empty list to store all site ids (USAF)
         siteid_all = []
 
-        # Fetch all file names within year
-        fnames = glob.glob(
-            os.path.join(os.path.expanduser('~'),
-                         'data', 'ISH_NSRD', str(year), '*'))
-
         # For years 1961-1990
         if year < 1991:
+            # Fetch all file names within year
+            fnames = glob.glob(
+                os.path.join(os.path.expanduser('~'),
+                             'data', 'ISH_NSRD', str(year), '*'))
+
             for name in fnames:
                 siteid_wban = name.split('/')[-1].split('_')[0]
                 siteid_usaf = df_stations.query(
@@ -347,7 +347,7 @@ def read_solrad(year_start, year_end):
                                               fill_value=np.nan)
 
                 # Replace missing data with NaN
-                df_solrad.solrad = df_solrad.replace({9999: np.nan})
+                df_solrad.replace({9999: np.nan}, inplace=True)
 
                 arr_solrad_sites = np.vstack(
                     [arr_solrad_sites, df_solrad.solrad])
@@ -375,6 +375,8 @@ def read_solrad(year_start, year_end):
                 if len(fname) == 1:
                     # Read in file
                     df = pd.read_csv(fname[0])
+                    siteid_all.append(station)
+
                 else:
                     print('multiple files!', fname)
 
@@ -388,6 +390,7 @@ def read_solrad(year_start, year_end):
 
                 # Fetch solrad - Global Horizontal Radiation (Wh/m2)
                 df_solrad = pd.DataFrame(df['METSTAT Glo (Wh/m^2)'])
+                df_solrad.columns = ['solrad']
                 df_solrad.index = datetimes
 
                 # Remove duplicated hours, keeping only first occurrence
@@ -405,8 +408,10 @@ def read_solrad(year_start, year_end):
                                               fill_value=np.nan)
 
                 # Replace missing data with NaN
-                df_solrad.solrad = df_solrad.replace({9999: np.nan})
+                df_solrad.replace({9999: np.nan}, inplace=True)
 
+                # Stacking all data as arrays to make sure
+                # all dimensions are correct
                 arr_solrad_sites = np.vstack(
                     [arr_solrad_sites, df_solrad.solrad])
 
