@@ -91,7 +91,7 @@ def read_wea(year_start, year_end):
                 os.path.join(os.path.expanduser('~'),
                              'data', 'ISH', str(year), '*'))
 
-        # For years 1991-2005
+        # For years 1991-2010
         else:
             # Select class1 weather station sites
             fpath_stations_info = os.path.join(DATA_PATH,
@@ -109,6 +109,9 @@ def read_wea(year_start, year_end):
             sites_year = sites_year[
                 sites_year.isin(sites)].reset_index(drop=True)
 
+            # Drop duplicates in sites_year
+            sites_year.drop_duplicates(keep='first', inplace=True)
+
             fnames = []
             for site in sites_year:
                 fname = glob.glob(os.path.join(os.path.expanduser('~'),
@@ -122,8 +125,8 @@ def read_wea(year_start, year_end):
                     fname = glob.glob(os.path.join(os.path.expanduser('~'),
                                                    'data', 'ISH',
                                                    str(year),
-                                                   f'{site}-99999-*'))[0]
-                    fnames.append(fname)
+                                                   f'{site}-99999-*'))
+                    fnames.append(fname[0])
 
         for name in fnames:
             # site_id
@@ -152,6 +155,10 @@ def read_wea(year_start, year_end):
             # except for first occurrence
             # ~: not selecting for True ends up selecting
             # for the non-duplicated indexes
+            # *** note: can't just use df.index.drop_duplicates() since
+            # * that only returns a list of the non-duplicated index
+            # * but you can't just use that to select non-duplicated rows
+            # * since it will also pick up the duplicated rows
             df = df[~df.index.duplicated(keep='first')]
 
             # Add in missing time values
@@ -204,9 +211,9 @@ def read_wea(year_start, year_end):
             df.precip_perhr = df.precip_perhr.replace({np.inf: np.nan})
 
             # Unit conversion
-            df.temp = df.temp/10
-            df.dew_temp = df.dew_temp/10
-            df.precip_perhr = df.precip_perhr/10
+            df.temp = np.round(df.temp/10, 2)
+            df.dew_temp = np.round(df.dew_temp/10, 2)
+            df.precip_perhr = np.round(df.precip_perhr/10, 1)
 
             # calculating RH through Clausius Clapeyron
             df.rh = CC_RH(df.temp, df.dew_temp)*100
@@ -215,7 +222,7 @@ def read_wea(year_start, year_end):
 
             arr_temp_sites = np.vstack([arr_temp_sites, df.temp])
             arr_rh_sites = np.vstack([arr_rh_sites, df.rh])
-            arr_precip_sites = np.vstack([arr_precip_sites, df.precip])
+            arr_precip_sites = np.vstack([arr_precip_sites, df.precip_perhr])
 
         # Convert all data for single year into pd.DataFrame
         df_temp_sites = pd.DataFrame(arr_temp_sites.transpose(), index=times)
@@ -430,33 +437,34 @@ def read_solrad(year_start, year_end):
 
 def combine_wea(basepath):
     """
-    Combine weather data from all individual years.
+    Combine weather data for all years.
 
     Parameters
     ----------
-
-    Returns
-    -------
+    basepath : str
+        path where all weather data csv files are stored.
 
     """
-    # initiate empty dataframes
-    df_temp = pd.DataFrame()
-    df_rh = pd.DataFrame()
-    df_precip = pd.DataFrame()
-    df_solrad = pd.DataFrame()
+    csv_files = ['temp_*.csv', 'rh_*.csv', 
+                 #'precip_*.csv', 
+                 'solrad_*.csv']
+    csv_names = ['temp_all.csv', 'rh_all.csv',
+                 #'precip_all.csv', 
+                 'solrad_all.csv']
 
-    dfs = [df_temp, df_rh, df_precip, df_solrad]
-    csv_files = ['temp_*.csv', 'rh_*.csv', 'precip_*.csv', 'solrad_*.csv']
+    for csvs, csv_name in zip(csv_files, csv_names):
+        print(csv_name)
+        fnames = glob.glob(os.path.join(basepath, csvs))
+        df_all = pd.concat([pd.read_csv(name, index_col=0) for name in fnames])
+        df_all.sort_index(axis=1, inplace=True)
 
-    for item, csvs in enumerate(csv_files):
-        df = pd.concat(
-            map(pd.read_csv, glob.glob(os.path.join(basepath, csvs))))
-        df.rename(columns={'Unnamed: 0': 'datetime'}, inplace=True)
-        df.set_index('datetime', inplace=True)
-        df.sort_index(axis=0, inplace=True)
-        dfs[item] = df
+        print(df_all.head())
+        print(df_all.tail())
 
-    return()
+#        if os.path.isfile(os.path.join(basepath, csv_name)):
+#            print(f'{csv_name} exists already!')
+#        else:
+#            df_all.to_csv(os.path.join(basepath, csv_name))
 
 
 def summarize_wea():
