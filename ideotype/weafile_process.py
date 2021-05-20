@@ -511,34 +511,77 @@ def wea_process(basepath, crthr):
 
     """
     # Read in processed weather data
-    df_temp = pd.read_csv(os.path.join(basepath, 'temp_all.csv'), index_col=0)
-    df_rh = pd.read_csv(os.path.join(basepath, 'rh_all.csv'), index_col=0)
+    df_temp = pd.read_csv(
+        os.path.join(basepath, 'temp_all.csv'),
+        index_col=0, parse_dates=True)
+    df_rh = pd.read_csv(
+        os.path.join(basepath, 'rh_all.csv'),
+        index_col=0, parse_dates=True)
     df_precip = pd.read_csv(
-        os.path.join(basepath, 'precip_all.csv'), index_col=0)
+        os.path.join(basepath, 'precip_all.csv'),
+        index_col=0, parse_dates=True)
     df_solrad = pd.read_csv(
-        os.path.join(basepath, 'solrad_all.csv'), index_col=0)
-
-    # Convert df index back into datetime format
-    df_temp.index = pd.to_datetime(df_temp.index)
-    df_rh.index = pd.to_datetime(df_rh.index)
-    df_precip.index = pd.to_datetime(df_precip.index)
-    df_solrad.idnex = pd.to_datetime(df_solrad.index)
+        os.path.join(basepath, 'solrad_all.csv'),
+        index_col=0, parse_dates=True)
 
     # Identify overlapping stations (columns) between
     # temp/rh/precip dataset & solrad dataset
     cols1 = df_temp.columns
     cols2 = df_solrad.columns
-    cols = list(cols1.intersection(cols2))
+    sites = list(cols1.intersection(cols2))
 
     # Filter for overlapping sites only
-    df_temp = df_temp.loc[:, cols]
-    df_rh = df_rh.loc[:, cols]
-    df_precip = df_precip.loc[:, cols]
-    df_solrad = df_solrad.loc[:, cols]
+    df_temp = df_temp.loc[:, sites]
+    df_rh = df_rh.loc[:, sites]
+    df_precip = df_precip.loc[:, sites]
+    df_solrad = df_solrad.loc[:, sites]
 
+    # Identify site-years that satisfy critical hours for gap-filling
+    dfs = [df_temp, df_precip, df_solrad]
+    final_list = []
+    years = np.arange(1961, 2011)
 
+    for df in dfs:
+        siteyears_all = list()
 
+        for year in years:
+            # Filter out specific year
+            df_year = df[df.index.year == year]
+            siteyears = list()
 
+            for site in sites:
+                # Filter out specific site-year
+                df_siteyear = pd.DataFrame(df_year.loc[:, site])
+
+                # Identify whether data entry is NaN
+                # df.notnull() returns TRUE or FALSE,
+                # astype(int) turns TRUE into 1, and FALSE into 0
+                df_siteyear['present'] = df_siteyear.notnull().astype(int)
+
+                # Calculate cumulative sum based on whether data is
+                # Nan value (1) or not (0)
+                # If there are consecutive missing data,
+                # the cumulative sum for those two rows will be the same,
+                # and can further be used for grouping purposes
+                # to count the number of consecutive missing rows
+                # within each streak of missing data.
+                df_siteyear['cumsum'] = df_siteyear.present.cumsum()
+
+                # Select individual timesteps that have missing data
+                df_siteyear = df_siteyear[df_siteyear.loc[:, site].isnull()]
+
+                # Count the number of consecutive NaNs
+                nans_list = df_siteyear.groupby('cumsum')['cumsum'].count()
+
+                # Only record site-years that have fewer consecutive NaNs
+                # than the critical value set
+                if nans_list[nans_list > crthr].shape[0] == 0:
+                    use_siteyear = str(year) + '_' + str(site)
+                    siteyears.append(use_siteyear)
+
+            siteyears_all.extend(siteyears)
+
+        final_list.extend(siteyears_all)
 
 
 def make_weafile():
