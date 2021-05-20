@@ -498,7 +498,7 @@ def wea_combine(basepath):
             df_all.to_csv(os.path.join(basepath, csv_name))
 
 
-def wea_process(basepath, crthr):
+def wea_preprocess(basepath):
     """
     Process weather data.
 
@@ -506,8 +506,13 @@ def wea_process(basepath, crthr):
     ----------
     basepath: str
         path to access weather data
-    crthr : int
-        critical hours for gap-filling
+
+    Returns
+    -------
+    df_temp
+    df_rh
+    df_precip
+    df_solrad
 
     """
     # Read in processed weather data
@@ -536,10 +541,31 @@ def wea_process(basepath, crthr):
     df_precip = df_precip.loc[:, sites]
     df_solrad = df_solrad.loc[:, sites]
 
+    return(df_temp, df_rh, df_precip, df_solrad)
+
+
+def wea_siteyears(df_temp, df_precip, df_solrad, crthr):
+    """
+    Identify valid site-years that satisfy critical hours for gap-flling.
+
+    Parameters
+    ----------
+    df_temp : pd.DataFrame
+    df_precip : pd.DataFrame
+    df_solrad : pd.DataFrame
+    crthr : int
+        critical hours for gap-filling
+
+    Returns
+    -------
+    siteyears : list
+
+    """
     # Identify site-years that satisfy critical hours for gap-filling
     dfs = [df_temp, df_precip, df_solrad]
     final_list = []
     years = np.arange(1961, 2011)
+    sites = list(df_temp.columns)
 
     for df in dfs:
         siteyears_all = list()
@@ -581,7 +607,25 @@ def wea_process(basepath, crthr):
 
             siteyears_all.extend(siteyears)
 
-        final_list.extend(siteyears_all)
+        final_list.append(siteyears_all)
+
+    # Assign site-years
+    siteyears_temp = final_list[0]
+    siteyears_precip = final_list[1]
+    siteyears_solrad = final_list[2]
+
+    # Identify all overlapping site-years
+    siteyears = list(
+        set(siteyears_temp) & set(siteyears_precip) & set(siteyears_solrad))
+
+    return(siteyears)
+
+
+def wea_filter():
+    """
+    """
+    pass
+
 
 
 def make_weafile():
