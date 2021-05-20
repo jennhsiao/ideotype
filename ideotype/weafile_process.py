@@ -19,7 +19,18 @@ def read_wea(year_start, year_end):
     - Data source: NOAA Integrated Surface Hourly Database
     - Link: https://www.ncdc.noaa.gov/isd
     - Weather data: temperature, RH, precipitation
+    - Raw data stored: ~/data/ISH/
     - Output csv files stored: ~/upscale/weadata/process/
+
+    * note:
+    For years 1991-2010, only select data from class 1
+    (refer to NSRDB manual p.7-8 for more details)
+    - class 1: have complete period of record of 1991-2010.
+    - class 2: have complete period of record but with
+      significant periods of interpolated, filler,
+      or otherwise low-quality input data for solar models.
+    - class 3: have have some gaps in the period of record
+      but have at least 3 years of data.
 
     Parameters
     ----------
@@ -258,6 +269,7 @@ def read_solrad(year_start, year_end):
       Total amount of direct and diffuse solar radiation (METSTAT-modeled)
       received on a horizontal surface during the 60-minute period
       ending at the timestamp (refer to NSRDB data manla p.15 Table 3)
+    - Raw data stored: ~/data/ISH_NSRD/
     - Output csv files stored: ~/upscale/weadata/process/
 
     * note:
@@ -447,7 +459,7 @@ def read_solrad(year_start, year_end):
                 os.path.join(basepath, f'solrad_{year}.csv'))
 
 
-def combine_wea(basepath):
+def wea_combine(basepath):
     """
     Combine weather data for all years.
 
@@ -457,23 +469,85 @@ def combine_wea(basepath):
         path where all weather data csv files are stored.
 
     """
+    # Set up loop iterables
     csv_files = ['temp_*.csv', 'rh_*.csv', 'precip_*.csv', 'solrad_*.csv']
     csv_names = ['temp_all.csv', 'rh_all.csv',
                  'precip_all.csv', 'solrad_all.csv']
 
     for csvs, csv_name in zip(csv_files, csv_names):
         print(csv_name)
-        fnames = glob.glob(os.path.join(basepath, csvs))
-        df_all = pd.concat([pd.read_csv(name, index_col=0) for name in fnames])
-        df_all.sort_index(axis=1, inplace=True)
 
+        # Check if compiled csv file exists already
         if os.path.isfile(os.path.join(basepath, csv_name)):
             print(f'{csv_name} exists already!')
+
+        # Combine data for all years
         else:
+            fnames = glob.glob(os.path.join(basepath, csvs))
+            # Read in and concat data from all years
+            df_all = pd.concat(
+                [pd.read_csv(name, index_col=0) for name in fnames])
+            # Order df by column so sites are ascending
+            df_all.sort_index(axis=1, inplace=True)
+            # Order df by index so time is ordered
+            # * note: glob.glob doesn't always grab filenames in
+            # the order you might think so better to order
+            # in this case, solrad was not ordered by year
+            df_all.sort_index(axis=0, inplace=True)
+            # Output concatenated and sorted dataframe
             df_all.to_csv(os.path.join(basepath, csv_name))
 
 
-def summarize_wea():
+def wea_process(basepath, crthr):
+    """
+    Process weather data.
+
+    Parameters
+    ----------
+    basepath: str
+        path to access weather data
+    crthr : int
+        critical hours for gap-filling
+
+    """
+    # Read in processed weather data
+    df_temp = pd.read_csv(os.path.join(basepath, 'temp_all.csv'), index_col=0)
+    df_rh = pd.read_csv(os.path.join(basepath, 'rh_all.csv'), index_col=0)
+    df_precip = pd.read_csv(
+        os.path.join(basepath, 'precip_all.csv'), index_col=0)
+    df_solrad = pd.read_csv(
+        os.path.join(basepath, 'solrad_all.csv'), index_col=0)
+
+    # Convert df index back into datetime format
+    df_temp.index = pd.to_datetime(df_temp.index)
+    df_rh.index = pd.to_datetime(df_rh.index)
+    df_precip.index = pd.to_datetime(df_precip.index)
+    df_solrad.idnex = pd.to_datetime(df_solrad.index)
+
+    # Identify overlapping stations (columns) between
+    # temp/rh/precip dataset & solrad dataset
+    cols1 = df_temp.columns
+    cols2 = df_solrad.columns
+    cols = list(cols1.intersection(cols2))
+
+    # Filter for overlapping sites only
+    df_temp = df_temp.loc[:, cols]
+    df_rh = df_rh.loc[:, cols]
+    df_precip = df_precip.loc[:, cols]
+    df_solrad = df_solrad.loc[:, cols]
+
+
+
+
+
+
+def make_weafile():
+    """
+    """
+    pass
+
+
+def wea_summarize():
     """
     Summarize weather data.
 
