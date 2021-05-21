@@ -4,13 +4,16 @@ import os
 import glob
 import yaml
 from datetime import datetime
+from dateutil import tz
 
 import numpy as np
 import pandas as pd
+from timezonefinder import TimezoneFinder
 
 from ideotype import DATA_PATH
 from ideotype.utils import CC_RH
 from ideotype.nass_process import summarize_nass
+from ideotype.utils import utc_to_local
 
 
 def read_wea(year_start, year_end):
@@ -714,10 +717,87 @@ def wea_filter(siteyears, area_threshold, irri_threshold):
     return(siteyears_filtered)
 
 
-def make_weafile():
+def make_weafile(siteyears_filtered, df_temp, df_rh, df_precip, df_solrad):
     """
+    Make individual maizsim weather files.
+
+    Parameters
+    ----------
+    siteyears_filtered : list
+        List of valid & filtered siteyears
+
     """
-    pass
+    # Read in station info
+    fpaths_wea = os.path.join(DATA_PATH, 'files', 'filepaths_wea.yml')
+    with open(fpaths_wea) as pfile:
+        dict_fpaths = yaml.safe_load(pfile)
+
+    # Read in info on conversion between WBAN & USAF id numbering system
+    fpath_stations_info = os.path.join(DATA_PATH,
+                                       *dict_fpaths['stations_info'])
+    df_stations = pd.read_csv(fpath_stations_info, dtype={'USAF': str})
+
+    # Package needed to find timezone
+    tf = TimezoneFinder()
+
+    for row in np.arange(siteyears_filtered.shape[0]):
+        # year & site
+        year = siteyears_filtered.loc[row, 'year']
+        site = siteyears_filtered.loc[row, 'site']
+
+        # lat & lon
+        lat = df_stations.query(f'USAF == "{site}"')['ISH_LAT (dd)'].item()
+        lon = df_stations.query(f'USAF == "{site}"')['ISH_LON(dd)'].item()
+
+        # Find and define timezone
+        zone = tf.timezone_at(lng=lon, lat=lat)
+        from_zone = tz.gettz('UTC')
+        to_zone = tz.gettz(zone)
+
+        # Construct dataframe that will hold all weather data
+        col = ['jday', 'date', 'hour',
+               'solrad', 'temp', 'precip', 'rh', 'co2']
+        df_wea = pd.DataFrame(columns=col)
+
+        # UTC datetimes
+        season_start = '02-02-'
+        season_end = '11-30-'
+        times = pd.date_range(f'{season_start + year}',
+                              f'{season_end + year} 23:00:00',
+                              freq='1H')
+
+        # Convert timestamp into datetime object
+        datetimes_utc = [time.to_pydatetime() for time in times]
+        # Assign datetime object UTC timezone
+        datetimes_utc = [
+            dt_utc.replace(tzinfo=from_zone) for dt_utc in datetimes_utc]
+
+        # Convert UTC datetime to local datetime
+        datetimes_local = [
+            dt_utc.astimezone(tzinfo=to_zone) for dt_utc in datetimes_utc]
+
+        # Put together df_wea:
+        # - Include datetime info in weather data
+        df_wea.jday = [int(datetime.strftime(
+            dt_utc, '%j')) for dt_utc in datetimes_utc]
+        df_wea.date = [datetime.strftime(
+            dt_utc, "'%m/%d/%Y'") for dt_utc in datetimes_utc]
+        df_wea.hour = [dt_utc.hour for dt_utc in datetimes_utc]
+
+        # Select temp, rh, & precip data based on times
+        # TODO: is the ISH time also in UTC?
+        df_wea.temp = list(df_temp.loc[times, site])
+        df_wea.rh = list(df_rh.loc[times, site])
+        df_wea.precip = list(df_precip.loc[times, site])
+        df_wea.co2 = 400
+
+        # Select solrad data based on local time
+        times_local = [datetime.strftime(
+            dt_local, '%Y-%m-%d %H:%M:%S') for dt_local in datetimes_local]
+        df_wea.solrad = list(df_solrad.loc[times_local, site])
+
+
+
 
 
 def wea_summarize():
