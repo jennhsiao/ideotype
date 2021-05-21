@@ -10,6 +10,7 @@ import pandas as pd
 
 from ideotype import DATA_PATH
 from ideotype.utils import CC_RH
+from ideotype.nass_process import summarize_nass
 
 
 def read_wea(year_start, year_end):
@@ -621,11 +622,96 @@ def wea_siteyears(df_temp, df_precip, df_solrad, crthr):
     return(siteyears)
 
 
-def wea_filter():
+def wea_filter(siteyears, area_threshold, irri_threshold):
     """
-    """
-    pass
+    Filter valid site-years based on location, area & irri.
 
+    - Location: limit to continental US (boundaries -123, -72, 19, 53)
+    - Planting area
+    - Irrigation area
+    - Estimated pdate
+
+    Parameters
+    ----------
+    area: int
+        Planting area threshold.
+    irri: int
+        Percent land irrigated.
+
+    """
+    # Identify total number of unique sites within valid site-years
+    sites = list(set([siteyear.split('_')[1] for siteyear in siteyears]))
+    sites.sort()
+
+    # Read in relevant file paths
+    fpaths_wea = os.path.join(DATA_PATH, 'files', 'filepaths_wea.yml')
+    with open(fpaths_wea) as pfile:
+        dict_fpaths = yaml.safe_load(pfile)
+
+    # Read in info on conversion between WBAN & USAF id numbering system
+    fpath_stations_info = os.path.join(DATA_PATH,
+                                       *dict_fpaths['stations_info'])
+    df_stations = pd.read_csv(fpath_stations_info, dtype={'USAF': str})
+    df_stations.USAF.isin(sites)
+
+    # Summarize nass data to fetch planting area & percent irrigated info
+    df_nass = summarize_nass()
+
+    # Site boundaries
+    lat_min = 19
+    lat_max = 53
+    lon_min = -123
+    lon_max = -72
+
+    # Initiate empty list
+    areas = []
+    perct_irris = []
+    sites_inbound = []
+    sites_outbound = []
+
+    for site in sites:
+        # Fetch site lat/lon info
+        lat = df_stations.query(f'USAF == "{site}"')['ISH_LAT (dd)'].item()
+        lon = df_stations.query(f'USAF == "{site}"')['ISH_LON(dd)'].item()
+
+        # Only include sites within continental US boundaries
+        if (lat_min <= lat <= lat_max) & (lon_min <= lon <= lon_max):
+            # Append sites within bound
+            sites_inbound.append(site)
+
+            # Calculate distance between site & all nass sites
+            dist = list(enumerate(
+                np.sqrt((lat - df_nass.lat)**2 + (lon - (df_nass.lon))**2)))
+            df_dist = pd.DataFrame(dist, columns=['rownum', 'distance'])
+
+            # select the five nearest locations and average for
+            # cropping area & irrigation percentage
+            rows = list(df_dist.nsmallest(5, 'distance').rownum)
+            area = df_nass.iloc[rows].area.mean()
+            perct_irri = df_nass.iloc[rows].perct_irri.mean()
+            areas.append(area)
+            perct_irris.append(perct_irri)
+
+        else:
+            sites_outbound.append(site)
+
+    # add planting area & irrigation info for filtering purposes
+    df_filter = pd.DataFrame({'site': sites_inbound,
+                              'area': areas,
+                              'perct_irri': perct_irris})
+    sites_filtered = df_filter.query(
+        f'(area > {area_threshold}) & (perct_irri < {irri_threshold})').site
+
+    # Turn siteyears into dataframe for easier processing
+    siteyear_years = [siteyear.split('_')[0] for siteyear in siteyears]
+    siteyear_sites = [siteyear.split('_')[1] for siteyear in siteyears]
+    df_siteyears = pd.DataFrame({'year': siteyear_years,
+                                 'site': siteyear_sites})
+
+    # Filter siteyears based on area & percent irrigated
+    siteyears_filtered = df_siteyears[df_siteyears.site.isin(sites_filtered)]
+
+    return(siteyears_filtered)
 
 
 def make_weafile():
