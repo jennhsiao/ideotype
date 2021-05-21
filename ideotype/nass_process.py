@@ -110,7 +110,7 @@ def summarize_nass():
     irri_area_mean = irri_area.mean(axis=1)
     df_census = pd.DataFrame({'state_id': state_id,
                               'county_id': county_id,
-                              'prect_irri': (
+                              'perct_irri': (
                                   irri_area_mean/crop_area_mean)*100})
 
     # Read in nass maize data
