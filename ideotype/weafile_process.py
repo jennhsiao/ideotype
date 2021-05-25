@@ -3,6 +3,7 @@
 import os
 import glob
 import yaml
+import statistics as stat
 from datetime import datetime
 from dateutil import tz
 
@@ -12,8 +13,8 @@ from timezonefinder import TimezoneFinder
 
 from ideotype import DATA_PATH
 from ideotype.utils import CC_RH
+from ideotype.utils import CC_VPD
 from ideotype.nass_process import summarize_nass
-from ideotype.utils import utc_to_local
 
 
 def read_wea(year_start, year_end):
@@ -232,7 +233,7 @@ def read_wea(year_start, year_end):
             df.precip_perhr = np.round(df.precip_perhr/10, 1)
 
             # calculating RH through Clausius Clapeyron
-            df.rh = CC_RH(df.temp, df.dew_temp)*100
+            df.rh = CC_RH(df.temp, df.dew_temp)
             if df[df.rh > 100].rh.sum() > 100:
                 print('rh > 100: ', year, name)
 
@@ -548,15 +549,21 @@ def wea_preprocess(basepath):
     return(df_temp, df_rh, df_precip, df_solrad)
 
 
-def wea_siteyears(df_temp, df_precip, df_solrad, crthr):
+def wea_siteyears(df_temp, df_rh, df_precip, df_solrad, 
+                  gseason_start, gseason_end, crthr):
     """
     Identify valid site-years that satisfy critical hours for gap-flling.
 
     Parameters
     ----------
     df_temp : pd.DataFrame
+    df_rh : pd.dataFrame
     df_precip : pd.DataFrame
     df_solrad : pd.DataFrame
+    gseason_start : int
+        Start of growing season (month)
+    gseason_end : int
+        End of growing season (month)
     crthr : int
         critical hours for gap-filling
 
@@ -566,7 +573,7 @@ def wea_siteyears(df_temp, df_precip, df_solrad, crthr):
 
     """
     # Identify site-years that satisfy critical hours for gap-filling
-    dfs = [df_temp, df_precip, df_solrad]
+    dfs = [df_temp, df_rh, df_precip, df_solrad]
     final_list = []
     years = np.arange(1961, 2011)
     sites = list(df_temp.columns)
@@ -576,38 +583,54 @@ def wea_siteyears(df_temp, df_precip, df_solrad, crthr):
 
         for year in years:
             # Filter out specific year
-            df_year = df[df.index.year == year]
+            df_year = df[(df.index.year == year) &
+                         (df.index.month >= gseason_start) &
+                         (df.index.month <= gseason_end)]
             siteyears = list()
 
             for site in sites:
                 # Filter out specific site-year
                 df_siteyear = pd.DataFrame(df_year.loc[:, site])
 
-                # Identify whether data entry is NaN
-                # df.notnull() returns TRUE or FALSE,
-                # astype(int) turns TRUE into 1, and FALSE into 0
-                df_siteyear['present'] = df_siteyear.notnull().astype(int)
+                # 4000: ~55% of the number of rows
+                # Used as a threshold to toss out site-years
+                # that have too many gaps to fill
+                # even if they satisfy the critical hours.
+                # This is set since I noticed some sites have data
+                # recorded every 3 hrs.
+                # Valide data collection method, but I wanted to avoid
+                # having to gap-fill throuhout that time period,
+                # especially for precipitation.
+                lim = 4000
 
-                # Calculate cumulative sum based on whether data is
-                # Nan value (1) or not (0)
-                # If there are consecutive missing data,
-                # the cumulative sum for those two rows will be the same,
-                # and can further be used for grouping purposes
-                # to count the number of consecutive missing rows
-                # within each streak of missing data.
-                df_siteyear['cumsum'] = df_siteyear.present.cumsum()
+                # Only continue processing if have less than ~55% of NaNs
+                if int(df_siteyear.isna().sum()) < lim:
+                    # Identify whether data entry is NaN
+                    # df.notnull() returns TRUE or FALSE,
+                    # astype(int) turns TRUE into 1, and FALSE into 0
+                    df_siteyear['present'] = df_siteyear.notnull().astype(int)
 
-                # Select individual timesteps that have missing data
-                df_siteyear = df_siteyear[df_siteyear.loc[:, site].isnull()]
+                    # Calculate cumulative sum based on whether data is
+                    # Nan value (1) or not (0)
+                    # If there are consecutive missing data,
+                    # the cumulative sum for those two rows will be the same,
+                    # and can further be used for grouping purposes
+                    # to count the number of consecutive missing rows
+                    # within each streak of missing data.
+                    df_siteyear['csum'] = df_siteyear.present.cumsum()
 
-                # Count the number of consecutive NaNs
-                nans_list = df_siteyear.groupby('cumsum')['cumsum'].count()
+                    # Select individual timesteps that have missing data
+                    df_siteyear = df_siteyear[
+                        df_siteyear.loc[:, site].isnull()]
 
-                # Only record site-years that have fewer consecutive NaNs
-                # than the critical value set
-                if nans_list[nans_list > crthr].shape[0] == 0:
-                    use_siteyear = str(year) + '_' + str(site)
-                    siteyears.append(use_siteyear)
+                    # Count the number of consecutive NaNs
+                    nans_list = df_siteyear.groupby('csum')['csum'].count()
+
+                    # Only record site-years that have fewer consecutive NaNs
+                    # than the critical value set
+                    if nans_list[nans_list > crthr].shape[0] == 0:
+                        use_siteyear = str(year) + '_' + str(site)
+                        siteyears.append(use_siteyear)
 
             siteyears_all.extend(siteyears)
 
@@ -615,17 +638,21 @@ def wea_siteyears(df_temp, df_precip, df_solrad, crthr):
 
     # Assign site-years
     siteyears_temp = final_list[0]
-    siteyears_precip = final_list[1]
-    siteyears_solrad = final_list[2]
+    siteyears_rh = final_list[1]
+    siteyears_precip = final_list[2]
+    siteyears_solrad = final_list[3]
 
     # Identify all overlapping site-years
     siteyears = list(
-        set(siteyears_temp) & set(siteyears_precip) & set(siteyears_solrad))
+        set(siteyears_temp) &
+        set(siteyears_rh) &
+        set(siteyears_precip) &
+        set(siteyears_solrad))
 
     return(siteyears)
 
 
-def wea_filter(siteyears, area_threshold, irri_threshold):
+def wea_filter(siteyears, area_threshold, irri_threshold, yearspersite):
     """
     Filter valid site-years based on location, area & irri.
 
@@ -636,10 +663,14 @@ def wea_filter(siteyears, area_threshold, irri_threshold):
 
     Parameters
     ----------
+    siteyears : list
+        Output of site-years from wea_preprocess()
     area: int
         Planting area threshold.
     irri: int
         Percent land irrigated.
+    yearspersite : int
+        Minimum number of years of data for each site.
 
     """
     # Identify total number of unique sites within valid site-years
@@ -660,7 +691,7 @@ def wea_filter(siteyears, area_threshold, irri_threshold):
     # Summarize nass data to fetch planting area & percent irrigated info
     df_nass = summarize_nass()
 
-    # Site boundaries
+    # Continental US site boundaries
     lat_min = 19
     lat_max = 53
     lon_min = -123
@@ -714,12 +745,30 @@ def wea_filter(siteyears, area_threshold, irri_threshold):
     # Filter siteyears based on area & percent irrigated
     siteyears_filtered = df_siteyears[df_siteyears.site.isin(sites_filtered)]
 
+    # Filter out sites that have less than 10 years of data
+    df_count = pd.DataFrame(siteyears_filtered.groupby('site').count())
+    sites_discard = list(df_count.query(f'year < {yearspersite}').index)
+    siteyears_filtered = siteyears_filtered[
+        ~siteyears_filtered.site.isin(sites_discard)]
+
     return(siteyears_filtered)
 
 
-def make_weafile(siteyears_filtered, df_temp, df_rh, df_precip, df_solrad):
+def make_weafile(siteyears_filtered,
+                 df_temp, df_rh, df_precip, df_solrad,
+                 outpath):
     """
     Make individual maizsim weather files.
+
+    * Note on handling time zone issues:
+    - ISH data (temp, rh, precip): recorded in UTC time
+    - NSRB data (solrad): recorded in local time
+
+    * Process:
+    1. Select ISH data (temp, rh, precip) based on UTC time
+    2. Convert UTC datetime info into local datetime
+    3. Write out local datetime info as the date-time columns in maizsim
+    4. Select solrad data based on local datetime
 
     Parameters
     ----------
@@ -742,8 +791,8 @@ def make_weafile(siteyears_filtered, df_temp, df_rh, df_precip, df_solrad):
 
     for row in np.arange(siteyears_filtered.shape[0]):
         # year & site
-        year = siteyears_filtered.loc[row, 'year']
-        site = siteyears_filtered.loc[row, 'site']
+        year = siteyears_filtered.iloc[row]['year']
+        site = siteyears_filtered.iloc[row]['site']
 
         # lat & lon
         lat = df_stations.query(f'USAF == "{site}"')['ISH_LAT (dd)'].item()
@@ -762,55 +811,112 @@ def make_weafile(siteyears_filtered, df_temp, df_rh, df_precip, df_solrad):
         # UTC datetimes
         season_start = '02-02-'
         season_end = '11-30-'
-        times = pd.date_range(f'{season_start + year}',
-                              f'{season_end + year} 23:00:00',
-                              freq='1H')
-
+        timestamps = pd.date_range(f'{season_start + year}',
+                                   f'{season_end + year} 23:00:00',
+                                   freq='1H')
         # Convert timestamp into datetime object
-        datetimes_utc = [time.to_pydatetime() for time in times]
+        datetimes = [tstamp.to_pydatetime() for tstamp in timestamps]
+
         # Assign datetime object UTC timezone
         datetimes_utc = [
-            dt_utc.replace(tzinfo=from_zone) for dt_utc in datetimes_utc]
+            dt.replace(tzinfo=from_zone) for dt in datetimes]
 
         # Convert UTC datetime to local datetime
         datetimes_local = [
-            dt_utc.astimezone(tzinfo=to_zone) for dt_utc in datetimes_utc]
+            dt_utc.astimezone(to_zone) for dt_utc in datetimes_utc]
 
         # Put together df_wea:
-        # - Include datetime info in weather data
-        df_wea.jday = [int(datetime.strftime(
-            dt_utc, '%j')) for dt_utc in datetimes_utc]
-        df_wea.date = [datetime.strftime(
-            dt_utc, "'%m/%d/%Y'") for dt_utc in datetimes_utc]
-        df_wea.hour = [dt_utc.hour for dt_utc in datetimes_utc]
-
-        # Select temp, rh, & precip data based on times
-        # TODO: is the ISH time also in UTC?
-        df_wea.temp = list(df_temp.loc[times, site])
-        df_wea.rh = list(df_rh.loc[times, site])
-        df_wea.precip = list(df_precip.loc[times, site])
+        # 1. Select temp, rh, & precip data based on original timestamps (UTC)
+        df_wea.temp = list(df_temp.loc[timestamps, site])
+        df_wea.rh = list(df_rh.loc[timestamps, site])
+        df_wea.precip = list(df_precip.loc[timestamps, site])
         df_wea.co2 = 400
-
-        # Select solrad data based on local time
-        times_local = [datetime.strftime(
+        # 2. Use converted local datetime as time info in df_wea
+        df_wea.jday = [int(datetime.strftime(
+            dt_local, '%j')) for dt_local in datetimes_local]
+        df_wea.date = [datetime.strftime(
+            dt_local, "'%m/%d/%Y'") for dt_local in datetimes_local]
+        df_wea.hour = [dt_local.hour for dt_local in datetimes_local]
+        # 3. Select solrad data based on converted local datetime
+        timestamps_local = [datetime.strftime(
             dt_local, '%Y-%m-%d %H:%M:%S') for dt_local in datetimes_local]
-        df_wea.solrad = list(df_solrad.loc[times_local, site])
+        df_wea.solrad = list(df_solrad.loc[timestamps_local, site])
+
+        # Gap-fill df_wea
+        df_wea.interpolate(axis=0)
+
+        # Write out df_wea for each site-year
+        wea_txt = os.path.join(outpath, f'{site}_{year}.txt')
+        if os.path.exists(wea_txt):
+            print(f'{site}_{year}.txt exists!')
+        else:
+            df_wea.to_csv(wea_txt, sep='\t', index=False)
 
 
-
-
-
-def wea_summarize():
+def wea_summarize(siteyears_filtered,
+                  df_temp, df_rh, df_precip, df_solrad,
+                  gseason_start, gseason_end):
     """
     Summarize weather data.
 
     Parameters
     ----------
+    df_temp : pd.DataFrame
+    df_rh : pd.DataFrame
+    df_precip : pd.DataFrame
+    df_solrad : pd.DataFrame
 
     Returns
     -------
-    df_wea_summary : pd.DataFrame
+    wea_summary : pd.DataFrame
         Summary weather data info.
 
     """
-    pass
+    temp_all = [np.nan]*siteyears_filtered.shape[0]
+    rh_all = [np.nan]*siteyears_filtered.shape[0]
+    precip_all = [np.nan]*siteyears_filtered.shape[0]
+    solrad_all = [np.nan]*siteyears_filtered.shape[0]
+
+    for item in np.arange(siteyears_filtered.shape[0]):
+        # year & site
+        year = siteyears_filtered.iloc[item]['year']
+        site = siteyears_filtered.iloc[item]['site']
+
+        # Temperature
+        df = df_temp
+        temp = list(df[
+            (df.index.year == int(year)) &
+            (gseason_start <= df.index.month) &
+            (df.index.month < gseason_end)][site])
+        temp = round(stat.mean(temp), 2)
+        temp_all[item] = temp
+
+        # RH
+        df = df_rh
+        rh = list(df[
+            (df.index.year == int(year)) &
+            (gseason_start <= df.index.month) &
+            (df.index.month < gseason_end)][site])
+        rh = round(stat.mean(rh), 2)
+        rh_all[item] = rh
+
+        # Precip
+        df = df_precip
+        precip = list(df[
+            (df.index.year == int(year)) &
+            (gseason_start <= df.index.month) &
+            (df.index.month < gseason_end)][site])
+        precip = round(sum(precip), 2)
+        precip_all[item] = precip
+
+        # Solrad
+        df = df_solrad
+        solrad = list(df[
+            (df.index.year == int(year)) &
+            (gseason_start <= df.index.month) &
+            (df.index.month < gseason_end)][site])
+        solrad = round(stat.mean(solrad), 2)
+        solrad_all[item] = solrad
+
+    # calculating VPD based on temperature & RH
+    vpd_all = [CC_VPD(temp, rh/100) for temp, rh in zip(temp_all, rh_all)]
