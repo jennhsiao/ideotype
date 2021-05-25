@@ -13,6 +13,10 @@ def read_nass():
     """
     Read & process USDA NASS county-level data.
 
+    * note:
+    * crop area units: ha
+    * yield units: tons/ha
+
     Returns
     -------
     df_nass : pd.DataFrame
@@ -78,8 +82,10 @@ def summarize_nass():
     """
     Read & process NASS planting area & irrigation data.
 
-    Cropping & irrigated area across four censue years:
+    Percent irrigated area calculated across four censue years:
     1997, 2002, 2007, and 2012.
+    * note:
+    * irrigated area & crop area recorded in acres
 
     Returns
     -------
