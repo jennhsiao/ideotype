@@ -129,7 +129,7 @@ def CC_RH(temp, temp_dew):
     Returns
     -------
     RH : Float
-        Relative humidity in fraction between 0-1.
+        Relative humidity in %.
 
     """
     # constant parameters
@@ -145,7 +145,7 @@ def CC_RH(temp, temp_dew):
     # Clausius-Clapeyron relation
     es = Es_Tref*np.exp((Lv/Rv)*(1/Tref - 1/Tair))
     e = Es_Tref*np.exp((Lv/Rv)*(1/Tref - 1/Tdew))
-    rh = round(e/es, 4)
+    rh = round((e/es)*100, 2)
 
     return(rh)
 
