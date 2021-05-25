@@ -84,8 +84,9 @@ def summarize_nass():
 
     Percent irrigated area calculated across four censue years:
     1997, 2002, 2007, and 2012.
-    * note:
-    * irrigated area & crop area recorded in acres
+    * note on units:
+    * irrigated area & crop area - acres
+    * maize area - ha
 
     Returns
     -------
@@ -122,7 +123,7 @@ def summarize_nass():
     # Read in nass maize data
     df_nass = read_nass()
     # subset to include only years 1961-2005
-    df_nass_sub = df_nass.query('year>=1961 & year<=2005')
+    df_nass_sub = df_nass.query('(year >= 1961) & (year <= 2005)')
     df_nass_sub.reset_index(drop=True, inplace=True)
 
     # Group df_nass to get max maize planting area & mean yield for maize
