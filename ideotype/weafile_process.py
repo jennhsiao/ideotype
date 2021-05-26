@@ -844,6 +844,10 @@ def make_weafile(siteyears_filtered,
         # Gap-fill df_wea
         df_wea.interpolate(axis=0, inplace=True)
 
+        # Round values one last time for uniform weather data
+        # otherwise interpolated points will end up with long floating nums
+        df_wea.round({'solrad': 1, 'temp': 1, 'precip': 1, 'rh': 2})
+
         # Write out df_wea for each site-year
         wea_txt = os.path.join(outpath, f'{site}_{year}.txt')
         if os.path.exists(wea_txt):
@@ -950,5 +954,4 @@ def wea_summarize(siteyears_filtered,
     df_siteyears = siteyears_filtered.reset_index(drop=True)
     df_wea_summary = df_siteyears.join(df_wea_all)
 
-    return(df_wea_summary)  # TODO: might want to directly output this?
-                            # TODO: estimate how long it takes to run.
+    return(df_wea_summary)
