@@ -3,7 +3,6 @@
 import os
 import glob
 import yaml
-import statistics as stat
 from datetime import datetime
 from dateutil import tz
 
@@ -549,7 +548,7 @@ def wea_preprocess(basepath):
     return(df_temp, df_rh, df_precip, df_solrad)
 
 
-def wea_siteyears(df_temp, df_rh, df_precip, df_solrad, 
+def wea_siteyears(df_temp, df_rh, df_precip, df_solrad,
                   gseason_start, gseason_end, crthr):
     """
     Identify valid site-years that satisfy critical hours for gap-flling.
@@ -682,7 +681,7 @@ def wea_filter(siteyears, area_threshold, irri_threshold, yearspersite):
     with open(fpaths_wea) as pfile:
         dict_fpaths = yaml.safe_load(pfile)
 
-    # Read in info on conversion between WBAN & USAF id numbering system
+    # Read in stations info
     fpath_stations_info = os.path.join(DATA_PATH,
                                        *dict_fpaths['stations_info'])
     df_stations = pd.read_csv(fpath_stations_info, dtype={'USAF': str})
@@ -809,7 +808,7 @@ def make_weafile(siteyears_filtered,
         df_wea = pd.DataFrame(columns=col)
 
         # UTC datetimes
-        season_start = '02-02-'
+        season_start = '02-02-'  # TODO: think about this & gseason_start/end
         season_end = '11-30-'
         timestamps = pd.date_range(f'{season_start + year}',
                                    f'{season_end + year} 23:00:00',
@@ -843,7 +842,7 @@ def make_weafile(siteyears_filtered,
         df_wea.solrad = list(df_solrad.loc[timestamps_local, site])
 
         # Gap-fill df_wea
-        df_wea.interpolate(axis=0)
+        df_wea.interpolate(axis=0, inplace=True)
 
         # Write out df_wea for each site-year
         wea_txt = os.path.join(outpath, f'{site}_{year}.txt')
@@ -857,7 +856,11 @@ def wea_summarize(siteyears_filtered,
                   df_temp, df_rh, df_precip, df_solrad,
                   gseason_start, gseason_end):
     """
-    Summarize weather data.
+    Summarize growing season weather data.
+
+    * note: linear interpolation prior to summarizing
+    * - mean temp (˚C)
+    * - total precip (mm)
 
     Parameters
     ----------
@@ -868,14 +871,18 @@ def wea_summarize(siteyears_filtered,
 
     Returns
     -------
-    wea_summary : pd.DataFrame
+    df_wea_summary : pd.DataFrame
         Summary weather data info.
 
     """
     temp_all = [np.nan]*siteyears_filtered.shape[0]
+    tempvar_all = [np.nan]*siteyears_filtered.shape[0]  # TODO: add variances
     rh_all = [np.nan]*siteyears_filtered.shape[0]
+    rhvar_all = [np.nan]*siteyears_filtered.shape[0]
     precip_all = [np.nan]*siteyears_filtered.shape[0]
+    precipvar_all = [np.nan]*siteyears_filtered.shape[0]
     solrad_all = [np.nan]*siteyears_filtered.shape[0]
+    solradvar_all = [np.nan]*siteyears_filtered.shape[0]
 
     for item in np.arange(siteyears_filtered.shape[0]):
         # year & site
@@ -887,36 +894,61 @@ def wea_summarize(siteyears_filtered,
         temp = list(df[
             (df.index.year == int(year)) &
             (gseason_start <= df.index.month) &
-            (df.index.month < gseason_end)][site])
-        temp = round(stat.mean(temp), 2)
+            (df.index.month < gseason_end)][site].interpolate(axis=0))
+        temp = round(np.nanmean(temp), 2)
+        tempvar = np.nanvar(temp)
         temp_all[item] = temp
+        tempvar_all[item] = tempvar
 
         # RH
         df = df_rh
         rh = list(df[
             (df.index.year == int(year)) &
             (gseason_start <= df.index.month) &
-            (df.index.month < gseason_end)][site])
-        rh = round(stat.mean(rh), 2)
+            (df.index.month < gseason_end)][site].interpolate(axis=0))
+        rh = round(np.nanmean(rh), 2)
+        rhvar = np.nanvar(rh)
         rh_all[item] = rh
+        rhvar_all[item] = rhvar
 
         # Precip
         df = df_precip
         precip = list(df[
             (df.index.year == int(year)) &
             (gseason_start <= df.index.month) &
-            (df.index.month < gseason_end)][site])
+            (df.index.month < gseason_end)][site].interpolate(axis=0))
         precip = round(sum(precip), 2)
+        precipvar = np.nanvar(precip)
         precip_all[item] = precip
+        precipvar_all[item] = precipvar
 
         # Solrad
         df = df_solrad
         solrad = list(df[
             (df.index.year == int(year)) &
             (gseason_start <= df.index.month) &
-            (df.index.month < gseason_end)][site])
-        solrad = round(stat.mean(solrad), 2)
+            (df.index.month < gseason_end)][site].interpolate(axis=0))
+        solrad = round(np.nanmean(solrad), 2)
+        solradvar = np.nanvar(solrad)
         solrad_all[item] = solrad
+        solradvar_all[item] = solradvar
 
-    # calculating VPD based on temperature & RH
-    vpd_all = [CC_VPD(temp, rh/100) for temp, rh in zip(temp_all, rh_all)]
+    # Calculate VPD based on temperature & RH
+    vpd_all = [
+        round(CC_VPD(temp, rh/100), 2) for temp, rh in zip(temp_all, rh_all)]
+
+    # Compile summarized growing season met info into dataframe
+    df_wea_all = pd.DataFrame({'temp': temp_all,
+                               'temp_var': tempvar_all,
+                               'rh': rh_all,
+                               'rh_var': rhvar_all,
+                               'vpd': vpd_all,
+                               'precip': precip_all,
+                               'precip_var': precipvar_all,
+                               'solrad': solrad_all,
+                               'solrad_var': solradvar_all})
+    df_siteyears = siteyears_filtered.reset_index(drop=True)
+    df_wea_summary = df_siteyears.join(df_wea_all)
+
+    return(df_wea_summary)  # TODO: might want to directly output this?
+                            # TODO: estimate how long it takes to run.
