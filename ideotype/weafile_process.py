@@ -880,7 +880,7 @@ def wea_summarize(siteyears_filtered,
 
     """
     temp_all = [np.nan]*siteyears_filtered.shape[0]
-    tempvar_all = [np.nan]*siteyears_filtered.shape[0]  # TODO: add variances
+    tempvar_all = [np.nan]*siteyears_filtered.shape[0]
     rh_all = [np.nan]*siteyears_filtered.shape[0]
     rhvar_all = [np.nan]*siteyears_filtered.shape[0]
     precip_all = [np.nan]*siteyears_filtered.shape[0]
