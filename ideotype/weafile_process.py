@@ -899,10 +899,10 @@ def wea_summarize(siteyears_filtered,
             (df.index.year == int(year)) &
             (gseason_start <= df.index.month) &
             (df.index.month < gseason_end)][site].interpolate(axis=0))
-        temp = round(np.nanmean(temp), 2)
-        tempvar = np.nanvar(temp)
-        temp_all[item] = temp
-        tempvar_all[item] = tempvar
+        temp_mean = round(np.nanmean(temp), 2)
+        temp_var = np.nanvar(temp)
+        temp_all[item] = temp_mean
+        tempvar_all[item] = temp_var
 
         # RH
         df = df_rh
@@ -910,10 +910,10 @@ def wea_summarize(siteyears_filtered,
             (df.index.year == int(year)) &
             (gseason_start <= df.index.month) &
             (df.index.month < gseason_end)][site].interpolate(axis=0))
-        rh = round(np.nanmean(rh), 2)
-        rhvar = np.nanvar(rh)
-        rh_all[item] = rh
-        rhvar_all[item] = rhvar
+        rh_mean = round(np.nanmean(rh), 2)
+        rh_var = np.nanvar(rh)
+        rh_all[item] = rh_mean
+        rhvar_all[item] = rh_var
 
         # Precip
         df = df_precip
@@ -921,10 +921,10 @@ def wea_summarize(siteyears_filtered,
             (df.index.year == int(year)) &
             (gseason_start <= df.index.month) &
             (df.index.month < gseason_end)][site].interpolate(axis=0))
-        precip = round(sum(precip), 2)
-        precipvar = np.nanvar(precip)
-        precip_all[item] = precip
-        precipvar_all[item] = precipvar
+        precip_mean = round(sum(precip), 2)
+        precip_var = np.nanvar(precip)
+        precip_all[item] = precip_mean
+        precipvar_all[item] = precip_var
 
         # Solrad
         df = df_solrad
@@ -932,10 +932,10 @@ def wea_summarize(siteyears_filtered,
             (df.index.year == int(year)) &
             (gseason_start <= df.index.month) &
             (df.index.month < gseason_end)][site].interpolate(axis=0))
-        solrad = round(np.nanmean(solrad), 2)
-        solradvar = np.nanvar(solrad)
-        solrad_all[item] = solrad
-        solradvar_all[item] = solradvar
+        solrad_mean = round(np.nanmean(solrad), 2)
+        solrad_var = np.nanvar(solrad)
+        solrad_all[item] = solrad_mean
+        solradvar_all[item] = solrad_var
 
     # Calculate VPD based on temperature & RH
     vpd_all = [
