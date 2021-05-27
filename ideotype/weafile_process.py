@@ -846,7 +846,7 @@ def make_weafile(siteyears_filtered,
 
         # Round values one last time for uniform weather data
         # otherwise interpolated points will end up with long floating nums
-        df_wea.round({'solrad': 1, 'temp': 1, 'precip': 1, 'rh': 2})
+        df_wea = df_wea.round({'solrad': 1, 'temp': 1, 'precip': 1, 'rh': 2})
 
         # Write out df_wea for each site-year
         wea_txt = os.path.join(outpath, f'{site}_{year}.txt')
@@ -863,8 +863,8 @@ def wea_summarize(siteyears_filtered,
     Summarize growing season weather data.
 
     * note: linear interpolation prior to summarizing
-    * - mean climate conditions
-    * - variability within climate: variance/mean
+    - mean climate conditions
+    - variability within climate: variance/mean
 
     Parameters
     ----------
