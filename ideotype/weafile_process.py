@@ -863,8 +863,8 @@ def wea_summarize(siteyears_filtered,
     Summarize growing season weather data.
 
     * note: linear interpolation prior to summarizing
-    * - mean temp (˚C)
-    * - total precip (mm)
+    * - mean climate conditions
+    * - variability within climate: variance/mean
 
     Parameters
     ----------
@@ -900,7 +900,7 @@ def wea_summarize(siteyears_filtered,
             (gseason_start <= df.index.month) &
             (df.index.month < gseason_end)][site].interpolate(axis=0))
         temp_mean = round(np.nanmean(temp), 2)
-        temp_var = np.nanvar(temp)
+        temp_var = np.nanvar(temp)/temp_mean
         temp_all[item] = temp_mean
         tempvar_all[item] = temp_var
 
@@ -911,7 +911,7 @@ def wea_summarize(siteyears_filtered,
             (gseason_start <= df.index.month) &
             (df.index.month < gseason_end)][site].interpolate(axis=0))
         rh_mean = round(np.nanmean(rh), 2)
-        rh_var = np.nanvar(rh)
+        rh_var = np.nanvar(rh)/rh_mean
         rh_all[item] = rh_mean
         rhvar_all[item] = rh_var
 
@@ -922,7 +922,7 @@ def wea_summarize(siteyears_filtered,
             (gseason_start <= df.index.month) &
             (df.index.month < gseason_end)][site].interpolate(axis=0))
         precip_mean = round(sum(precip), 2)
-        precip_var = np.nanvar(precip)
+        precip_var = np.nanvar(precip)/precip_mean
         precip_all[item] = precip_mean
         precipvar_all[item] = precip_var
 
@@ -933,7 +933,7 @@ def wea_summarize(siteyears_filtered,
             (gseason_start <= df.index.month) &
             (df.index.month < gseason_end)][site].interpolate(axis=0))
         solrad_mean = round(np.nanmean(solrad), 2)
-        solrad_var = np.nanvar(solrad)
+        solrad_var = np.nanvar(solrad)/solrad_mean
         solrad_all[item] = solrad_mean
         solradvar_all[item] = solrad_var
 
