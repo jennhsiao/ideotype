@@ -32,7 +32,6 @@ yearspersite = 15
 siteyears_filtered = wea_filter(siteyears, area, irri, yearspersite)
 
 # Convert met data into individual maizsim weather data files
-# TODO: test newly compiled weather data
-outpath = '/home/disk/eos8/ach315/upscale/weadata/data/test/'
+outpath = '/home/disk/eos8/ach315/upscale/weadata/data/'
 make_weafile(
     siteyears_filtered, df_temp, df_rh, df_precip, df_solrad, outpath)
