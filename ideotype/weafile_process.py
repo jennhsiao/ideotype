@@ -738,8 +738,8 @@ def wea_filter(siteyears, area_threshold, irri_threshold, yearspersite):
     # Turn siteyears into dataframe for easier processing
     siteyear_years = [siteyear.split('_')[0] for siteyear in siteyears]
     siteyear_sites = [siteyear.split('_')[1] for siteyear in siteyears]
-    df_siteyears = pd.DataFrame({'year': siteyear_years,
-                                 'site': siteyear_sites})
+    df_siteyears = pd.DataFrame({'site': siteyear_sites,
+                                 'year': siteyear_years})
 
     # Filter siteyears based on area & percent irrigated
     siteyears_filtered = df_siteyears[df_siteyears.site.isin(sites_filtered)]
@@ -808,7 +808,7 @@ def make_weafile(siteyears_filtered,
         df_wea = pd.DataFrame(columns=col)
 
         # UTC datetimes
-        season_start = '02-02-'  # TODO: think about this & gseason_start/end
+        season_start = '02-02-'
         season_end = '11-30-'
         timestamps = pd.date_range(f'{season_start + year}',
                                    f'{season_end + year} 23:00:00',
