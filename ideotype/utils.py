@@ -150,46 +150,6 @@ def CC_RH(temp, temp_dew):
     return(rh)
 
 
-def find_zone(site, siteinfo):
-    """
-    Find time zone for specific sites.
-
-    Parameters
-    ----------
-    site :
-    siteinfo :
-
-    Returns
-    -------
-    zone:
-
-    """
-    from timezonefinder import TimezoneFinder
-
-    lat = float(siteinfo[siteinfo.site == site].lat)
-    lon = float(siteinfo[siteinfo.site == site].lon)
-    tf = TimezoneFinder()
-    zone = tf.timezone_at(lng=lon, lat=lat)
-    return zone
-
-
-def utc_to_local(times, zone):
-    """Convert list of utc timestamps into local time."""
-    # convert from pd.DatetimeIndex into python datetime format
-    times = times.to_pydatetime()
-    # setting up the UTC timezone, requires package 'pytz'
-    utc = pytz.timezone('UTC')
-    local_datetime = list()
-
-    for time in times:
-        utctime = utc.localize(time)  # adding UTC timezone to datetime
-        localtime = utctime.astimezone(pytz.timezone(zone))
-        datetime = pd.to_datetime(localtime)
-        local_datetime.append(datetime)
-
-    return local_datetime
-
-
 def calc_gdd(temps, temp_base=8, gdd_threshold=100):
     """
     Maize growing season GDD calculation.
