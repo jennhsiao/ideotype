@@ -1,0 +1,6 @@
+run_name: control
+sims: sims_6105_control_fixpd.csv
+sites: site_summary.csv
+siteyears: siteyears_filtered.csv
+wea: wea_summary.csv
+params: param_control.csv
