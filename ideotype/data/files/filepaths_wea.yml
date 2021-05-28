@@ -1,0 +1,3 @@
+stations_info: [files, stations_info_9110.csv]
+id_conversion: [files, stations_wban_usaf.csv]
+basepath: '/home/disk/eos8/ach315/upscale/weadata/process'
