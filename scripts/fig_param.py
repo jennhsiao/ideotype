@@ -29,7 +29,7 @@ df_scaled.index = ['g1',
                    'pop']
 
 # All params
-fig, ax = plt.subplots(figsize=(30,5))
+fig, ax = plt.subplots(figsize=(30, 5))
 ax = sns.heatmap(df_scaled, cmap=YlGnBu_8.mpl_colormap)
 plt.xticks(fontweight='light', fontsize=12)
 plt.yticks(rotation=0, fontweight='light', fontsize=12)
