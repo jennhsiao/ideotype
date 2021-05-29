@@ -11,19 +11,17 @@ def params_sample(N_sample):
     Sample parameter through LSH.
 
     - Physiology:
-        - g1: Ball-Berry slope
-            * 3.06-3.23 (Miner et al., 2017, Table 1 - BB model)
-        - vcmax:
-        - jmax:
-        - phyf:
+        - g1: Ball-Berry gs model slope
+        - Vcmax: Max RUBISCO capacity
+        - Jmax: Max electron transport rate
+        - phyf: Leaf water potential triggering stomatal closure (MPa)
     - Phenology:
-        - staygreen:
-        - juv_leaves:
-        - rmax_ltar:
-            * note that rmax_ltir should be 2*rmax_ltar
+        - SG: Duration that leaves maintain active function after maturity
+        - gleaf: Generic total leaf number
+        - LTAR: Max leaf tip appearance rate (leaves/day)
     - Morphology:
-        - lm_min: Length characteristic of longest leaf in canopy (cm)
-        - laf: leaf angle factor for corn leaves (1.37)
+        - LM: Length characteristic of longest leaf in canopy (cm)
+        - LAF: leaf angle factor for corn leaves (1.37)
     - Management:
         - gdd: growing degree days accumulated before sowing
         - pop: plants/m2
@@ -34,7 +32,7 @@ def params_sample(N_sample):
 
     """
     problem = {
-        'num_vars': 11,  # TODO: still need to finalize
+        'num_vars': 11,
         'names': ['g1',
                   'vcmax',
                   'jmax',
@@ -57,7 +55,7 @@ def params_sample(N_sample):
                    [80, 120],  # LM_min
                    [0.9, 1.4],  # LAF
                    [80, 160],  # gdd
-                   [6, 14],  # population
+                   [6, 10],  # population
                    ]
     }
 
