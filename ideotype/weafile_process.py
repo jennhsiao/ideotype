@@ -848,6 +848,10 @@ def make_weafile(siteyears_filtered,
         # otherwise interpolated points will end up with long floating nums
         df_wea = df_wea.round({'solrad': 1, 'temp': 1, 'precip': 1, 'rh': 2})
 
+        # Edge case where first row is nan and was not interpolated
+        if df_wea.isna().sum().sum() > 0:
+            print(f'Require additional gap fill: {site}_{year}')
+
         # Write out df_wea for each site-year
         wea_txt = os.path.join(outpath, f'{site}_{year}.txt')
         if os.path.exists(wea_txt):
