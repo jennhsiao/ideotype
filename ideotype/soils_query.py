@@ -25,11 +25,11 @@ def soilquery(latitude, longitude):
       per unit volume of soil at a water tension of 1/3 bar.
     - wthirdbar_r:
       The volumetric content of soil water retained
-      at a tension of 1/3 bar (33 kPa),
+      at a tension of 1/3 bar (33 kPa, field capacity, saturation),
       expressed as a percentage of the whole soil (need to divide by 100).
     - wfifteenbar_r:
       The volumetric content of soil water retained at
-      a tension of 15 bars (1500 kPa),
+      a tension of 15 bars (1500 kPa, wilting point),
       expressed as a percentage of the whole soil.
 
     """
