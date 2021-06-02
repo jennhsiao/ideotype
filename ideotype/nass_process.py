@@ -82,11 +82,15 @@ def summarize_nass():
     """
     Read & process NASS planting area & irrigation data.
 
-    Percent irrigated area calculated across four censue years:
-    1997, 2002, 2007, and 2012.
+    * note:
+    - Percent irrigated area calculated across four censue years:
+      1997, 2002, 2007, and 2012.
+    - Yield calculated across all sim years through read_nass()
+
     * note on units:
     * irrigated area & crop area - acres
     * maize area - ha
+    * yield - tons/ha
 
     Returns
     -------
