@@ -14,7 +14,7 @@ def read_nass():
     Read & process USDA NASS county-level data.
 
     * note:
-    * crop area units: ha
+    * planting area units: ha
     * yield units: tons/ha
 
     Returns
@@ -78,23 +78,19 @@ def read_nass():
     return df_nass
 
 
-def summarize_nass():
+def read_irri():
     """
-    Read & process NASS planting area & irrigation data.
+    Read & process NASS cropping area & irrigation data.
 
-    * note:
-    - Percent irrigated area calculated across four censue years:
-      1997, 2002, 2007, and 2012.
-    - Yield calculated across all sim years through read_nass()
-
-    * note on units:
-    * irrigated area & crop area - acres
-    * maize area - ha
-    * yield - tons/ha
+    Percent irrigated area calculated across four censue years
+    1997, 2002, 2007, and 2012.
+    * irrigated area - acres
+    * crop area - acres
+    * percent irrigated - %
 
     Returns
     -------
-    df_nass_summary : pd.DataFrame
+    df_irri : pd.DataFrame
 
     """
     # Read in file paths
@@ -119,15 +115,32 @@ def summarize_nass():
     # Average cropping area & irrigated area across 4 census years
     crop_area_mean = crop_area.mean(axis=1)
     irri_area_mean = irri_area.mean(axis=1)
-    df_census = pd.DataFrame({'state_id': state_id,
-                              'county_id': county_id,
-                              'perct_irri': (
-                                  irri_area_mean/crop_area_mean)*100})
+    df_irri = pd.DataFrame({'state_id': state_id,
+                            'county_id': county_id,
+                            'perct_irri': (
+                                irri_area_mean/crop_area_mean)*100})
 
-    # Read in nass maize data
+    return df_irri
+
+
+def nass_summarize(year_start, year_end):
+    """
+    Summarize NASS data for specified years.
+
+    Parameters
+    ----------
+    year_start : int
+        Start year for data summary.
+    year_end : int
+        End year for data summary.
+
+    """
     df_nass = read_nass()
-    # subset to include only years 1961-2005
-    df_nass_sub = df_nass.query('(year >= 1961) & (year <= 2005)')
+    df_irri = read_irri()
+
+    # Subset to include specified year(s)
+    df_nass_sub = df_nass.query(
+        f'(year >= {year_start}) & (year <= {year_end})')
     df_nass_sub.reset_index(drop=True, inplace=True)
 
     # Group df_nass to get max maize planting area & mean yield for maize
@@ -139,7 +152,7 @@ def summarize_nass():
         [df_nass_maxarea, df_nass_meanyield], axis=1).reset_index()
 
     # Merge maize data with census irrigation data
-    df_nass_census = pd.merge(df_nass_grouped, df_census,
-                              how='left', on=['state_id', 'county_id'])
+    df_nass_summary = pd.merge(df_nass_grouped, df_irri,
+                               how='left', on=['state_id', 'county_id'])
 
-    return df_nass_census
+    return(df_nass_summary)
