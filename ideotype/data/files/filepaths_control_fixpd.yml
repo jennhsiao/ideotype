@@ -1,4 +1,4 @@
-run_name: control
+run_name: control_fixpd
 sims: sims_6105_control_fixpd.csv
 sites: site_summary.csv
 siteyears: siteyears_filtered.csv
