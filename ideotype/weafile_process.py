@@ -13,7 +13,7 @@ from timezonefinder import TimezoneFinder
 from ideotype import DATA_PATH
 from ideotype.utils import CC_RH
 from ideotype.utils import CC_VPD
-from ideotype.nass_process import summarize_nass
+from ideotype.nass_process import nass_summarize
 
 
 def read_wea(year_start, year_end):
@@ -688,7 +688,7 @@ def wea_filter(siteyears, area_threshold, irri_threshold, yearspersite):
     df_stations.USAF.isin(sites)
 
     # Summarize nass data to fetch planting area & percent irrigated info
-    df_nass = summarize_nass()
+    df_nass = nass_summarize()
 
     # Continental US site boundaries
     lat_min = 19
