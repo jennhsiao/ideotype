@@ -688,7 +688,7 @@ def wea_filter(siteyears, area_threshold, irri_threshold, yearspersite):
     df_stations.USAF.isin(sites)
 
     # Summarize nass data to fetch planting area & percent irrigated info
-    df_nass = nass_summarize()
+    df_nass = nass_summarize(1961, 2005)
 
     # Continental US site boundaries
     lat_min = 19
