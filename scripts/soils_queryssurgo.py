@@ -9,15 +9,6 @@ from ideotype import DATA_PATH
 from ideotype.soils_query import soilquery
 from ideotype.nass_process import nass_summarize
 
-# Read in filepaths
-#file_paths = os.path.join(DATA_PATH, 'files', 'filepaths_soils.yml')
-#with open(file_paths, 'r') as pfile:
-#    dict_files = yaml.safe_load(pfile)
-
-# Read in NASS site info
-#file_nass = os.path.join(DATA_PATH, 'files', dict_files['nass_siteinfo'])
-#df_nass = pd.read_csv(file_nass, index_col=0)
-
 df_nass = nass_summarize()
 lats = df_nass.lat
 lons = df_nass.lon
