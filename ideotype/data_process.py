@@ -154,7 +154,7 @@ def read_data(yamlfile):
     # 3. weather
     df_wea = pd.read_csv(os.path.join(DATA_PATH, 'files', wea),
                          dtype={'site': str})
-
+    
     # 4. parameter
     df_params = pd.read_csv(os.path.join(DATA_PATH, 'files', params))
     df_params = df_params.drop(['rmax_ltar'], axis=1)
