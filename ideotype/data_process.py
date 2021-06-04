@@ -153,8 +153,7 @@ def read_data(yamlfile):
 
     # 3. weather
     df_wea = pd.read_csv(os.path.join(DATA_PATH, 'files', wea),
-                         dtype={'site': str}, index_col=0)
-    df_wea.reset_index(inplace=True, drop=True)
+                         dtype={'site': str})
 
     # 4. parameter
     df_params = pd.read_csv(os.path.join(DATA_PATH, 'files', params))
@@ -165,10 +164,8 @@ def read_data(yamlfile):
     df_sims_params = pd.merge(df_sims, df_params, on='cvar')
     df_sims_params_sites = pd.merge(df_sims_params, df_sites, on='site')
 
-    df_wea_sub = df_wea.loc[:, [
-        'site', 'year', 'temp', 'rh', 'precip', 'solrad', 'vpd']]
     df_all = pd.merge(df_sims_params_sites,
-                      df_wea_sub, on=['site', 'year'])
+                      df_wea, on=['site', 'year'])
 
     # 6. data with simulations that reached maturity only
     df_matured = df_all[df_all.note == '"Matured"']
