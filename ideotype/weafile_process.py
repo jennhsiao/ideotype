@@ -685,7 +685,6 @@ def wea_filter(siteyears, area_threshold, irri_threshold, yearspersite):
     fpath_stations_info = os.path.join(DATA_PATH,
                                        *dict_fpaths['stations_info'])
     df_stations = pd.read_csv(fpath_stations_info, dtype={'USAF': str})
-    df_stations.USAF.isin(sites)
 
     # Summarize nass data to fetch planting area & percent irrigated info
     df_nass = nass_summarize(1961, 2005)
