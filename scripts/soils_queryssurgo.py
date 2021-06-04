@@ -1,11 +1,7 @@
 """Query SSURGO soil data."""
 
-import os
-import yaml
-
 import pandas as pd
 
-from ideotype import DATA_PATH
 from ideotype.soils_query import soilquery
 from ideotype.nass_process import nass_summarize
 
