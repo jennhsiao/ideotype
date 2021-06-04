@@ -25,7 +25,7 @@ siteyears = wea_siteyears(df_temp, df_rh, df_precip, df_solrad,
 
 # Filter site-years based on area, irrigation, & estimated pdate
 area = 10000/2.47  # convert acre into ha
-irri = 10
+irri = 25
 yearspersite = 15
 siteyears_filtered = wea_filter(siteyears, area, irri, yearspersite)
 siteyears_filtered.to_csv(
