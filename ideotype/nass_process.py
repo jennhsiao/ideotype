@@ -123,7 +123,7 @@ def read_irri():
     return df_irri
 
 
-def nass_summarize(year_start, year_end):
+def nass_summarize(year_start=1961, year_end=2005):
     """
     Summarize NASS data for specified years.
 
