@@ -1,6 +1,6 @@
 run_name: control_fixpd
 sims: sims_6105_control_fixpd.csv
 sites: site_summary.csv
-siteyears: siteyears_filtered.csv
-wea: wea_summary.csv
+siteyears: siteyears_control_fixpd.csv
+wea: wea_summary_control_fixpd.csv
 params: param_control.csv
