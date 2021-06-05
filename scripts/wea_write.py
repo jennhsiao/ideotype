@@ -1,9 +1,12 @@
 """Write out MAIZSIM weather files."""
 
 import os
+
 import pandas as pd
+
 from ideotype.weafile_process import (wea_preprocess,
                                       make_weafile)
+from ideotype import DATA_PATH
 
 # Run name
 run_name = 'control_fixpd'
@@ -11,7 +14,7 @@ wea_folder = 'control'
 
 # Paths
 basepath_wea = '/home/disk/eos8/ach315/upscale/weadata/process'
-basepath_siteyears = '/home/disk/eos8/ach315/upscale/weadata/'
+basepath_siteyears = os.path.join(DATA_PATH, 'siteyears')
 outpath = os.path.join(
     '/home/disk/eos8/ach315/upscale/weadata/data', wea_folder)
 
