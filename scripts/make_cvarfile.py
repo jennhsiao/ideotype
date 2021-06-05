@@ -5,6 +5,7 @@ import argparse
 import pandas as pd
 
 from ideotype.init_params import params_sample
+from ideotype import DATA_PATH
 
 
 # Setup argparse for terminal control
@@ -24,8 +25,7 @@ N_samples = 300
 problem, param_values = params_sample(N_samples)
 df_params = pd.DataFrame(param_values.round(2), columns=problem['names'])
 
-fpath_save = os.path.join(os.path.expanduser('~'),
-                          'upscale', 'params', f'param_{args.run_name}.csv')
+fpath_save = os.path.join(DATA_PATH, 'params', f'param_{args.run_name}.csv')
 
 if os.path.exists(fpath_save):
     print('cultivar file exists!')
