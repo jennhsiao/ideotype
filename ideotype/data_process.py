@@ -140,23 +140,23 @@ def read_data(yamlfile):
     params = dict_files['params']
 
     # 1. maizsim outputs
-    df_sims = pd.read_csv(os.path.join(DATA_PATH, 'files', sims),
+    df_sims = pd.read_csv(os.path.join(DATA_PATH, 'sims', sims),
                           dtype={'site': str})
 
     # 2. site & site-years
-    df_sites_all = pd.read_csv(os.path.join(DATA_PATH, 'files', sites),
+    df_sites_all = pd.read_csv(os.path.join(DATA_PATH, 'sites', sites),
                                dtype={'site': str})
-    df_siteyears = pd.read_csv(os.path.join(DATA_PATH, 'files', siteyears),
+    df_siteyears = pd.read_csv(os.path.join(DATA_PATH, 'siteyears', siteyears),
                                dtype={'site': str})
     df_sites = df_sites_all[df_sites_all.site.isin(df_siteyears.site)]
     df_sites.reset_index(inplace=True, drop=True)
 
     # 3. weather
-    df_wea = pd.read_csv(os.path.join(DATA_PATH, 'files', wea),
+    df_wea = pd.read_csv(os.path.join(DATA_PATH, 'wea', wea),
                          dtype={'site': str})
 
     # 4. parameter
-    df_params = pd.read_csv(os.path.join(DATA_PATH, 'files', params))
+    df_params = pd.read_csv(os.path.join(DATA_PATH, 'params', params))
     df_params = df_params.drop(['rmax_ltar'], axis=1)
     df_params['cvar'] = df_params.index
 
