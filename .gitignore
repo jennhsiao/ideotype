@@ -130,7 +130,6 @@ dmypy.json
 
 # additional manually added
 .vscode/
-/ideotype/data/files/sims_6105.csv
-/ideotype/data/files/sims_6163_fixpd.csv
-/ideotype/data/files/sims_6165_control.csv
-/ideotype/data/files/param_control.csv
+/ideotype/data/sims/*.csv
+/ideotype/data/logs/*
+/scripts/tmpcode.py
