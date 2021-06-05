@@ -5,11 +5,11 @@ setup:
   path_wea: ['weadata', 'data', 'control']
   path_init_standards: ['inits', 'standards', 'control']
   path_init_soils: ['inits', 'soils']
-  path_params: ['params', 'param_control.csv']
+  path_params: params_control.csv
   path_maizsim: /home/disk/eos8/ach315/MAIZSIM_v142
-  siteyears: ['weadata', 'siteyears_control_fixpd.csv']
-  site_info: ['weadata', 'stations_info_9110.csv']
-  site_summary: ['weadata', 'site_summary.csv']
+  siteyears: siteyears_control_fixpd.csv
+  site_info: stations_info_9110.csv
+  site_summary: site_summary.csv
 specs:
   years:
   - 1961
