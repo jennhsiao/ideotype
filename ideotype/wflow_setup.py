@@ -243,14 +243,14 @@ def make_inits(run_name, yamlfile=None, cont_cvars=True):
                                       *dict_setup['path_wea'])
 
         else:
-            fpath_siteinfo = os.path.join(dict_setup['path_project'],
-                                          *dict_setup['site_info'])
-            fpath_siteyears = os.path.join(dict_setup['path_project'],
-                                           *dict_setup['siteyears'])
-            fpath_params = os.path.join(dict_setup['path_project'],
-                                        *dict_setup['path_params'])
-            fpath_weas = os.path.join(dict_setup['path_project'],
-                                      *dict_setup['path_wea'])
+            fpath_siteinfo = os.path.join(
+                DATA_PATH, 'sites', dict_setup['site_info'])
+            fpath_siteyears = os.path.join(
+                DATA_PATH, 'siteyears', dict_setup['siteyears'])
+            fpath_params = os.path.join(
+                DATA_PATH, 'params', dict_setup['path_params'])
+            fpath_weas = os.path.join(
+                dict_setup['path_project'], *dict_setup['path_wea'])
 
         df_siteinfo, df_siteyears = read_siteinfo(fpath_siteinfo,
                                                   fpath_siteyears)
@@ -498,8 +498,8 @@ def make_cultivars(run_name, yamlfile=None, cont_cvars=True):
     if dict_setup['base_path'] == 'testing':
         fpath_params = os.path.join(DATA_PATH, *dict_setup['path_params'])
     else:
-        fpath_params = os.path.join(dict_setup['path_project'],
-                                    *dict_setup['path_params'])
+        fpath_params = os.path.join(
+            DATA_PATH, 'params', dict_setup['path_params'])
 
     df_params = pd.read_csv(fpath_params)
 
@@ -685,10 +685,10 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True, dynamic_soil=True):
                                             *dict_setup['path_init_standards'])
 
         else:
-            fpath_siteyears = os.path.join(dict_setup['path_project'],
-                                           *dict_setup['siteyears'])
-            fpath_sitesummary = os.path.join(dict_setup['path_project'],
-                                             *dict_setup['site_summary'])
+            fpath_siteyears = os.path.join(
+                DATA_PATH, 'siteyears', dict_setup['siteyears'])
+            fpath_sitesummary = os.path.join(
+                DATA_PATH, 'sites', dict_setup['site_summary'])
             dirct_init_wea = os.path.join(dict_setup['path_project'],
                                           *dict_setup['path_wea'])
             dirct_init_soils = os.path.join(dict_setup['path_project'],
