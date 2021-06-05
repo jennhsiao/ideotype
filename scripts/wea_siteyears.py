@@ -1,17 +1,20 @@
 """Filter site-years."""
 
 import os
+
 from ideotype.weafile_process import (wea_preprocess,
                                       wea_siteyears,
                                       wea_filter,
                                       wea_summarize)
+from ideotype import DATA_PATH
 
 # Run name
 run_name = 'control_fixpd'
 
 # Paths
 basepath = '/home/disk/eos8/ach315/upscale/weadata/process'
-outpath = '/home/disk/eos8/ach315/upscale/weadata'
+outpath_siteyears = os.path.join(DATA_PATH, 'siteyears')
+outpath_wea = os.path.join(DATA_PATH, 'wea')
 
 # Preprocess combined weather data
 df_temp, df_rh, df_precip, df_solrad = wea_preprocess(basepath)
@@ -29,7 +32,7 @@ irri = 25
 yearspersite = 15
 siteyears_filtered = wea_filter(siteyears, area, irri, yearspersite)
 siteyears_filtered.to_csv(
-    os.path.join(outpath, f'siteyears_{run_name}.csv'), index=False)
+    os.path.join(outpath_siteyears, f'siteyears_{run_name}.csv'), index=False)
 
 # Summarize site-year weather info
 gseason_start_weasummary = 3
@@ -39,4 +42,4 @@ df_wea = wea_summarize(siteyears_filtered,
                        df_temp, df_rh, df_precip, df_solrad,
                        gseason_start_weasummary, gseason_end_weasummary)
 df_wea.to_csv(
-    os.path.join(outpath, f'wea_summary_{run_name}.csv'), index=False)
+    os.path.join(outpath_wea, f'wea_summary_{run_name}.csv'), index=False)
