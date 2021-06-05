@@ -62,8 +62,8 @@ def read_wea(year_start, year_end):
         dict_fpaths = yaml.safe_load(pfile)
 
     # Read in info on conversion between WBAN & USAF id numbering system
-    fpath_id_conversion = os.path.join(DATA_PATH,
-                                       *dict_fpaths['id_conversion'])
+    fpath_id_conversion = os.path.join(
+        DATA_PATH, 'sites', dict_fpaths['id_conversion'])
     df_stations = pd.read_csv(fpath_id_conversion, header=None, dtype=str)
     df_stations.columns = ['WBAN', 'USAF']
 
@@ -110,8 +110,8 @@ def read_wea(year_start, year_end):
         # For years 1991-2010
         else:
             # Select class1 weather station sites
-            fpath_stations_info = os.path.join(DATA_PATH,
-                                               *dict_fpaths['stations_info'])
+            fpath_stations_info = os.path.join(
+                DATA_PATH, 'sites', dict_fpaths['stations_info'])
             df_sites = pd.read_csv(fpath_stations_info)
             sites = df_sites.query(
                 'CLASS == 1').reset_index().USAF.astype('str')
@@ -301,8 +301,8 @@ def read_solrad(year_start, year_end):
     basepath = dict_fpaths['basepath']
 
     # Read in info on conversion between WBAN & USAF id numbering system
-    fpath_id_conversion = os.path.join(DATA_PATH,
-                                       *dict_fpaths['id_conversion'])
+    fpath_id_conversion = os.path.join(
+        DATA_PATH, 'sites', dict_fpaths['id_conversion'])
     df_stations = pd.read_csv(fpath_id_conversion, header=None, dtype=str)
     df_stations.columns = ['WBAN', 'USAF']
     stations_usaf = df_stations.USAF
@@ -682,8 +682,8 @@ def wea_filter(siteyears, area_threshold, irri_threshold, yearspersite):
         dict_fpaths = yaml.safe_load(pfile)
 
     # Read in stations info
-    fpath_stations_info = os.path.join(DATA_PATH,
-                                       *dict_fpaths['stations_info'])
+    fpath_stations_info = os.path.join(
+        DATA_PATH, 'sites', dict_fpaths['stations_info'])
     df_stations = pd.read_csv(fpath_stations_info, dtype={'USAF': str})
 
     # Summarize nass data to fetch planting area & percent irrigated info
@@ -780,8 +780,8 @@ def make_weafile(siteyears_filtered,
         dict_fpaths = yaml.safe_load(pfile)
 
     # Read in info on conversion between WBAN & USAF id numbering system
-    fpath_stations_info = os.path.join(DATA_PATH,
-                                       *dict_fpaths['stations_info'])
+    fpath_stations_info = os.path.join(
+        DATA_PATH, 'sites', dict_fpaths['stations_info'])
     df_stations = pd.read_csv(fpath_stations_info, dtype={'USAF': str})
 
     # Package needed to find timezone
