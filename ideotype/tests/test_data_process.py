@@ -22,10 +22,10 @@ def test_agg_sims():
     """
     if os.path.expanduser('~/') == '/home/disk/eos8/ach315/':
         filepaths_yaml = 'filepaths_local.yml'
-        aggshape = (100, 129)
+        aggshape = (100, 3)
     else:
         filepaths_yaml = 'filepaths_repo.yml'
-        aggshape = (100, 111)
+        aggshape = (100, 3)
 
     yamlfile = os.path.join(DATA_PATH, 'files', filepaths_yaml)
 
