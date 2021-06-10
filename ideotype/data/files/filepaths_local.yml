@@ -2,5 +2,5 @@ run_name: opt
 sims: sims_6105.csv
 sites: site_summary.csv
 siteyears: siteyears_test.csv
-wea: wea_summary.csv
+wea: wea_summary_control_fixpd.csv
 params: params_opt.csv
