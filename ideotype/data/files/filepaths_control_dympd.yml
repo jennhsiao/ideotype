@@ -1,0 +1,6 @@
+run_name: control_dympd
+sims: sims_6105_control_dympd.csv
+sites: site_summary.csv
+siteyears: siteyears_control_fixpd.csv
+wea: wea_summary_control_fixpd.csv  # share same weather file with fixpd
+params: params_control.csv
