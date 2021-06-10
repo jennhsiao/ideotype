@@ -300,17 +300,19 @@ def make_inits(run_name, yamlfile=None, cont_cvars=True):
                 # Dynamic pdate but gdd not perturbed
                 if dict_setup['init']['plant_date'] == 'dynamic':
                     # use default gdd_threhold value
-                    date_start, date_plant = estimate_pdate(fpath_weas,
-                                                            site,
-                                                            year)
+                    gdd = dict_setup['params']['gdd']
+                    start, sowing = estimate_pdate(fpath_weas,
+                                                   site,
+                                                   year,
+                                                   gdd)
                 # Dynamic pdate with perturbed gdd
                 elif dict_setup['init']['plant_date'] == 'dynamic_perturbed':
                     # use perturbed gdd value
                     gdd = df_params.loc[int(cultivar.split('_')[-1]), 'gdd']
-                    date_start, date_plant = estimate_pdate(fpath_weas,
-                                                            site,
-                                                            year,
-                                                            gdd_threshold=gdd)
+                    start, sowing = estimate_pdate(fpath_weas,
+                                                   site,
+                                                   year,
+                                                   gdd)
                 # Standard pdate across asll sites
                 else:
                     sowing = f'{dict_setup["init"]["plant_date"]}{year}'
