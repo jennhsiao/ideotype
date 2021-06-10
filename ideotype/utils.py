@@ -175,6 +175,7 @@ def calc_gdd(temps, temp_base=8, gdd_threshold=100):
 
     """
     gdd = 0
+
     for count, temp in enumerate(temps):
         if gdd > gdd_threshold:
             break
@@ -183,10 +184,11 @@ def calc_gdd(temps, temp_base=8, gdd_threshold=100):
                 gdd += 0
             else:
                 gdd += (temp-temp_base)/24
+
     return(count)
 
 
-def estimate_pdate(basepath, site, year, gdd_threshold=100):
+def estimate_pdate(basepath, site, year, gdd_threshold):
     """
     Estimate planting date for specified location.
 
@@ -210,10 +212,10 @@ def estimate_pdate(basepath, site, year, gdd_threshold=100):
 
     """
     fpath_wea = os.path.join(basepath, f'{site}_{year}.txt')
-    df_wea = pd.read_csv(fpath_wea)
+    df_wea = pd.read_csv(fpath_wea, sep='\t')
     temps = list(df_wea.temp)
 
-    loc = calc_gdd(temps, gdd_threshold)
+    loc = calc_gdd(temps, gdd_threshold=gdd_threshold)
     jday_plant = df_wea.loc[loc, 'jday']
     jday_start = jday_plant - 14  # start date 2 weeks prior to planting
 
