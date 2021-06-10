@@ -22,10 +22,8 @@ def test_agg_sims():
     """
     if os.path.expanduser('~/') == '/home/disk/eos8/ach315/':
         filepaths_yaml = 'filepaths_local.yml'
-        aggshape = (100, 3)
     else:
         filepaths_yaml = 'filepaths_repo.yml'
-        aggshape = (100, 3)
 
     yamlfile = os.path.join(DATA_PATH, 'files', filepaths_yaml)
 
@@ -33,6 +31,9 @@ def test_agg_sims():
      df_params, df_all, df_matured) = read_data(yamlfile)
     df = df_all
     groups = ['cvar', 'site']
+
+    # final aggregated shape
+    aggshape = (100, 2)
 
     # mean
     how = 'mean'
