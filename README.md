@@ -29,3 +29,12 @@ We ran the MAIZSIM model with past climate as well as idealized projections of 2
 <p align="left">
   <img src="docs/sites_obsyield.png" width ="500">
 </p>
+
+## Workflow
+1. Process weather data (script: wea_process)
+2. Identify siteyears (script: wea_siteyears.py)
+3. Write out MAIZSIM weather files (script: wea_write.py)
+4. Create cultivar files (script: make_cvarfile.py)
+5. Set up workflow (script: wflow_control.py)
+6. Submit job scripts (bash script)
+7. Compile sim outputs (data_process.py)
