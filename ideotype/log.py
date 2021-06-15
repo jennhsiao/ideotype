@@ -41,7 +41,8 @@ def log_fetchinfo(run_name):
 
     # check if log file for experiment exists already
     if os.path.isfile(log_runinfo):
-        raise ValueError(f'log file for run_name: "{run_name}" exists already!')
+        raise ValueError(
+            f'log file for run_name: "{run_name}" exists already!')
 
     # read in init param yaml file
     with open(fpath_init, 'r') as pfile:
