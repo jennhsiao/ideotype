@@ -25,7 +25,7 @@ N_samples = 300
 problem, param_values = params_sample(N_samples)
 df_params = pd.DataFrame(param_values.round(2), columns=problem['names'])
 
-fpath_save = os.path.join(DATA_PATH, 'params', f'param_{args.run_name}.csv')
+fpath_save = os.path.join(DATA_PATH, 'params', f'params_{args.run_name}.csv')
 
 if os.path.exists(fpath_save):
     print('cultivar file exists!')
