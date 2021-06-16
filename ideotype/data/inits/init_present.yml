@@ -49,7 +49,7 @@ params:
   - 160
   pop:
   - 6
-  -10
+  - 10
 init:
   rowsp: 75
   rowang: 0
@@ -59,8 +59,8 @@ init:
   eomult: 0.5
   co2: -1
   soil: false
-  start_date: dynamic
-  plant_date: dynamic
+  start_date: dynamic_perturbed
+  plant_date: dynamic_perturbed
   end_date: 12/31/
   timestep: 60
   alt: 0
