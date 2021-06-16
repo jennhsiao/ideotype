@@ -22,7 +22,7 @@ a.add_argument(
 args = a.parse_args()
 
 N_samples = 300
-problem, param_values = params_sample(N_samples)
+problem, param_values = params_sample(args.run_name, N_samples)
 df_params = pd.DataFrame(param_values.round(2), columns=problem['names'])
 
 fpath_save = os.path.join(DATA_PATH, 'params', f'params_{args.run_name}.csv')
