@@ -2,12 +2,15 @@
 
 import os
 import yaml
+
 import pandas as pd
+
 from ideotype import DATA_PATH
 from ideotype.soils_process import (bin_depth,
                                     merge_texture,
                                     texture_profile,
                                     assign_texture)
+
 
 # Read in filepaths
 file_paths = os.path.join(DATA_PATH, 'files', 'filepaths_soils.yml')
@@ -15,13 +18,13 @@ with open(file_paths, 'r') as pfile:
     dict_files = yaml.safe_load(pfile)
 
 # Set up relevant files
-file_sites = os.path.join(DATA_PATH, 'files', dict_files['sites'])
-file_soils = os.path.join(DATA_PATH, 'files', dict_files['soils'])
+file_sites = os.path.join(DATA_PATH, 'soils', dict_files['sites'])
+file_soils = os.path.join(DATA_PATH, 'soils', dict_files['soils'])
 file_soiltextures = os.path.join(DATA_PATH, 'files', dict_files['soiltexture'])
 
 # Read in files into dataframes
 df_sites = pd.read_csv(file_sites, dtype={'site': str})
-df_soils = pd.read_csv(file_soils, dtype={'sgroup': str})
+df_soils = pd.read_csv(file_soils, dtype={'site': str})
 df_soiltextures = pd.read_csv(file_soiltextures)
 
 # Bin soil into 5 soil depth categories
