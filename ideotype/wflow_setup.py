@@ -940,25 +940,24 @@ def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
                 str2 = '#PBS -l nodes=1:ppn=1\n'
                 str3 = '#PBS -l walltime=12:00:00\n'
                 str4 = '#PBS -m a\n'
-                str5 = '#PBS -M \n'  # can choose to add email here
-                str6 = ('#PBS -N ' + run_name + '_' + str(year) +
+                str5 = ('#PBS -N ' + run_name + '_' + str(year) +
                         '_' + cvar + '\n')
-                str7 = '\n'
-                str8 = 'FILES=' + os.path.join(dirct_project,
+                str6 = '\n'
+                str7 = 'FILES=' + os.path.join(dirct_project,
                                                'runs',
                                                run_name,
                                                str(year),
                                                cvar,
                                                '*') + '\n'
-                str9 = '\n'
-                str10 = 'for file in $FILES\n'
-                str11 = 'do\n'
-                str12 = f'\tcd {path_maizsim}\n'
-                str13 = '\ttimeout 20m maizsim $file\n'
-                str14 = 'done\n'
+                str8 = '\n'
+                str9 = 'for file in $FILES\n'
+                str10 = 'do\n'
+                str11 = f'\tcd {path_maizsim}\n'
+                str12 = '\ttimeout 20m maizsim $file\n'
+                str13 = 'done\n'
 
                 strings = [str1, str2, str3, str4, str5, str6, str7,
-                           str8, str9, str10, str11, str12, str13, str14]
+                           str8, str9, str10, str11, str12, str13]
 
                 jobs = open(os.path.join(dirct_jobs,
                                          str(year) + '_' + cvar + '.job'), 'w')
