@@ -169,22 +169,6 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
     else:
         raise ValueError(f'directory {dirct_inits_cultivars} already exists!')
 
-    # *** /inits/customs
-    dirct_inits_customs = os.path.join(
-        dirct_project, 'inits', 'customs', run_name)
-
-    if not os.path.isdir(dirct_inits_customs):
-        os.mkdir(dirct_inits_customs)
-        for row in np.arange(df_siteyears.shape[0]):
-            siteyear = (f'{df_siteyears.iloc[row].site}_'
-                        f'{df_siteyears.iloc[row].year}')
-            dirct_inits_customs_siteyear = os.path.join(
-                dirct_project, 'inits', 'customs', run_name, siteyear)
-            os.mkdir(dirct_inits_customs_siteyear)
-    else:
-        raise ValueError(
-            f'directory {dirct_inits_customs} already exists!')
-
     # *** /jobs
     dirct_jobs = os.path.join(dirct_project, 'jobs', run_name)
 
@@ -209,6 +193,29 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
     for var in cvars_iter:
         cultivar = 'var_' + str(var)
         cultivars.append(cultivar)
+
+    # *** /inits/customs
+    dirct_inits_customs = os.path.join(
+        dirct_project, 'inits', 'customs', run_name)
+    if not os.path.isdir(dirct_inits_customs):
+        os.mkdir(dirct_inits_customs)
+    else:
+        raise ValueError(
+            f'directory {dirct_inits_customs} already exists!')
+
+    for cultivar in cultivars:
+        os.mkdir(os.path.join(dirct_inits_customs, cultivar))
+
+        for row in np.arange(df_siteyears.shape[0]):
+            siteyear = (f'{df_siteyears.iloc[row].site}_'
+                        f'{df_siteyears.iloc[row].year}')
+            dirct_inits_customs_siteyear = os.path.join(dirct_project,
+                                                        'inits',
+                                                        'customs',
+                                                        run_name,
+                                                        cultivar,
+                                                        siteyear)
+            os.mkdir(dirct_inits_customs_siteyear)
 
     # *** /runs & /sims
     for folder in (['runs'], ['sims']):
@@ -380,7 +387,7 @@ def make_inits(run_name, yamlfile=None, cont_cvars=True):
             str9 = (start + '\t' + sowing + '\t' + end + '\t'
                     f'{dict_setup["init"]["timestep"]:.0f}\n')
             str10 = ('output soils data (g03, g04, g05, and g06 files)'
-                        ' 1 if true\n')
+                     ' 1 if true\n')
             str11 = 'no soil files\toutputsoil files\n'
             if dict_setup["init"]["soil"]:
                 str12 = '0\t1\n'
@@ -806,8 +813,8 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True, dynamic_soil=True):
                                                  'inits',
                                                  'customs',
                                                  run_name,
-                                                 year,
-                                                 cultivar)
+                                                 cultivar,
+                                                 siteyear)
 
                 # itemize dict_custom items into paths
                 dict_custom_loop = dict_custom.copy()
@@ -855,7 +862,7 @@ def make_runs(run_name, yamlfile=None, cont_cvars=True, dynamic_soil=True):
                     dirct_project,
                     'runs',
                     run_name,
-                    siteyear.split('_')[1],  # parse year
+                    year,
                     cultivar,
                     'run_' + siteyear + '_' + cultivar + '.txt'), 'w')
                 run.writelines(strings)
