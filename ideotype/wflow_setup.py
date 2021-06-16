@@ -108,8 +108,8 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
 
     Directories include experiment-specific subdirectories for:
     1. /inits
-        1.1 /inits/customs
-        1.2 /inits/cultivars
+        1.1 /inits/cultivars
+        1.2 /inits/customs
     2. /jobs
     3. /runs
     4. /sims
@@ -133,13 +133,31 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
         Fals: stored specific cultivars (testing purposes).
 
     """
-    # read in setup yaml file
+    # Read in setup yaml file
     dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
 
-    # setup project directory
+    # Set up project directory
     dirct_project = dict_setup['path_project']
 
-    # /inits - cultivars
+    # Set up filepaths
+    if dict_setup['base_path'] == 'testing':
+        basepath = DATA_PATH
+        fpath_siteinfo = os.path.join(basepath,
+                                      *dict_setup['site_info'])
+        fpath_siteyears = os.path.join(basepath,
+                                       *dict_setup['siteyears'])
+
+    else:
+        fpath_siteinfo = os.path.join(
+            DATA_PATH, 'sites', dict_setup['site_info'])
+        fpath_siteyears = os.path.join(
+            DATA_PATH, 'siteyears', dict_setup['siteyears'])
+
+    # Read in site-years
+    df_siteinfo, df_siteyears = read_siteinfo(fpath_siteinfo,
+                                              fpath_siteyears)
+
+    # *** /inits/cultivars
     dirct_inits_cultivars = os.path.join(dirct_project,
                                          'inits',
                                          'cultivars',
@@ -151,7 +169,23 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
     else:
         raise ValueError(f'directory {dirct_inits_cultivars} already exists!')
 
-    # /jobs
+    # *** /inits/customs
+    dirct_inits_customs = os.path.join(
+        dirct_project, 'inits', 'customs', run_name)
+
+    if not os.path.isdir(dirct_inits_customs):
+        os.mkdir(dirct_inits_customs)
+        for row in np.arange(df_siteyears.shape[0]):
+            siteyear = (f'{df_siteyears.iloc[row].site}_'
+                        f'{df_siteyears.iloc[row].year}')
+            dirct_inits_customs_siteyear = os.path.join(
+                dirct_project, 'inits', 'customs', run_name, siteyear)
+            os.mkdir(dirct_inits_customs_siteyear)
+    else:
+        raise ValueError(
+            f'directory {dirct_inits_customs} already exists!')
+
+    # *** /jobs
     dirct_jobs = os.path.join(dirct_project, 'jobs', run_name)
 
     if not os.path.isdir(dirct_jobs):
@@ -159,24 +193,26 @@ def make_dircts(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
     else:
         raise ValueError(f'directory {dirct_jobs} already exists!')
 
-    # /inits/customs, /runs & /sims
-    for folder in (['inits', 'customs'], ['runs'], ['sims']):
+    # Set up years & cvars info
+    years = dict_setup['specs']['years']  # fetch from init_runame.yml
+    cvars = dict_setup['specs']['cvars']  # fetch from init_runame.yml
+
+    # Check if cultivar in yamlfile is continuous or not
+    # False case mostly for testing purposes
+    cultivars = list()
+    if cont_cvars is True:
+        cvars_iter = np.arange(cvars[0])
+    else:
+        cvars_iter = cvars
+
+    # Assemble cultivars
+    for var in cvars_iter:
+        cultivar = 'var_' + str(var)
+        cultivars.append(cultivar)
+
+    # *** /runs & /sims
+    for folder in (['runs'], ['sims']):
         dirct_folder = os.path.join(dirct_project, *folder, run_name)
-        years = dict_setup['specs']['years']  # fetch from init_runame.yml
-        cvars = dict_setup['specs']['cvars']  # fetch from init_runame.yml
-
-        # check if cultivar in yamlfile is continuous or not
-        # False case mostly for testing purposes
-        cultivars = list()
-        if cont_cvars is True:
-            cvars_iter = np.arange(cvars[0])
-        else:
-            cvars_iter = cvars
-
-        # assemble cultivars
-        for var in cvars_iter:
-            cultivar = 'var_' + str(var)
-            cultivars.append(cultivar)
 
         if not os.path.isdir(dirct_folder):
             # make /runs or /sims directory with run_name
@@ -898,7 +934,7 @@ def make_jobs(run_name, yamlfile=None, cont_years=True, cont_cvars=True):
                 str2 = '#PBS -l nodes=1:ppn=1\n'
                 str3 = '#PBS -l walltime=12:00:00\n'
                 str4 = '#PBS -m a\n'
-                str5 = '#PBS -M ach315@uw.edu\n'
+                str5 = '#PBS -M \n'  # can choose to add email here
                 str6 = ('#PBS -N ' + run_name + '_' + str(year) +
                         '_' + cvar + '\n')
                 str7 = '\n'
