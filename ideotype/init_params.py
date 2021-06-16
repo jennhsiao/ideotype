@@ -4,9 +4,10 @@
 # run_name based on parameter file name
 
 from SALib.sample import latin
+from ideotype.wflow_setup import read_inityaml
 
 
-def params_sample(N_sample):
+def params_sample(run_name, N_sample, yamlfile=None):
     """
     Sample parameter through LSH.
 
@@ -31,32 +32,14 @@ def params_sample(N_sample):
     N_sample : number of samples to generate.
 
     """
+    dict_setup = read_inityaml(run_name, yamlfile=yamlfile)
+    names = list(dict_setup['params'].keys())
+    bounds = list(dict_setup['params'].values())
+
     problem = {
-        'num_vars': 11,
-        'names': ['g1',
-                  'vcmax',
-                  'jmax',
-                  'phyf',
-                  'staygreen',
-                  'juv_leaves',
-                  'rmax_ltar',
-                  'lm_min',
-                  'laf',
-                  'gdd',
-                  'pop'
-                  ],
-        'bounds': [[2, 6],  # g1
-                   [65, 80],  # Vcmax
-                   [350, 420],  # Jmax
-                   [-3, -1],  # phyf
-                   [2, 6],  # staygreen
-                   [11, 25],  # juv_leaves
-                   [0.4, 0.8],  # rmax_ltar
-                   [80, 120],  # LM_min
-                   [0.9, 1.4],  # LAF
-                   [80, 160],  # gdd
-                   [6, 10],  # population
-                   ]
+        'num_vars': len(names),
+        'names': names,
+        'bounds': bounds
     }
 
     param_values = latin.sample(problem, N_sample)
