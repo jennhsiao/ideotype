@@ -309,10 +309,10 @@ def make_inits(run_name, yamlfile=None, cont_cvars=True):
         for row in data:
             siteyears.append(str(row[0]) + '_' + str(row[1]))
 
-        # setup cultivars
+        # Set up cultivars
         cvars = dict_setup['specs']['cvars']  # fetch cultivar numbers
 
-        # check if cultivar in yamlfile is continuous or not
+        # Check if cultivar in yamlfile is continuous or not
         # False case for control sim & testing purposes
         cultivars = list()
         if cont_cvars is True:
@@ -325,180 +325,185 @@ def make_inits(run_name, yamlfile=None, cont_cvars=True):
             cultivar = 'var_' + str(var)
             cultivars.append(cultivar)
 
-        # loop through site-years
-        for siteyear in siteyears:
-            site = siteyear.split('_')[0]
-            year = siteyear.split('_')[1]
-            lat = df_siteinfo[df_siteinfo.site == site].lat.item()
-            lon = df_siteinfo[df_siteinfo.site == site].lon.item()
+        # Loop through cultivars
+        for cultivar in cultivars:
+            for siteyear in siteyears:
+                site = siteyear.split('_')[0]
+                year = siteyear.split('_')[1]
+                lat = df_siteinfo[df_siteinfo.site == site].lat.item()
+                lon = df_siteinfo[df_siteinfo.site == site].lon.item()
 
-            # *** init.txt
-            init_txt = open(os.path.join(dirct_init,
-                                         siteyear,
-                                         'init.txt'), 'w')
+                # *** init.txt
+                init_txt = open(os.path.join(dirct_init,
+                                             cultivar,
+                                             siteyear,
+                                             'init.txt'), 'w')
 
-            # Dynamic pdate but gdd not perturbed
-            if dict_setup['init']['plant_date'] == 'dynamic':
-                # use default gdd_threhold value
-                gdd = dict_setup['params']['gdd']
-                start, sowing = estimate_pdate(fpath_weas,
-                                               site,
-                                               year,
-                                               gdd)
-            # Dynamic pdate with perturbed gdd
-            elif dict_setup['init']['plant_date'] == 'dynamic_perturbed':
-                # use perturbed gdd value
-                gdd = df_params.loc[int(cultivar.split('_')[-1]), 'gdd']
-                start, sowing = estimate_pdate(fpath_weas,
-                                               site,
-                                               year,
-                                               gdd)
-            # Standard pdate across asll sites
-            else:
-                sowing = f'{dict_setup["init"]["plant_date"]}{year}'
-                sowing = "'" + sowing + "'"  # requires single quote
-                start = f'{dict_setup["init"]["start_date"]}{year}'
-                start = "'" + start + "'"
+                # Dynamic pdate but gdd not perturbed
+                if dict_setup['init']['plant_date'] == 'dynamic':
+                    # use default gdd_threhold value
+                    gdd = dict_setup['params']['gdd']
+                    start, sowing = estimate_pdate(fpath_weas,
+                                                   site,
+                                                   year,
+                                                   gdd)
+                # Dynamic pdate with perturbed gdd
+                elif dict_setup['init']['plant_date'] == 'dynamic_perturbed':
+                    # use perturbed gdd value
+                    gdd = df_params.loc[int(cultivar.split('_')[-1]), 'gdd']
+                    start, sowing = estimate_pdate(fpath_weas,
+                                                   site,
+                                                   year,
+                                                   gdd)
+                # Standard pdate across asll sites
+                else:
+                    sowing = f'{dict_setup["init"]["plant_date"]}{year}'
+                    sowing = "'" + sowing + "'"  # requires single quote
+                    start = f'{dict_setup["init"]["start_date"]}{year}'
+                    start = "'" + start + "'"
 
-            end = f'{dict_setup["init"]["end_date"]}{year}'
-            end = "'" + end + "'"
+                end = f'{dict_setup["init"]["end_date"]}{year}'
+                end = "'" + end + "'"
 
-            # set up init.txt text strings
-            pop = df_params.loc[int(cultivar.split('_')[-1]), 'pop']
-            str1 = '*** initialization data ***\n'
-            str2 = ('poprow\trowsp\tplant_density\trowang\t'
-                    'x_seed\ty_seed\ttab\tCEC\teomult\tco2\n')
-            str3 = (f'{pop*(dict_setup["init"]["rowsp"])/100:.1f}\t'
-                    f'{dict_setup["init"]["rowsp"]:.1f}\t'
-                    f'{pop:.1f}\t'
-                    f'{dict_setup["init"]["rowang"]:.1f}\t'
-                    f'{dict_setup["init"]["x_seed"]:.1f}\t'
-                    f'{dict_setup["init"]["y_seed"]:.1f}\t'
-                    f'{dict_setup["init"]["cec"]:.2f}\t'
-                    f'{dict_setup["init"]["eomult"]:.2f}\t'
-                    f'{dict_setup["init"]["co2"]:.0f}\n')
-            str4 = 'latitude\tlongitude\taltitude\n'
-            str5 = (f'{lat:.2f}\t'
-                    f'{lon:.2f}\t'
-                    f'{dict_setup["init"]["alt"]:.2f}\n')
-            str6 = 'autoirrigate\n'
-            str7 = f'{dict_setup["init"]["irrigate"]}\n'
-            str8 = 'begin\tsowing\tend\ttimestep (mins)\n'
-            str9 = (start + '\t' + sowing + '\t' + end + '\t'
-                    f'{dict_setup["init"]["timestep"]:.0f}\n')
-            str10 = ('output soils data (g03, g04, g05, and g06 files)'
-                     ' 1 if true\n')
-            str11 = 'no soil files\toutputsoil files\n'
-            if dict_setup["init"]["soil"]:
-                str12 = '0\t1\n'
-            else:
-                str12 = '1\t0\n'
+                # set up init.txt text strings
+                pop = df_params.loc[int(cultivar.split('_')[-1]), 'pop']
+                str1 = '*** initialization data ***\n'
+                str2 = ('poprow\trowsp\tplant_density\trowang\t'
+                        'x_seed\ty_seed\ttab\tCEC\teomult\tco2\n')
+                str3 = (f'{pop*(dict_setup["init"]["rowsp"])/100:.1f}\t'
+                        f'{dict_setup["init"]["rowsp"]:.1f}\t'
+                        f'{pop:.1f}\t'
+                        f'{dict_setup["init"]["rowang"]:.1f}\t'
+                        f'{dict_setup["init"]["x_seed"]:.1f}\t'
+                        f'{dict_setup["init"]["y_seed"]:.1f}\t'
+                        f'{dict_setup["init"]["cec"]:.2f}\t'
+                        f'{dict_setup["init"]["eomult"]:.2f}\t'
+                        f'{dict_setup["init"]["co2"]:.0f}\n')
+                str4 = 'latitude\tlongitude\taltitude\n'
+                str5 = (f'{lat:.2f}\t'
+                        f'{lon:.2f}\t'
+                        f'{dict_setup["init"]["alt"]:.2f}\n')
+                str6 = 'autoirrigate\n'
+                str7 = f'{dict_setup["init"]["irrigate"]}\n'
+                str8 = 'begin\tsowing\tend\ttimestep (mins)\n'
+                str9 = (start + '\t' + sowing + '\t' + end + '\t'
+                        f'{dict_setup["init"]["timestep"]:.0f}\n')
+                str10 = ('output soils data (g03, g04, g05, and g06 files)'
+                         ' 1 if true\n')
+                str11 = 'no soil files\toutputsoil files\n'
+                if dict_setup["init"]["soil"]:
+                    str12 = '0\t1\n'
+                else:
+                    str12 = '1\t0\n'
 
-            strings = [str1, str2, str3, str4, str5, str6,
-                       str7, str8, str9, str10, str11, str12]
-            init_txt.writelines(strings)
-            init_txt.close()
+                strings = [str1, str2, str3, str4, str5, str6,
+                           str7, str8, str9, str10, str11, str12]
+                init_txt.writelines(strings)
+                init_txt.close()
 
-            # *** time.txt
-            time_txt = open(os.path.join(dirct_init,
-                                         siteyear,
-                                         'time.txt'), 'w')
+                # *** time.txt
+                time_txt = open(os.path.join(dirct_init,
+                                             cultivar,
+                                             siteyear,
+                                             'time.txt'), 'w')
 
-            # set up text strings
-            str1 = '*** synchronizer information ***\n'
-            str2 = 'initial time\tdt\tdtmin\tdmul1\tdmul2\ttfin\n'
-            str3 = (start + '\t' +
-                    f'{dict_setup["time"]["dt"]}\t'
-                    f'{dict_setup["time"]["dt_min"]}\t'
-                    f'{dict_setup["time"]["dmul1"]}\t'
-                    f'{dict_setup["time"]["dmul2"]}\t' +
-                    end + '\n')
-            str4 = 'output variables, 1 if true\tDaily\tHourly\n'
-            if dict_setup['time']['output_timestep'] == 'hourly':
-                output_timestep = '0\t1\n'
-            else:
-                output_timestep = '1\t0\n'
-            str5 = output_timestep
-            str6 = 'weather data, 1 if true\tDaily\tHourly\n'
-            if dict_setup['time']['input_timestep'] == 'hourly':
-                input_timestep = '0\t1\n'
-            else:
-                input_timestep = '1\t0\n'
-            str7 = input_timestep
+                # set up text strings
+                str1 = '*** synchronizer information ***\n'
+                str2 = 'initial time\tdt\tdtmin\tdmul1\tdmul2\ttfin\n'
+                str3 = (start + '\t' +
+                        f'{dict_setup["time"]["dt"]}\t'
+                        f'{dict_setup["time"]["dt_min"]}\t'
+                        f'{dict_setup["time"]["dmul1"]}\t'
+                        f'{dict_setup["time"]["dmul2"]}\t' +
+                        end + '\n')
+                str4 = 'output variables, 1 if true\tDaily\tHourly\n'
+                if dict_setup['time']['output_timestep'] == 'hourly':
+                    output_timestep = '0\t1\n'
+                else:
+                    output_timestep = '1\t0\n'
+                str5 = output_timestep
+                str6 = 'weather data, 1 if true\tDaily\tHourly\n'
+                if dict_setup['time']['input_timestep'] == 'hourly':
+                    input_timestep = '0\t1\n'
+                else:
+                    input_timestep = '1\t0\n'
+                str7 = input_timestep
 
-            strings = [str1, str2, str3, str4, str5, str6, str7]
-            time_txt.writelines(strings)
-            time_txt.close()
+                strings = [str1, str2, str3, str4, str5, str6, str7]
+                time_txt.writelines(strings)
+                time_txt.close()
 
-            # *** climate.txt
-            climate_txt = open(os.path.join(dirct_init,
-                                            siteyear,
-                                            'climate.txt'), 'w')
+                # *** climate.txt
+                climate_txt = open(os.path.join(dirct_init,
+                                                cultivar,
+                                                siteyear,
+                                                'climate.txt'), 'w')
 
-            # put together txt strings
-            str1 = '*** standard meteorological data ***\n'
-            str2 = 'latitude\n'
-            str3 = f'{lat}\n'
-            str4 = ('daily bulb temp, daily wind, rain intensity, '
-                    'daily conc, furrow, relative humidity, co2\n')
-            str5 = (f'{dict_setup["climate"]["daily_bulb"]}\t'
-                    f'{dict_setup["climate"]["daily_wind"]}\t'
-                    f'{dict_setup["climate"]["rain_intensity"]}\t'
-                    f'{dict_setup["climate"]["daily_conc"]}\t'
-                    f'{dict_setup["climate"]["furrow"]}\t'
-                    f'{dict_setup["climate"]["relative_humidity"]}\t'
-                    f'{dict_setup["climate"]["daily_co2"]}\n')
-            str6 = ('parameters for unit conversion:'
-                    'BSOLAR BTEMP ATEMP ERAIN BWIND BIR\n')
-            str7 = 'BSOLAR is 1e6/3600 to go from jm-2h-1 to wm-2\n'
-            str8 = (f'{dict_setup["climate"]["bsolar"]}\t'
-                    f'{dict_setup["climate"]["btemp"]}\t'
-                    f'{dict_setup["climate"]["atemp"]}\t'
-                    f'{dict_setup["climate"]["erain"]}\t'
-                    f'{dict_setup["climate"]["bwind"]}\t'
-                    f'{dict_setup["climate"]["bir"]}\n')
-            str9 = 'average values for the site\n'
-            str10 = 'WINDA\tIRAV\tConc\tCO2\n'
-            str11 = (f'{dict_setup["climate"]["winda"]}\t'
-                     f'{dict_setup["climate"]["conc"]}\n')
+                # put together txt strings
+                str1 = '*** standard meteorological data ***\n'
+                str2 = 'latitude\n'
+                str3 = f'{lat}\n'
+                str4 = ('daily bulb temp, daily wind, rain intensity, '
+                        'daily conc, furrow, relative humidity, co2\n')
+                str5 = (f'{dict_setup["climate"]["daily_bulb"]}\t'
+                        f'{dict_setup["climate"]["daily_wind"]}\t'
+                        f'{dict_setup["climate"]["rain_intensity"]}\t'
+                        f'{dict_setup["climate"]["daily_conc"]}\t'
+                        f'{dict_setup["climate"]["furrow"]}\t'
+                        f'{dict_setup["climate"]["relative_humidity"]}\t'
+                        f'{dict_setup["climate"]["daily_co2"]}\n')
+                str6 = ('parameters for unit conversion:'
+                        'BSOLAR BTEMP ATEMP ERAIN BWIND BIR\n')
+                str7 = 'BSOLAR is 1e6/3600 to go from jm-2h-1 to wm-2\n'
+                str8 = (f'{dict_setup["climate"]["bsolar"]}\t'
+                        f'{dict_setup["climate"]["btemp"]}\t'
+                        f'{dict_setup["climate"]["atemp"]}\t'
+                        f'{dict_setup["climate"]["erain"]}\t'
+                        f'{dict_setup["climate"]["bwind"]}\t'
+                        f'{dict_setup["climate"]["bir"]}\n')
+                str9 = 'average values for the site\n'
+                str10 = 'WINDA\tIRAV\tConc\tCO2\n'
+                str11 = (f'{dict_setup["climate"]["winda"]}\t'
+                         f'{dict_setup["climate"]["conc"]}\n')
 
-            strings = [str1, str2, str3, str4, str5,
-                       str6, str7, str8, str9, str10, str11]
-            climate_txt.writelines(strings)
-            climate_txt.close()
+                strings = [str1, str2, str3, str4, str5,
+                           str6, str7, str8, str9, str10, str11]
+                climate_txt.writelines(strings)
+                climate_txt.close()
 
-            # *** management.txt
-            management_txt = open(os.path.join(dirct_init,
-                                               siteyear,
-                                               'management.txt'), 'w')
+                # *** management.txt
+                management_txt = open(os.path.join(dirct_init,
+                                                   cultivar,
+                                                   siteyear,
+                                                   'management.txt'), 'w')
 
-            # addressing N application date according to dynamic pdate
-            sowing_date = pd.to_datetime(sowing, format="'%m/%d/%Y'")
-            appl_date1 = sowing_date + pd.DateOffset(days=14)
-            appl_date2 = sowing_date + pd.DateOffset(days=14+30)
-            appl_time1 = appl_date1.strftime("'%m/%d/%Y'")
-            appl_time2 = appl_date2.strftime("'%m/%d/%Y'")
+                # addressing N application date according to dynamic pdate
+                sowing_date = pd.to_datetime(sowing, format="'%m/%d/%Y'")
+                appl_date1 = sowing_date + pd.DateOffset(days=14)
+                appl_date2 = sowing_date + pd.DateOffset(days=14+30)
+                appl_time1 = appl_date1.strftime("'%m/%d/%Y'")
+                appl_time2 = appl_date2.strftime("'%m/%d/%Y'")
 
-            # put together txt strings
-            str1 = '*** script for chemical application module ***\n'
-            str2 = 'number of fertilizer applicaitons (max=25)\n'
-            str3 = f'{dict_setup["management"]["appl_num"]}\n'
-            str4 = ('appl_time(i)\tappl_mg(i)\tappl_depth(cm)\t'
-                    'residue_C\tresidue_N\n')
-            str5 = (f'{appl_time1}\t'
-                    f'{dict_setup["management"]["appl_mg"]}\t'
-                    f'{dict_setup["management"]["appl_depth"]}\t'
-                    f'{dict_setup["management"]["residue_C"]}\t'
-                    f'{dict_setup["management"]["residue_N"]}\n')
-            str6 = (f'{appl_time2}\t'
-                    f'{dict_setup["management"]["appl_mg"]}\t'
-                    f'{dict_setup["management"]["appl_depth"]}\t'
-                    f'{dict_setup["management"]["residue_C"]}\t'
-                    f'{dict_setup["management"]["residue_N"]}\n')
+                # put together txt strings
+                str1 = '*** script for chemical application module ***\n'
+                str2 = 'number of fertilizer applicaitons (max=25)\n'
+                str3 = f'{dict_setup["management"]["appl_num"]}\n'
+                str4 = ('appl_time(i)\tappl_mg(i)\tappl_depth(cm)\t'
+                        'residue_C\tresidue_N\n')
+                str5 = (f'{appl_time1}\t'
+                        f'{dict_setup["management"]["appl_mg"]}\t'
+                        f'{dict_setup["management"]["appl_depth"]}\t'
+                        f'{dict_setup["management"]["residue_C"]}\t'
+                        f'{dict_setup["management"]["residue_N"]}\n')
+                str6 = (f'{appl_time2}\t'
+                        f'{dict_setup["management"]["appl_mg"]}\t'
+                        f'{dict_setup["management"]["appl_depth"]}\t'
+                        f'{dict_setup["management"]["residue_C"]}\t'
+                        f'{dict_setup["management"]["residue_N"]}\n')
 
-            strings = [str1, str2, str3, str4, str5, str6]
-            management_txt.writelines(strings)
-            management_txt.close()
+                strings = [str1, str2, str3, str4, str5, str6]
+                management_txt.writelines(strings)
+                management_txt.close()
 
     else:
         raise ValueError(f'custom initial files for run_name: "{run_name}"'
