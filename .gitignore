@@ -140,3 +140,6 @@ dmypy.json
 
 # files relating to ensemble sims first attempt
 /ideotype/data/files/filepaths_opt.yml
+
+# bash scripts to remove sim outputs
+/scripts/rm_*
