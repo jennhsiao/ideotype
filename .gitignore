@@ -139,5 +139,4 @@ dmypy.json
 /ideotype/data/sims/sims_*_fixpd.csv
 
 # files relating to ensemble sims first attempt
-/ideotype/data/params/params_opt.csv
 /ideotype/data/files/filepaths_opt.yml
