@@ -157,7 +157,6 @@ def read_data(yamlfile):
 
     # 4. parameter
     df_params = pd.read_csv(os.path.join(DATA_PATH, 'params', params))
-    df_params = df_params.drop(['rmax_ltar'], axis=1)
     df_params['cvar'] = df_params.index
 
     # 5. merge all
@@ -234,8 +233,8 @@ def agg_sims(df, groups, how):
     list_groupindex = []
     for group in groups:
         # find set in index, turn to list
-        # since order gets messed up when turned into list
-        # so re-order and turn back to list again
+        # since order can get messed up when turned into list
+        # re-order and turn back to list again
         list_groupindex.append(list(np.sort(list(set(df[group])))))
 
     lens = []
