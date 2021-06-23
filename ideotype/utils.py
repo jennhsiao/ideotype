@@ -4,6 +4,8 @@ from datetime import datetime
 
 import pandas as pd
 import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 
 
@@ -254,3 +256,36 @@ def stomata_waterstress():
     mod_coef = mod.coef_[0][0]
 
     return mod_intercept, mod_coef
+
+
+def custom_colormap(num_colors):
+    """
+    Define custom colormap.
+
+    Parameters
+    ----------
+    num_colors : int
+        Number of color bins in custom color map.
+
+    Returns
+    -------
+    cmap : colormap
+    bounds : list
+    norm : list
+
+    """
+    # Select existing colormap to work with
+    cmap = plt.cm.tab20
+
+    # Extract all colors from colormap
+    cmaplist = [cmap(item) for item in range(cmap.N)]
+
+    # Create new map
+    cmap = mpl.colors.LinearSegmentedColormap.from_list(
+        'custom_cmap', cmaplist, num_colors)
+
+    # Define bins and normalize
+    bounds = np.linspace(0, num_colors, num_colors+1)
+    norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+
+    return(cmap, bounds, norm)
