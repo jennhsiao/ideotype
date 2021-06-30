@@ -97,11 +97,23 @@ def identify_top_phenos(df_all, df_sites, n_pheno=5, w_yield=1, w_disp=1):
 
     Parameters
     ----------
-
-
+    df_all : pd.DataFrame
+    df_sites : pd.DataFrame
+    n_pheno : int
+        Number of top phenotypes to identify.
+    w_yield : int
+        Weight on importance of yield.
+        Value between 0 - 1.
+    w_disp : int
+        Weight on importance of yield dispersion.
+        Value between 0 - 1.
 
     Returns
     -------
+    df_pheno : pd.DataFrame
+        Dataframe with phenotype performance and site info for mapping.
+    mx_pheno : np.array
+        Matrix with site, pheno, and phenotype performance info for heatmap.
 
     """
     sites = sorted(list(set(df_all.site)))
@@ -125,10 +137,6 @@ def identify_top_phenos(df_all, df_sites, n_pheno=5, w_yield=1, w_disp=1):
             yield_mean-yield_mean.min())/(yield_mean.max()-yield_mean.min())
         yield_disp_norm = (
             yield_disp-yield_disp.min())/(yield_disp.max()-yield_disp.min())
-
-        # Convert into dataframe
-        df_yield_mean = pd.DataFrame(yield_mean_norm)
-        df_yield_disp = pd.DataFrame(yield_disp_norm)
 
         # Identify max yield and min dispersion
         max_yield = yield_mean_norm.max()
@@ -158,11 +166,11 @@ def identify_top_phenos(df_all, df_sites, n_pheno=5, w_yield=1, w_disp=1):
         df_pheno, df_sites_sorted, left_on='sites', right_on='site')
 
     # Initiate empty matrix
-    mx = np.empty(shape=[len(phenos), len(sites)])
-    mx[:] = np.nan
+    mx_pheno = np.empty(shape=[len(phenos), len(sites)])
+    mx_pheno[:] = np.nan
 
     # Fill in matrix data
     for item in np.arange(n_pheno):
-        mx[df_pheno[f'pheno{item+1}'], df_pheno['site_num']] = item + 1
+        mx_pheno[df_pheno[f'pheno{item+1}'], df_pheno['site_num']] = item + 1
 
-    return(df_pheno, mx)
+    return(df_pheno, mx_pheno)
