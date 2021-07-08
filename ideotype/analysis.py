@@ -130,7 +130,7 @@ def identify_top_phenos(df_all, df_sites, n_pheno=5, w_yield=1, w_disp=1):
         # for specified site
         yield_mean = df_sub.groupby('cvar').mean().dm_ear
         yield_var = df_sub.groupby('cvar').var().dm_ear
-        yield_disp = yield_mean/yield_var
+        yield_disp = yield_var/yield_mean
 
         # Standardize yield_mean & yield_disp into between 0 & 1
         yield_mean_norm = (
