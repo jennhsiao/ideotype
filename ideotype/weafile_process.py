@@ -961,7 +961,7 @@ def wea_summarize(siteyears_filtered,
     return(df_wea_summary)
 
 
-def scale_temp(run_name, month):
+def get_scale_ratio(run_name, climate_factor, month):
     """
     Determine temperature scaling pattern for future climate.
 
@@ -969,6 +969,9 @@ def scale_temp(run_name, month):
     ----------
     run_name : str
         Simulation run name.
+    climate_factor : str
+        - 'T'
+        - 'RH'
     month : int
         Month of data (0 - Jan, 11 - Dec)
 
@@ -979,10 +982,11 @@ def scale_temp(run_name, month):
 
     """
     dirct_yaml = os.path.join(DATA_PATH, 'files', f'filepaths_{run_name}.yml')
-    dirct_temp_scaling = os.path.join(os.path.expanduser('~'),
-                                      'data',
-                                      'temp_scalepattern',
-                                      f'T_scaling_mon{month}.nc')
+    dirct_temp_scaling = os.path.join(
+        os.path.expanduser('~'),
+        'data',
+        f'{climate_factor}_scalepattern',
+        f'{climate_factor}_scaling_mon{month}.nc')
 
     df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
         dirct_yaml)
