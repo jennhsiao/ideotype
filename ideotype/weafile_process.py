@@ -1024,3 +1024,17 @@ def get_scale_ratio(run_name, climate_factor, month):
         temp_scales.append(temp_scale)
 
     return(temp_scales)
+
+
+def scale_temp(temp, weafile):
+    """
+    Scale climate factor in weather data file.
+
+    Based on climate factor projected pattern determined
+    throuhg get_scale_ratio.
+
+    temp : float
+        Climate sensitivity at determined future time point.
+
+    """
+    pass
