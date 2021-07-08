@@ -1019,4 +1019,4 @@ def scale_temp(run_name, month):
         temp_scale = ds.ratio.isel(lat=lat_index).isel(lon=lon_index).item()
         temp_scales.append(temp_scale)
 
-    return(temp_scale)
+    return(temp_scales)
