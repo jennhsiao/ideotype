@@ -8,11 +8,12 @@ from dateutil import tz
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 from timezonefinder import TimezoneFinder
 
 from ideotype import DATA_PATH
-from ideotype.utils import CC_RH
-from ideotype.utils import CC_VPD
+from ideotype.utils import CC_RH, CC_VPD
+from ideotype.data_process import read_data
 from ideotype.nass_process import nass_summarize
 
 
@@ -958,3 +959,64 @@ def wea_summarize(siteyears_filtered,
     df_wea_summary = df_siteyears.join(df_wea_all)
 
     return(df_wea_summary)
+
+
+def scale_temp(run_name, month):
+    """
+    Determine temperature scaling pattern for future climate.
+
+    Parameters
+    ----------
+    run_name : str
+        Simulation run name.
+    month : int
+        Month of data (0 - Jan, 11 - Dec)
+
+    Returns
+    -------
+    temp_scale : list
+        List of scaling ratios for temp projection.
+
+    """
+    dirct_yaml = os.path.join(DATA_PATH, 'files', f'filepaths_{run_name}.yml')
+    dirct_temp_scaling = os.path.join(os.path.expanduser('~'),
+                                      'data',
+                                      'temp_scalepattern',
+                                      f'T_scaling_mon{month}.nc')
+
+    df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
+        dirct_yaml)
+    ds = xr.open_dataset(dirct_temp_scaling)
+
+    # lat/lon for sim sites
+    site_lats = df_sites.lat
+    # convert lon from -180/180 into 0/360
+    site_lons = [round(lon % 360, 2) for lon in df_sites.lon]
+
+    # lat/lon for temp scaling pattern
+    lats = ds.lat.values
+    lons = ds.lon.values
+    lats_index = []
+    lons_index = []
+
+    # Determine closest temp pattern lat/lon index
+    for site_lat, site_lon in zip(site_lats, site_lons):
+        # latitude
+        min_lat_diff = min([abs(lat - site_lat) for lat in lats])
+        nearest_lat_index = [
+            abs(lat - site_lat) for lat in lats].index(min_lat_diff)
+        lats_index.append(nearest_lat_index)
+
+        # longitude
+        min_lon_diff = min([abs(lon - site_lon) for lon in lons])
+        nearest_lon_index = [
+            abs(lon - site_lon) for lon in lons].index(min_lon_diff)
+        lons_index.append(nearest_lon_index)
+
+    # Filter out temperature scaling ratio
+    temp_scales = []
+    for lat_index, lon_index in zip(lats_index, lons_index):
+        temp_scale = ds.ratio.isel(lat=lat_index).isel(lon=lon_index).item()
+        temp_scales.append(temp_scale)
+
+    return(temp_scale)
