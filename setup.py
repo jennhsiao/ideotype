@@ -14,6 +14,7 @@ setup_args = {
     "include_package_data": True,
     "install_requires": ["numpy",
                          "pandas",
+                         "matplotlib",
                          "pyyaml",
                          "setuptools_scm",
                          "sqlalchemy",

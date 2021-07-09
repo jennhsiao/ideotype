@@ -5,6 +5,7 @@ channels:
 dependencies:
   - numpy
   - pandas
+  - matplotlib
   - pytest
   - pytest-cov
   - pyyaml
