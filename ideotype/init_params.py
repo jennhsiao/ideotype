@@ -1,13 +1,10 @@
 """Sample parameter for ensemble runs."""
-# TODO: need to make sure parameter file name is generated systematically
-# since other modules (e.g. sql_insert insert_paras) parse out
-# run_name based on parameter file name
 
 from SALib.sample import latin
 from ideotype.wflow_setup import read_inityaml
 
 
-def params_sample(run_name, N_sample, yamlfile=None):
+def params_sample(run_name, N_sample=10, yamlfile=None):
     """
     Sample parameter through LSH.
 
