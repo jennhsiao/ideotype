@@ -169,6 +169,36 @@ def _time_estimate(time_list, count_list, nfiles, fname):
           f'estimated time remaining {round(estimated_time, 2)} {unit}')
 
 
+def _sim_select(filelists):
+    """
+    Select crop output sim file (out1_*.txt) from filelists.
+
+    Parameters
+    ----------
+    filelists : list
+        List of file directories.
+        Gathered from get_filelist()
+
+    Returns
+    -------
+    simfiles : list
+        Correct sim output out1_*.txt
+
+    """
+    locs = []
+
+    for loc, item in enumerate(np.arange(len(filelists))):
+        fname_header = filelists[item].split(
+            '/')[-1].split('.')[0].split('_')[0]
+        fname_extension = filelists[item].split('/')[-1].split('.')[-1]
+        if (fname_header == 'out1') and (fname_extension == 'txt'):
+            locs.append(loc)
+
+    simfiles = [filelists[loc] for loc in locs]
+
+    return(simfiles)
+
+
 #@profile  # noqa
 def insert_weadata(dirct_weadata, fpath_db, session=None):
     """
@@ -308,7 +338,9 @@ def insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=100, session=None,
     # fetch all simulation files
     if (start_year is None) and (start_cvar is None) and (start_site is None):
         # standard read-all case
-        simfiles = get_filelist(dirct_sims)
+        filelists = get_filelist(dirct_sims)
+        simfiles = _sim_select(filelists)
+
     else:
         # if start point specified for reading in sim files
         dirct_sims_full = os.path.join(dirct_sims,
@@ -317,9 +349,10 @@ def insert_sims(dirct_sims, fpath_db, run_name, n_savefiles=100, session=None,
                                        'out1_' + str(start_site) + '_' +
                                        str(start_year) + '_' +
                                        'var_' + str(start_cvar) + '.txt')
-        simfiles = get_filelist(dirct_sims)
-        simfile_index = simfiles.index(dirct_sims_full)
-        simfiles = simfiles[simfile_index:]
+        filelists = get_filelist(dirct_sims)
+        filelists_index = filelists.index(dirct_sims_full)
+        filelists = filelists[filelists_index:]
+        simfiles = _sim_select(filelists)
 
     # setup run name
     runame = run_name
@@ -499,11 +532,6 @@ def insert_loginit(fpath_log, fpath_db, session=None):
 
     # commit data to DB
     session.commit()
-
-
-def insert_logmaizsim():
-    """Insert maizsim logs."""
-    pass
 
 
 def insert_update():
