@@ -1,7 +1,7 @@
 """Set up and create tables for SQL database."""
 
 from sqlalchemy import (Column, ForeignKey, ForeignKeyConstraint,
-                        Integer, String, Float, DateTime)
+                        Integer, String, Float)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 
@@ -43,10 +43,10 @@ class WeaData(IdeotypeBase):
     """
 
     __tablename__ = 'weadata'
+    year = Column(Integer, primary_key=True)
     site = Column(String(6),
                   ForeignKey('site_info.site'),
                   primary_key=True)
-    year = Column(Integer, primary_key=True)
     jday = Column(Integer, primary_key=True)
     time = Column(Integer, primary_key=True)
     date = Column(String)
@@ -84,16 +84,16 @@ class Sims(IdeotypeBase):
     __tablename__ = 'sims'
 
     # primary keys
-    run_name = Column(String(20),
-                      ForeignKey('params.run_name'),
-                      primary_key=True)
-    site = Column(String(6),
-                  ForeignKey('site_info.site'),
-                  primary_key=True)
-    year = Column(Integer, primary_key=True)
     cvar = Column(Integer,
                   ForeignKey('params.cvar'),
                   primary_key=True)
+    year = Column(Integer, primary_key=True)
+    site = Column(String(6),
+                  ForeignKey('site_info.site'),
+                  primary_key=True)
+    run_name = Column(String(20),
+                      ForeignKey('params.run_name'),
+                      primary_key=True)
     jday = Column(Integer, primary_key=True)
     time = Column(Integer, primary_key=True)
 
@@ -175,19 +175,21 @@ class SiteInfo(IdeotypeBase):
 
     Attributes
     ----------
-    site: String Column
+    site : String Column
         Simulation site. Primary key.
-    state: String Column
-    lat: Float Column
-    lon: Float Column
-    years: Integer Column
+    state : String Column
+    lat : Float Column
+    lon : Float Column
+    years : Integer Column
         Years of weather data available at simulation site.
-    area: Float Column
+    area : Float Column
         Area maize planted (#TODO: find unit).
         Average value from nearby NASS sites (#TODO: find how many site).
-    perct_irri: Float Column
+    perct_irri : Float Column
         Percent irrigated for simulation site.
         Average value from nearby NASS sites.
+    texture : String Column
+        Soil texture for simulated site.
 
     """
 
@@ -199,6 +201,7 @@ class SiteInfo(IdeotypeBase):
     years = Column(Integer)
     area = Column(Float)
     perct_irri = Column(Float)
+    texture = Column(String(6))
 
 
 class LogInit(IdeotypeBase):
@@ -252,31 +255,6 @@ class LogInit(IdeotypeBase):
     pdate = Column(String)
     version = Column(String)
 
-
-#class LogMAIZSIM(Base):
-#    # TODO: not sure how to capture this yet
-#    __tablename__ = 'log_maizsim'
-
-
-#class NASSYield(Base):
-#    __tablename__ = 'nass_yield'
-    # TODO: this is an issue here since lat/lon here
-    # don't actually correspond to lat/lon in site
-    # I use lat/lon to calcualte the nearest site/sites
-    # and calculate mean [yield/planting area/irrigation for comparison
-    # TODO: probably a good way to go about is to create a relations
-    # table that links the two tables
-    # this can be a one-to-many relation
-
-
-#class SoilClass(Base):
-#    __tablename__ = 'soil_class'
-#    site = Column(String, primary_key=True)
-    # TODO: similar issue
-    # linked to NASS_yield but not to the rest of the DB
-
-
-# TODO: maybe move elsewhere - consider later
 
 def create_table(fpath_db):
     """
