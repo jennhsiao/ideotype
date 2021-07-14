@@ -132,6 +132,7 @@ dmypy.json
 .vscode/
 /ideotype/data/logs/*
 /scripts/tmpcode.py
+/scripts/alter_table.sql
 
 # sims
 /ideotype/data/sims/sims_6105_control_*.csv
