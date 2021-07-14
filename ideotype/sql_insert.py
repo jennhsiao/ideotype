@@ -200,7 +200,7 @@ def _sim_select(filelists):
 
 
 #@profile  # noqa
-def insert_weadata(dirct_weadata, fpath_db, session=None):
+def insert_weadata(dirct_weadata, fpath_db, n_savefiles=100, session=None):
     """
     Propagate values to DB table - WeaData.
 
@@ -217,7 +217,6 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
 
     """
     print('>>> importing weafiles')
-    start_time = time.perf_counter()
 
     if session is None:
         engine = create_engine('sqlite:///' + fpath_db)
@@ -243,6 +242,10 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
     # https://docs.sqlalchemy.org/en/13/faq/performance.html#i-m-inserting-400-000-rows-with-the-orm-and-it-s-really-slow
     # create list of dicts that stores table info
     core_list = []
+
+    n_to_save = np.ceil(nfiles/n_savefiles).astype(int)
+    core_list_iter = list(np.arange(n_to_save)*n_savefiles)
+    core_list_iter[-1] = nfiles - 1
 
     # loop through individual weather files
     for count, weafile in enumerate(weafiles):
@@ -281,19 +284,31 @@ def insert_weadata(dirct_weadata, fpath_db, session=None):
                 }
             )
 
-    # insert list of dicts with all weather info into WeaData
-    print('> inserting weafiles to DB')
-    engine.execute(
-        WeaData.__table__.insert(),
-        core_list
-    )
+        if count in core_list_iter:
+            try:
+                print(f'> batch weafiles insert at file #: {count}')
+                engine.execute(
+                    WeaData.__table__.insert(),
+                    core_list
+                )
+                # commit data to database
+                print('> commiting weafiles to DB')
+                session.commit()
 
-    # commit data to database
-    print('> commiting weafiles to DB')
-    session.commit()
+            except IntegrityError:
+                print('!!! integrity error - start check !!!')
+                for item in core_list:
+                    try:
+                        engine.execute(
+                            WeaData.__table__.insert(),
+                            item
+                        )
+                        session.commit()
+                    except IntegrityError as error:
+                        print(item)
+                        raise error
 
-    end_time = time.perf_counter()
-    print(f'sims total run time: {end_time - start_time} s')
+            core_list = []
 
 
 #@profile  # noqa
