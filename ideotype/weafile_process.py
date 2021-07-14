@@ -848,6 +848,24 @@ def make_weafile(siteyears_filtered,
         # otherwise interpolated points will end up with long floating nums
         df_wea = df_wea.round({'solrad': 1, 'temp': 1, 'precip': 1, 'rh': 2})
 
+        # Remove artificial duplicated jday-hour row created
+        # due to daylight saving (~jday 300)
+        # * note: this is not a complete duplicate of rows
+        # * since the data are actually from a different hour
+        # * however, the jday-time index become duplicated
+        # * and may cause issues in maizsim
+        # * and definitely cause problems when inserting
+        # * weather data into database
+        jday_time = [
+            f'{df_wea.jday[row]}_{df_wea.hour[row]}'
+            for row in np.arange(df_wea.shape[0])]
+        df_jdaytime = pd.DataFrame(jday_time)
+        index_to_drop = df_jdaytime[df_jdaytime.duplicated()].index.values
+
+        # Drop dupliacted jday_time row only if it exists
+        if index_to_drop.size > 0:
+            df_wea.drop(index=index_to_drop, inplace=True)
+
         # Edge case where first row is nan and was not interpolated
         if df_wea.isna().sum().sum() > 0:
             print(f'Require additional gap fill: {site}_{year}')
