@@ -63,5 +63,5 @@ dirct_sims = os.path.join(os.path.expanduser('~'),
 # insert values into table for specific run
 insert_siteinfo(fpath_siteinfo, fpath_db)
 insert_params(fpath_params, fpath_db, args.run_name)
-insert_weadata(dirct_weadata, fpath_db)
+insert_weadata(dirct_weadata, fpath_db, n_savefiles=500)
 insert_sims(dirct_sims, fpath_db, args.run_name, n_savefiles=1000)
