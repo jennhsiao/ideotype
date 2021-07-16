@@ -132,6 +132,7 @@ dmypy.json
 .vscode/
 /ideotype/data/logs/*
 /scripts/tmpcode.py
+/scripts/tmpcode.sql
 /scripts/alter_table.sql
 
 # sims
