@@ -9,7 +9,9 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from SALib.analyze import rbd_fast
 
+from ideotype import DATA_PATH
 from ideotype.init_params import params_sample
+from ideotype.data_process import read_data
 
 
 def run_rbdfast(N_sample, run_name):
@@ -91,14 +93,12 @@ def cluster_sites(df, features, n):
     pass
 
 
-def identify_top_phenos(df_all, df_sites, n_pheno=5, w_yield=1, w_disp=1):
+def identify_top_phenos(run_name, n_pheno=5, w_yield=1, w_disp=1):
     """
     Identify top performing phenotypes.
 
     Parameters
     ----------
-    df_all : pd.DataFrame
-    df_sites : pd.DataFrame
     n_pheno : int
         Number of top phenotypes to identify.
     w_yield : int
@@ -116,6 +116,9 @@ def identify_top_phenos(df_all, df_sites, n_pheno=5, w_yield=1, w_disp=1):
         Matrix with site, pheno, and phenotype performance info for heatmap.
 
     """
+    df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
+        os.path.join(DATA_PATH, 'files', f'filepaths_{run_name}.yml'))
+
     sites = sorted(list(set(df_all.site)))
     phenos = list(set(df_all.cvar))
 
@@ -174,3 +177,64 @@ def identify_top_phenos(df_all, df_sites, n_pheno=5, w_yield=1, w_disp=1):
         mx_pheno[df_pheno[f'pheno{item+1}'], df_pheno['site_num']] = item + 1
 
     return(df_pheno, mx_pheno)
+
+
+def top_pheno_prevalence(run_name, n_pheno, intervals):
+    """
+    Identify the prevalence of top performing phenotypes.
+
+    Parameters
+    ----------
+    run_name : str
+        Simulation run name.
+    n_pheno : int
+        Number of top phenotypes to identify.
+    intervals : int
+        Number of intervals to create for yield and dispersion weights.
+
+    Returns
+    -------
+    df_pheno_prevalence : pd.DataFrame
+
+    """
+    pheno_prevalences = []
+    list_intervals = [round(item, 2) for item in np.arange(
+        0, 1.000001, 1/intervals)]
+    w_yields = list_intervals.copy()
+    w_disps = list_intervals.copy()
+    w_disps.reverse()
+
+    for item in np.arange(intervals):
+        df_pheno, mx = identify_top_phenos(
+            run_name=run_name,
+            n_pheno=n_pheno,
+            w_yield=w_yields[item],
+            w_disp=w_disps[item])
+        df = pd.DataFrame(mx)
+        pheno_prevalence = list(df.count(axis=1))
+        pheno_prevalences.append(pheno_prevalence)
+
+    df_pheno_prevalence = pd.DataFrame(pheno_prevalences).transpose()
+
+    return(df_pheno_prevalence)
+
+
+def prevalent_top_pheno(run_name, n_pheno, intervals, site_threshold):
+    """
+    Identify top performing and prevalent phenotypes.
+
+    Parameters
+    ----------
+    run_name : str
+
+    Returns
+    -------
+    list_top_pheno : list
+        List of top performing prevalent phenotypes.
+
+    """
+    df_pheno_prevalence = top_pheno_prevalence(run_name, n_pheno, intervals)
+    df_top_pheno = (df_pheno_prevalence > site_threshold).astype(int)
+    list_top_pheno = list(df_top_pheno[df_top_pheno.sum(axis=1) > 0].index)
+
+    return(list_top_pheno)
