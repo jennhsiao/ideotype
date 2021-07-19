@@ -219,7 +219,7 @@ def top_pheno_prevalence(run_name, n_pheno, intervals):
     return(df_pheno_prevalence)
 
 
-def prevalent_top_pheno(run_name, n_pheno, intervals, site_threshold):
+def prevalent_top_pheno(run_name, n_pheno, w_yield, w_disp, site_threshold):
     """
     Identify top performing and prevalent phenotypes.
 
@@ -233,8 +233,12 @@ def prevalent_top_pheno(run_name, n_pheno, intervals, site_threshold):
         List of top performing prevalent phenotypes.
 
     """
-    df_pheno_prevalence = top_pheno_prevalence(run_name, n_pheno, intervals)
-    df_top_pheno = (df_pheno_prevalence > site_threshold).astype(int)
-    list_top_pheno = list(df_top_pheno[df_top_pheno.sum(axis=1) > 0].index)
+    df_pheno, mx_pheno = identify_top_phenos(
+        run_name, n_pheno, w_yield, w_disp)
+    df_prevalence = pd.DataFrame(mx_pheno).notna().astype(int).sum(axis=1)
+    df_prevalence_sorted = df_prevalence.sort_values()
+    list_top_phenos = df_prevalence_sorted[
+        df_prevalence_sorted > site_threshold].index.tolist()
+    list_top_phenos.reverse()
 
-    return(list_top_pheno)
+    return(list_top_phenos)
