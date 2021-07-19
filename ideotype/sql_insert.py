@@ -65,7 +65,7 @@ def insert_siteinfo(fpath_siteinfo, fpath_db, session=None):
         delimiter=',',
         skip_header=1,
         dtype=('U6', int, '<U40', 'U2', int,
-               float, float, int, float, float),
+               float, float, int, float, float, 'U6'),
         )
 
     for row in data:
@@ -73,11 +73,12 @@ def insert_siteinfo(fpath_siteinfo, fpath_db, session=None):
         record = SiteInfo(
             site=(row[0]),
             state=row[3],
-            lat=row[5],
-            lon=row[6],
+            lat=round(row[5], 2),
+            lon=round(row[6], 2),
             years=int(row[7]),
             area=round(row[8], 2),
             perct_irri=round(row[9], 2),
+            texture=row[10]
         )
 
         # add row data to record
