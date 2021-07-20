@@ -177,3 +177,83 @@ def query_phys(fpath_db, phenos):
     df = pd.DataFrame(results, columns=columns)
 
     return(query, results, df)
+
+
+def query_waterstatus(fpath_db, phenos):
+    """
+    Query water status.
+
+    Parameters
+    ----------
+    fpath_db : str
+
+    """
+    engine = create_engine('sqlite:///' + fpath_db)
+    IdeotypeBase.metadata.bind = engine
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    query = session.query(Sims.cvar.label('cvar'),
+                          Sims.site.label('site'),
+                          Sims.year.label('year'),
+                          Sims.pheno.label('pheno'),
+                          func.avg(
+                              Sims.ET_sply - Sims.ET_dmd).label(
+                              'water_deficit')
+                          ).group_by(Sims.cvar,
+                                     Sims.year,
+                                     Sims.site,
+                                     Sims.pheno).filter(
+                                         and_(Sims.cvar.in_(phenos),
+                                              Sims.time == 12,
+                                              ))
+
+    results = query.all()
+
+    # Construct dataframe from database query
+    columns = []
+    for item in query.column_descriptions:
+        columns.append(item['name'])
+    df = pd.DataFrame(results, columns=columns)
+
+    return(query, results, df)
+
+
+def query_waterpotential(fpath_db, phenos, time):
+    """
+    Query water status.
+
+    Parameters
+    ----------
+    fpath_db : str
+    time : int
+        Time to query.
+
+    """
+    engine = create_engine('sqlite:///' + fpath_db)
+    IdeotypeBase.metadata.bind = engine
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    query = session.query(Sims.cvar.label('cvar'),
+                          Sims.site.label('site'),
+                          Sims.year.label('year'),
+                          Sims.pheno.label('pheno'),
+                          func.avg(Sims.leaf_wp).label('leaf_wp')
+                          ).group_by(Sims.cvar,
+                                     Sims.year,
+                                     Sims.site,
+                                     Sims.pheno).filter(
+                                         and_(Sims.cvar.in_(phenos),
+                                              Sims.time == time
+                                              ))
+
+    results = query.all()
+
+    # Construct dataframe from database query
+    columns = []
+    for item in query.column_descriptions:
+        columns.append(item['name'])
+    df = pd.DataFrame(results, columns=columns)
+
+    return(query, results, df)
