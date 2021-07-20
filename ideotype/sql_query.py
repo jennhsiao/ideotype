@@ -1,15 +1,17 @@
 """Query DB for analyses."""
 import csv
-from re import M
 
+import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import func, and_
 from sqlalchemy.sql.expression import distinct
 
-from ideotype.sql_declarative import (
-    IdeotypeBase, WeaData, Sims, Params,
-    SiteInfo, LogInit)
+from ideotype.sql_declarative import (IdeotypeBase,
+                                      WeaData,
+                                      Sims,
+                                      SiteInfo,
+                                      Params)
 
 
 def query_weadata(fpath_db):
@@ -45,7 +47,7 @@ def query_weadata(fpath_db):
             outcsv.writerow(row)
 
 
-def query_sims(fpath_db):
+def query_yield(fpath_db, phenos):
     """
     Sims query.
 
@@ -60,26 +62,34 @@ def query_sims(fpath_db):
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
-    query = session.query(Sims.site.label('site'),
+    query = session.query(Sims.cvar.label('cvar'),
                           Sims.year.label('year'),
-                          Sims.cvar.label('cavr'),
-                          Sims.DM_ear.label('DM_ear'),
-                          Sims.pheno.label('pheno')
-                          ).group_by(Sims.site, Sims.cvar).filter(
-                              Sims.pheno == '"Matured"')
+                          Sims.site.label('site'),
+                          Sims.pheno.label('pheno'),
+                          func.avg(Sims.DM_ear).label('yield'),
+                          SiteInfo.lat.label('lat'),
+                          SiteInfo.lon.label('lon'),
+                          SiteInfo.texture.label('soil_texture'),
+                          ).group_by(Sims.cvar,
+                                     Sims.year,
+                                     Sims.site,
+                                     Sims.pheno,
+                                     SiteInfo.site).filter(
+                                         and_(Sims.pheno == '"Matured"',
+                                              Sims.cvar.in_(phenos),
+                                              Sims.site == SiteInfo.site,
+                                              Sims.cvar == Params.cvar
+                                              ))
+
     results = query.all()
 
-    return(results)
+    # Construct dataframe from database query
+    columns = []
+    for item in query.column_descriptions:
+        columns.append(item['name'])
+    df = pd.DataFrame(results, columns=columns)
 
-#    query = session.query(Sims.pheno).group_by(Sims.pheno).distinct()
-
-#    query = session.query(Sims.site.label('site'),
-#                          Sims.cvar.label('cavr'),
-#                          func.avg(Sims.DM_ear).label('mean_DM_ear'),
-#                          func.stdev(Sims.DM_ear).label('stdev_DM_ear'),
-#                          Sims.pheno.label('pheno')
-#                          ).group_by(Sims.site, Sims.cvar).filter(
-#                              Sims.pheno == '"grainFill"')
+    return(query, results, df)
 
 
 def query_pheno(fpath_db, phenos):
@@ -109,13 +119,61 @@ def query_pheno(fpath_db, phenos):
                           Sims.year.label('year'),
                           Sims.pheno.label('pheno'),
                           func.count(distinct(Sims.jday)).label('pheno_days')
-                          ).group_by(
-                              Sims.cvar, Sims.site, Sims.year, Sims.pheno
-                          ).filter(
-                              and_(
-                                  Sims.cvar.in_(phenos)
-                              ))
+                          ).group_by(Sims.cvar,
+                                     Sims.site,
+                                     Sims.year,
+                                     Sims.pheno).filter(
+                                         and_(Sims.cvar.in_(phenos)
+                                              ))
 
     results = query.all()
 
-    return(query, results)
+    # Construct dataframe from database query
+    columns = []
+    for item in query.column_descriptions:
+        columns.append(item['name'])
+    df = pd.DataFrame(results, columns=columns)
+
+    return(query, results, df)
+
+
+def query_phys(fpath_db, phenos):
+    """
+    Query physiological model outputs.
+
+    Parameters
+    ----------
+    fpath_db : str
+
+    Returns
+    -------
+    results
+
+    """
+    engine = create_engine('sqlite:///' + fpath_db)
+    IdeotypeBase.metadata.bind = engine
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    query = session.query(Sims.cvar.label('cvar'),
+                          Sims.site.label('site'),
+                          Sims.year.label('year'),
+                          Sims.pheno.label('pheno'),
+                          func.max(Sims.LAI).label('LAI'),
+                          func.avg(Sims.av_gs).label('gs'),
+                          ).group_by(Sims.cvar,
+                                     Sims.year,
+                                     Sims.site,
+                                     Sims.pheno).filter(
+                                         and_(Sims.cvar.in_(phenos)
+                                              ))
+
+    results = query.all()
+
+    # Construct dataframe from database query
+    columns = []
+    for item in query.column_descriptions:
+        columns.append(item['name'])
+    df = pd.DataFrame(results, columns=columns)
+
+    return(query, results, df)
