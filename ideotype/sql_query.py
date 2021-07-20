@@ -139,15 +139,60 @@ def query_pheno(fpath_db, phenos):
 
 def query_phys(fpath_db, phenos):
     """
+    Query phhysiological model outputs during sunlit hours.
+
+    Parameters
+    ----------
+    fpath_db : str
+    phenos : list
+
+    """
+    engine = create_engine('sqlite:///' + fpath_db)
+    IdeotypeBase.metadata.bind = engine
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    query = session.query(Sims.cvar.label('cvar'),
+                          Sims.site.label('site'),
+                          Sims.year.label('year'),
+                          Sims.pheno.label('pheno'),
+                          func.avg(Sims.av_gs).label('gs'),
+                          func.max(Sims.LAI_sun).label('LAI_sun'),
+                          func.max(Sims.LAI_shade).label('LAI_shade'),
+                          func.avg(Sims.Ag_sun).label('Ag_sun'),
+                          func.avg(Sims.Ag_shade).label('Ag_shade')
+                          ).group_by(Sims.cvar,
+                                     Sims.year,
+                                     Sims.site,
+                                     Sims.pheno).filter(
+                                         and_(Sims.cvar.in_(phenos),
+                                              Sims.PFD_sun > 0
+                                              ))
+
+    results = query.all()
+
+    # Construct dataframe from database query
+    columns = []
+    for item in query.column_descriptions:
+        columns.append(item['name'])
+    df = pd.DataFrame(results, columns=columns)
+
+    # Scale photosynthesis to canopy
+    df['sun_perct'] = df.LAI_sun/(df.LAI_sun + df.LAI_shade)
+    df['shade_perct'] = df.LAI_shade/(df.LAI_sun + df.LAI_shade)
+    df['Ag'] = (df.Ag_sun * df.sun_perct) + (df.Ag_shade * df.shade_perct)
+
+    return(query, results, df)
+
+
+def query_leaves(fpath_db, phenos):
+    """
     Query physiological model outputs.
 
     Parameters
     ----------
     fpath_db : str
-
-    Returns
-    -------
-    results
+    phenos : list
 
     """
     engine = create_engine('sqlite:///' + fpath_db)
@@ -160,7 +205,7 @@ def query_phys(fpath_db, phenos):
                           Sims.year.label('year'),
                           Sims.pheno.label('pheno'),
                           func.max(Sims.LAI).label('LAI'),
-                          func.avg(Sims.av_gs).label('gs'),
+                          func.max(Sims.LA_perplant).label('LA')
                           ).group_by(Sims.cvar,
                                      Sims.year,
                                      Sims.site,
@@ -186,6 +231,7 @@ def query_waterstatus(fpath_db, phenos):
     Parameters
     ----------
     fpath_db : str
+    phenos : list
 
     """
     engine = create_engine('sqlite:///' + fpath_db)
@@ -226,6 +272,7 @@ def query_waterpotential(fpath_db, phenos, time):
     Parameters
     ----------
     fpath_db : str
+    phenos : list
     time : int
         Time to query.
 
