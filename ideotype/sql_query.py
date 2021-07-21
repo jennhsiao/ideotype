@@ -292,7 +292,8 @@ def query_waterpotential(fpath_db, phenos, time):
                                      Sims.site,
                                      Sims.pheno).filter(
                                          and_(Sims.cvar.in_(phenos),
-                                              Sims.time == time
+                                              Sims.time == time,
+                                              Sims.leaf_wp > -5
                                               ))
 
     results = query.all()
