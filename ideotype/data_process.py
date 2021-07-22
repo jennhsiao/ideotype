@@ -267,3 +267,33 @@ def agg_sims(df, groups, how):
         mx_data[count] = a_rows
 
     return mx_data
+
+
+def process_phys(df, sites, phenostage, phenos_ranked, phys):
+    """
+    """
+    # Filter for pheno stage
+    df_phenostage = df[df.pheno == phenostage]
+
+    # Group phyiology outputs by phenotype & site
+    df_grouped = df_phenostage.groupby(['cvar', 'site']).mean()
+
+    # Set up empty matrix to store outputs
+    mx_phys = np.empty(shape=[len(phenos_ranked), len(sites)])
+    mx_phys[:] = np.nan
+
+    # Select outputs
+    for count_x, pheno in enumerate(phenos_ranked):
+        for count_y, site in enumerate(sites):
+            df_bool = df_grouped.query(
+                f'(cvar=={pheno}) & (site=={int(site)})')[str(phys)].shape[0]
+            if df_bool == 0:
+                mx_phys[count_x, count_y] = np.nan
+            else:
+                Ag = round(
+                    df_grouped.query(
+                        f'(cvar=={pheno}) '
+                        f'& (site=={int(site)})')[str(phys)].item(), 2)
+                mx_phys[count_x, count_y] = Ag
+
+    return(mx_phys)
