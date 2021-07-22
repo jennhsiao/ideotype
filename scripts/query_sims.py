@@ -22,12 +22,14 @@ query, results, df = query_phys(fpath_db, phenos)
 
 # Query water deficit
 query, results, df = query_waterstatus(fpath_db, phenos)
-# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_waterdeficit.csv', index=False)
+# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_waterdeficit.csv',
+# index=False)
 
 # Query water potential
 time = 5
 query, results, df = query_waterpotential(fpath_db, phenos, time)
-# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_waterpotential.csv', index=False)
+# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_waterpotential.csv',
+# index=False)
 
 # Query phenology
 query, results, df = query_pheno(fpath_db, phenos)
