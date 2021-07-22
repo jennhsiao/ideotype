@@ -1,6 +1,7 @@
 """Compilation of functions for analyzing maizsim output."""
 
 import os
+import collections
 
 import pandas as pd
 import numpy as np
@@ -242,3 +243,50 @@ def prevalent_top_pheno(run_name, n_pheno, w_yield, w_disp, site_threshold):
     list_top_phenos.reverse()
 
     return(list_top_phenos)
+
+
+def rank_all_phenos(run_name, n_pheno, w_yield, w_disp):
+    """
+    Rank performance for all phenotypes across all locations.
+
+    Parameters
+    ----------
+    run_name : str
+    n_pheno : int
+    w_yield : float
+    w_disp : float
+
+    Returns
+    -------
+    phenos_ranked : list
+
+    """
+    # Identify tanking for all phenotypes
+    df_pheno, mx = identify_top_phenos(
+        run_name, n_pheno=n_pheno, w_yield=w_yield, w_disp=w_disp)
+
+    # Rank general performance for all phenotypes across all sites
+    performance = []
+    for site in np.arange(df_pheno.shape[0]):
+        # Select phenotypes ranked by performance from df_pheno
+        phenos = df_pheno.iloc[site, :n_pheno].tolist()
+
+        # Assign each phenotype ranked value
+        # -- lower values mean better performance)
+        pheno_ranks = np.arange(n_pheno)
+
+        # Compile phenotype and ranking info into dict
+        dict_rank = dict(zip(phenos, pheno_ranks))
+
+        # Sort dict to order by phenotype
+        dict_sorted = collections.OrderedDict(sorted(dict_rank.items()))
+
+        # Append ranking into list of performance
+        performance.append(list(dict_sorted.values()))
+
+    # Calculate performance
+    # -- phenotypes with lowest sum have best performance overall
+    df_performance = pd.DataFrame(performance).sum(axis=0)
+    phenos_ranked = list(df_performance.sort_values(ascending=True).index)
+
+    return(phenos_ranked)
