@@ -273,7 +273,16 @@ def process_phys(df, sites, phenostage, phenos_ranked, phys):
     """
     """
     # Filter for pheno stage
-    df_phenostage = df[df.pheno == phenostage]
+    if len(phenostage) == 1:
+        pheno_stage = phenostage[0]
+        df_phenostage = df[df.pheno == pheno_stage]
+    else:
+        cols = df.columns
+        df_phenostage = pd.DataFrame(columns=cols)
+
+        for item in np.arange(len(phenostage)):
+            pheno_stage = phenostage[item]
+            df_phenostage = df_phenostage.append(df[df.pheno == pheno_stage])
 
     # Group phyiology outputs by phenotype & site
     df_grouped = df_phenostage.groupby(['cvar', 'site']).mean()
@@ -290,10 +299,10 @@ def process_phys(df, sites, phenostage, phenos_ranked, phys):
             if df_bool == 0:
                 mx_phys[count_x, count_y] = np.nan
             else:
-                Ag = round(
+                queried_phys = round(
                     df_grouped.query(
                         f'(cvar=={pheno}) '
                         f'& (site=={int(site)})')[str(phys)].item(), 2)
-                mx_phys[count_x, count_y] = Ag
+                mx_phys[count_x, count_y] = queried_phys
 
     return(mx_phys)
