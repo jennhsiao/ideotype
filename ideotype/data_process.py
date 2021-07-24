@@ -269,40 +269,82 @@ def agg_sims(df, groups, how):
     return mx_data
 
 
-def process_phys(df, sites, phenostage, phenos_ranked, phys):
+def process_sims(df, sites, phenos, phenostage, sim, agg_method):
     """
+    Process sim queries.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe of queried info.
+        Previously processed with script query_sims.py
+    sites : list
+        List of simulation sites.
+    phenos : list
+        List of phenotypes.
+    phenostage : list of strings
+        - 'all'
+        - ['"none:']
+        - ['"Germinated"']
+        - ['"Emerged"']
+        - ['"Tasselinit"']
+        - ['"Tasseled"']
+        - ['"Silkled"']
+        - ['"Matured"']
+        - ['"Tasseled"', '"Silked"']
+    sim : str
+        Model output to process. Must match column in df.
+    agg_method : str
+        Method to aggregate model output.
+        - 'mean'
+        - 'max'
+
+    Returns
+    -------
+    mx_phys : np.array
+        Matrix of processed sims.
+
     """
     # Filter for pheno stage
-    if len(phenostage) == 1:
-        pheno_stage = phenostage[0]
-        df_phenostage = df[df.pheno == pheno_stage]
-    else:
-        cols = df.columns
-        df_phenostage = pd.DataFrame(columns=cols)
+    if phenostage == 'all':
+        df_phenostage = df
 
-        for item in np.arange(len(phenostage)):
-            pheno_stage = phenostage[item]
-            df_phenostage = df_phenostage.append(df[df.pheno == pheno_stage])
+    else:
+        if len(phenostage) == 1:
+            pheno_stage = phenostage[0]
+            df_phenostage = df[df.pheno == pheno_stage]
+        else:
+            cols = df.columns
+            df_phenostage = pd.DataFrame(columns=cols)
+            for item in np.arange(len(phenostage)):
+                pheno_stage = phenostage[item]
+                df_phenostage = df_phenostage.append(
+                    df[df.pheno == pheno_stage])
 
     # Group phyiology outputs by phenotype & site
-    df_grouped = df_phenostage.groupby(['cvar', 'site']).mean()
+    if agg_method == 'mean':
+        df_grouped = df_phenostage.groupby(['cvar', 'site']).mean()
+    elif agg_method == 'max':
+        df_grouped = df_phenostage.groupby(['cvar', 'site']).max()
+    else:
+        raise ValueError(f'agg method {agg_method} not supported!')
 
     # Set up empty matrix to store outputs
-    mx_phys = np.empty(shape=[len(phenos_ranked), len(sites)])
+    mx_phys = np.empty(shape=[len(phenos), len(sites)])
     mx_phys[:] = np.nan
 
     # Select outputs
-    for count_x, pheno in enumerate(phenos_ranked):
+    for count_x, pheno in enumerate(phenos):
         for count_y, site in enumerate(sites):
             df_bool = df_grouped.query(
-                f'(cvar=={pheno}) & (site=={int(site)})')[str(phys)].shape[0]
+                f'(cvar=={pheno}) & (site=={int(site)})')[str(sim)].shape[0]
             if df_bool == 0:
                 mx_phys[count_x, count_y] = np.nan
             else:
                 queried_phys = round(
                     df_grouped.query(
                         f'(cvar=={pheno}) '
-                        f'& (site=={int(site)})')[str(phys)].item(), 2)
+                        f'& (site=={int(site)})')[str(sim)].item(), 2)
                 mx_phys[count_x, count_y] = queried_phys
 
     return(mx_phys)
