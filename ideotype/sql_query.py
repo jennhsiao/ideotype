@@ -160,7 +160,9 @@ def query_phys(fpath_db, phenos):
                           func.max(Sims.LAI_sun).label('LAI_sun'),
                           func.max(Sims.LAI_shade).label('LAI_shade'),
                           func.avg(Sims.Ag_sun).label('Ag_sun'),
-                          func.avg(Sims.Ag_shade).label('Ag_shade')
+                          func.avg(Sims.Ag_shade).label('Ag_shade'),
+                          func.avg(Sims.An_sun).label('An_sun'),
+                          func.avg(Sims.An_shade).label('An_shade')
                           ).group_by(Sims.cvar,
                                      Sims.year,
                                      Sims.site,
@@ -181,6 +183,7 @@ def query_phys(fpath_db, phenos):
     df['sun_perct'] = df.LAI_sun/(df.LAI_sun + df.LAI_shade)
     df['shade_perct'] = df.LAI_shade/(df.LAI_sun + df.LAI_shade)
     df['Ag'] = (df.Ag_sun * df.sun_perct) + (df.Ag_shade * df.shade_perct)
+    df['An'] = (df.An_sun * df.sun_perct) + (df.An_shade * df.shade_perct)
 
     return(query, results, df)
 
