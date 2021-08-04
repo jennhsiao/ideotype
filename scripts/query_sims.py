@@ -4,8 +4,10 @@ import numpy as np
 
 from ideotype.sql_query import (query_yield,
                                 query_phys,
+                                query_photo,
                                 query_pheno,
                                 query_leaves,
+                                query_mass,
                                 query_waterstatus,
                                 query_waterpotential)
 
@@ -19,6 +21,14 @@ query, results, df = query_yield(fpath_db, phenos)
 # Query physiology
 query, results, df = query_phys(fpath_db, phenos)
 # df.to_csv('/home/disk/eos8/ach315/ideotype/sims_phys.csv', index=False)
+
+# Query photosynthesis
+query, results, df = query_photo(fpath_db, phenos)
+# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_photo_sum.csv', index=False)
+
+# Query mass
+query, results, df = query_mass(fpath_db, phenos)
+# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_mass.csv', index=False)
 
 # Query water deficit
 query, results, df = query_waterstatus(fpath_db, phenos)
