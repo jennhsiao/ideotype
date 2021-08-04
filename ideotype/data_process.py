@@ -53,7 +53,7 @@ def read_sims(path):
             'VPD', 'N', 'N_dmd', 'N_upt', 'N_leaf', 'PCRL',
             'dm_total', 'dm_shoot', 'dm_ear', 'dm_totleaf',
             'dm_dropleaf', 'df_stem', 'df_root',
-            'roil_rt', 'mx_rootdept',
+            'soil_rt', 'mx_rootdept',
             'available_water', 'soluble_c', 'note']
 
     data_all = []
