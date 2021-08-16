@@ -37,13 +37,14 @@ def test_agg_sims():
 
     # mean
     how = 'mean'
-    mx_mean = agg_sims(df, groups, how)
+    sim = 'dm_ear'
+    mx_mean = agg_sims(df, groups, how, sim)
     assert mx_mean.shape == aggshape
 
     how = 'variance'
-    mx_variance = agg_sims(df, groups, how)
+    mx_variance = agg_sims(df, groups, how, sim)
     assert mx_variance.shape == aggshape
 
     how = 'std'
-    mx_std = agg_sims(df, groups, how)
+    mx_std = agg_sims(df, groups, how, sim)
     assert mx_std.shape == aggshape
