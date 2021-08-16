@@ -211,7 +211,7 @@ def parse_mature(df_all):
     return (df_extended, df_stuck)
 
 
-def agg_sims(df, groups, how):
+def agg_sims(df, groups, how, sim):
     """
     Aggregate simulation yield output.
 
@@ -223,6 +223,8 @@ def agg_sims(df, groups, how):
     how : {'mean', 'variance', 'std'}, default 'mean'
         Type of aggregation method to be performed.
         - std: standard deviation
+    sim : str
+        Model output.
 
     Returns:
     --------
@@ -246,23 +248,31 @@ def agg_sims(df, groups, how):
     mx_data[:] = np.nan
 
     if how == 'mean':
-        df_grouped = df.groupby(groups).mean().dm_ear
+        df_grouped = df.groupby(groups).mean()[sim]
 
     if how == 'variance':
-        df_grouped = df.groupby(groups).var().dm_ear
+        df_grouped = df.groupby(groups).var()[sim]
 
     if how == 'std':
-        df_grouped = df.groupby(groups).agg(np.std).dm_ear
+        df_grouped = df.groupby(groups).agg(np.std)[sim]
 
     for count, item in enumerate(list_groupindex[0]):
-        # create empty array to store data for each row in matrix
+        # create empty array to store data for each row (cvar) in matrix
+        # a_rows length should equal numebr of sites
         a_rows = np.empty(lens[1])
+        # populate list with nans
         a_rows[:] = np.nan
 
-        list1 = list_groupindex[1]
-        list2 = list(df_grouped.loc[(item,)].index)
-        a_rows_index = [list1.index(item) for item in list2]
+        # list of sites
+        sitelist_all = list_groupindex[1]
+        # list of sites for that particular cvar
+        # (some cvars may have missing data)
+        sitelist_cvar = list(df_grouped.loc[(item,)].index)
 
+        # select cvar locations for designated site
+        a_rows_index = [sitelist_all.index(site) for site in sitelist_cvar]
+
+        # fill in yield data for specified cvar & site
         a_rows[a_rows_index] = df_grouped.loc[(item,)].values
         mx_data[count] = a_rows
 
@@ -291,7 +301,7 @@ def process_sims(df, sites, phenos, phenostage, sim, agg_method):
         - ['"Tasseled"']
         - ['"Silkled"']
         - ['"Matured"']
-        - ['"Tasseled"', '"Silked"']
+        - [['"Tasseled"', '"Silked"']]
     sim : str
         Model output to process. Must match column in df.
     agg_method : str
