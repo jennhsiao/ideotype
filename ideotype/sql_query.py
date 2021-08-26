@@ -308,7 +308,10 @@ def query_leaves(fpath_db, phenos):
                           Sims.year.label('year'),
                           Sims.pheno.label('pheno'),
                           func.max(Sims.LAI).label('LAI'),
-                          func.max(Sims.LA_perplant).label('LA')
+                          func.max(Sims.LA_perplant).label('LA'),
+                          func.max(Sims.leaves).label('leaves'),
+                          func.max(Sims.leaves_mature).label('leaves_mature'),
+                          func.max(Sims.leaves_dropped).label('leaves_dropped')
                           ).group_by(Sims.cvar,
                                      Sims.year,
                                      Sims.site,
@@ -384,13 +387,56 @@ def query_waterstatus(fpath_db, phenos):
                           Sims.pheno.label('pheno'),
                           func.avg(
                               Sims.ET_sply - Sims.ET_dmd).label(
-                              'water_deficit')
+                                  'water_deficit_mean'),
+                          func.sum(
+                              Sims.ET_sply - Sims.ET_dmd).label(
+                                  'water_deficit_sum')
                           ).group_by(Sims.cvar,
                                      Sims.year,
                                      Sims.site,
                                      Sims.pheno).filter(
                                          and_(Sims.cvar.in_(phenos),
                                               Sims.time == 12,
+                                              ))
+
+    results = query.all()
+
+    # Construct dataframe from database query
+    columns = []
+    for item in query.column_descriptions:
+        columns.append(item['name'])
+    df = pd.DataFrame(results, columns=columns)
+
+    return(query, results, df)
+
+
+def query_waterstatus_sum(fpath_db, phenos):
+    """
+    Query water status summed across phenostage.
+
+    Parameters
+    ----------
+    fpath_db : str
+    phenos : list
+
+    """
+    engine = create_engine('sqlite:///' + fpath_db)
+    IdeotypeBase.metadata.bind = engine
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    query = session.query(Sims.cvar.label('cvar'),
+                          Sims.site.label('site'),
+                          Sims.year.label('year'),
+                          Sims.pheno.label('pheno'),
+                          func.sum(
+                              Sims.ET_sply - Sims.ET_dmd).label(
+                                  'water_deficit_sum')
+                          ).group_by(Sims.cvar,
+                                     Sims.year,
+                                     Sims.site,
+                                     Sims.pheno).filter(
+                                         and_(Sims.cvar.in_(phenos),
                                               ))
 
     results = query.all()
