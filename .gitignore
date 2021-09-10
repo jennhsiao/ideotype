@@ -140,6 +140,17 @@ dmypy.json
 /ideotype/data/sims/sims_6105.csv
 /ideotype/data/sims/sims_*_fixpd.csv
 /ideotype/data/sims/sims_present.csv
+/ideotype/data/sims/sims_present_db.csv
+/ideotype/data/sims/sims_gseason_climate.csv
+/ideotype/data/sims/sims_leaves.csv
+/ideotype/data/sims/sims_mass.csv
+/ideotype/data/sims/sims_phenology.csv
+/ideotype/data/sims/sims_photo_sum.csv
+/ideotype/data/sims/sims_photo.csv
+/ideotype/data/sims/sims_phys.csv
+/ideotype/data/sims/sims_waterdeficit_sum.csv
+/ideotype/data/sims/sims_waterdeficit.csv
+/ideotype/data/sims/sims_waterpotential.csv
 
 # files relating to ensemble sims first attempt
 /ideotype/data/files/filepaths_opt.yml
