@@ -12,7 +12,7 @@ from SALib.analyze import rbd_fast
 
 from ideotype import DATA_PATH
 from ideotype.init_params import params_sample
-from ideotype.data_process import read_data
+from ideotype.data_process import read_data, process_sims
 
 
 def run_rbdfast(N_sample, run_name):
@@ -211,7 +211,10 @@ def top_pheno_prevalence(run_name, n_pheno, intervals):
             n_pheno=n_pheno,
             w_yield=w_yields[item],
             w_disp=w_disps[item])
+        # convert matrix with site and ranking info into dataframe
         df = pd.DataFrame(mx)
+        # count the number of times each phenotype
+        # made it into top rankings (n_pheno) across all locations
         pheno_prevalence = list(df.count(axis=1))
         pheno_prevalences.append(pheno_prevalence)
 
@@ -261,7 +264,7 @@ def rank_all_phenos(run_name, n_pheno, w_yield, w_disp):
     phenos_ranked : list
 
     """
-    # Identify tanking for all phenotypes
+    # Identify ranking for all phenotypes
     df_pheno, mx = identify_top_phenos(
         run_name, n_pheno=n_pheno, w_yield=w_yield, w_disp=w_disp)
 
@@ -286,7 +289,56 @@ def rank_all_phenos(run_name, n_pheno, w_yield, w_disp):
 
     # Calculate performance
     # -- phenotypes with lowest sum have best performance overall
-    df_performance = pd.DataFrame(performance).sum(axis=0)
+    df_rankings = pd.DataFrame(performance).transpose()
+    df_performance = df_rankings.sum(axis=1)
     phenos_ranked = list(df_performance.sort_values(ascending=True).index)
 
-    return(phenos_ranked)
+    return(df_rankings, phenos_ranked)
+
+
+def phenostage_climate(df_all, df_gseason_climate,
+                       df_waterdeficit, phenostage_num):
+    """
+    Process climate data to get in-season summaries.
+
+    Parameters
+    ----------
+    df_all : pd.DataFrame
+    df_gseason_climate : pd.DataFrame
+    df_waterdeficit : pd.DataFrame
+    phenostage_num : int
+        0 - Emerged
+        1 - Tasselinit
+        2 - Tasseled & Silked
+        3 - Grainfill
+
+    """
+    phenostages = [['"Emerged"'], ['"Tasselinit"'],
+                   ['"Tasseled"', '"Silked"'], ['"grainFill"']]
+    phenos = np.arange(100)
+    sites = sites = sorted(list(set(df_all.site)))
+    phenostage = phenostages[phenostage_num]
+
+    # temp
+    df = df_gseason_climate
+    sim = 'temp_air'
+    agg_method = 'mean'
+    mx_temp = process_sims(df, sites, phenos, phenostage, sim, agg_method)
+    df_temp = pd.DataFrame(mx_temp)
+
+    # vpd
+    df = df_gseason_climate
+    sim = 'vpd'
+    agg_method = 'mean'
+    mx_vpd = process_sims(df, sites, phenos, phenostage, sim, agg_method)
+    df_vpd = pd.DataFrame(mx_vpd)
+
+    # water deficit
+    df = df_waterdeficit
+    sim = 'water_deficit_mean'
+    agg_method = 'mean'
+    phenostage = phenostages[phenostage_num]
+    mx_wd = process_sims(df, sites, phenos, phenostage, sim, agg_method)
+    df_wd = pd.DataFrame(mx_wd)
+
+    return(df_temp, df_vpd, df_wd)
