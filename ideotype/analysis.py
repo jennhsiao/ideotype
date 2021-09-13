@@ -8,6 +8,8 @@ import numpy as np
 from numpy import genfromtxt
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
 from SALib.analyze import rbd_fast
 
 from ideotype import DATA_PATH
@@ -74,24 +76,33 @@ def run_pca(df, n):
     return pca, df_pca
 
 
-def cluster_sites(df, features, n):
+def linear_mod(df, features, target, test_size=0.33):
     """
-    Cluster simulation sites into climate space.
+    Linear model that operates from DF based on features & target.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Data to cluster.
+        Dataframe to draw data for linear model.
     features : list
-        List of features to cluster on.
-    n : int
-        Number of clusters.
-
-    Returns
-    -------
+        List of features as strings used to construct linear model.
+    target : list
+        List of target as string.
+    test_size : float
+        Default as 0.33 - 33% of data set aside for testing.
 
     """
-    pass
+    X = df[features]
+    y = df[target]
+
+    mod = LinearRegression(fit_intercept=True)
+    mod.fit(X, y)
+    y_pred = mod.predict(X)
+    coefs = mod.coef_
+    mse = mean_squared_error(y, y_pred)
+    r2 = r2_score(y, y_pred)
+
+    return coefs, mse, r2
 
 
 def identify_top_phenos(run_name, n_pheno=5, w_yield=1, w_disp=1):
