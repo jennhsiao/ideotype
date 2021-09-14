@@ -17,7 +17,7 @@ from ideotype.data_process import read_data
 from ideotype.nass_process import nass_summarize
 
 
-def read_wea(year_start, year_end):
+def read_wea(year_start, year_end, climate_treatment=None):
     """
     Read in raw hourly weather data.
 
@@ -41,6 +41,9 @@ def read_wea(year_start, year_end):
     ----------
     year_start : int
     year_end : int
+    climate_treatment : int
+        Create weather data for future climate projections.
+        2050 or 2100.
 
     """
     # setting up np.read_fwf arguments
@@ -68,8 +71,16 @@ def read_wea(year_start, year_end):
     df_stations = pd.read_csv(fpath_id_conversion, header=None, dtype=str)
     df_stations.columns = ['WBAN', 'USAF']
 
+    # Read in stations info
+    fpath_stations_info = os.path.join(
+        DATA_PATH, 'sites', dict_fpaths['stations_info'])
+    df_sites = pd.read_csv(fpath_stations_info)
+
     # Set up basepath
-    basepath = dict_fpaths['basepath']
+    if climate_treatment is None:
+        basepath = dict_fpaths['basepath']
+    else:
+        basepath = f'{dict_fpaths["basepath"]}_{climate_treatment}'
 
     # Set up years
     if year_start == year_end:
@@ -111,9 +122,6 @@ def read_wea(year_start, year_end):
         # For years 1991-2010
         else:
             # Select class1 weather station sites
-            fpath_stations_info = os.path.join(
-                DATA_PATH, 'sites', dict_fpaths['stations_info'])
-            df_sites = pd.read_csv(fpath_stations_info)
             sites = df_sites.query(
                 'CLASS == 1').reset_index().USAF.astype('str')
 
@@ -231,6 +239,38 @@ def read_wea(year_start, year_end):
             df.temp = np.round(df.temp/10, 2)
             df.dew_temp = np.round(df.dew_temp/10, 2)
             df.precip_perhr = np.round(df.precip_perhr/10, 1)
+
+            # Apply climate treatment if requested
+            if climate_treatment is not None:
+                lat = df_sites.query(
+                    f'USAF == {siteid_usaf}')['ISH_LAT (dd)'].item()
+                lon = df_sites.query(
+                    f'USAF == {siteid_usaf}')['ISH_LON(dd)'].item()
+                months = list(df.index.month)
+                climate_factor = 'T'
+                scales = scale_climate(lat, lon, months, climate_factor)
+
+                # Calculate temperature anomalies based on scaling pattern
+                # based on CMIP6 SSP3-7.0 scenario
+                if climate_treatment == 2050:
+                    temp_anomaly = 1.4
+                elif climate_treatment == 2100:
+                    temp_anomaly = 3.1
+
+                temp_anomalies = [scale * temp_anomaly for scale in scales]
+
+                # Add temperature anomalies onto temperatures
+                temp_presentday = df.temp
+                temp_future = np.round(temp_presentday + temp_anomalies, 2)
+                df.temp = temp_future
+
+                # TODO: what to do with dew point temp???
+                # TODO: does this make sense at all?
+                # TODO: what is dew point even?
+                dew_temp_presentday = df.dew_temp
+                dew_temp_future = np.round(
+                    dew_temp_presentday + temp_anomalies, 2)
+                df.dew_temp = dew_temp_future
 
             # calculating RH through Clausius Clapeyron
             df.rh = CC_RH(df.temp, df.dew_temp)
@@ -1044,15 +1084,71 @@ def get_scale_ratio(run_name, climate_factor, month):
     return(temp_scales)
 
 
-def scale_temp(temp, weafile):
+def scale_climate(site_lat, site_lon, months, climate_factor):
     """
     Scale climate factor in weather data file.
 
     Based on climate factor projected pattern determined
     throuhg get_scale_ratio.
 
-    temp : float
-        Climate sensitivity at determined future time point.
+    Parameters
+    ----------
+    temp_anomaly : float
+        Multi-model mean of projected global temperature change.
+    site_lat : float
+        Latitude of selected location.
+    site_lon : float
+        Longitude of selected location.
+    months : list
+        List of ints, month of data (1 - Jan, 12 - Dec).
+    climate_factor : str
+        - 'T'
+        - 'RH'
 
     """
-    pass
+    # Read in scaling data for each month
+    months_in_year = np.arange(12)
+    dss = [np.nan]*len(months_in_year)
+
+    for item, month_in_year in enumerate(months_in_year):
+        dirct_climate_scaling = os.path.join(
+            os.path.expanduser('~'),
+            'data',
+            f'{climate_factor}_scalepattern',
+            f'{climate_factor}_scaling_mon{month_in_year}.nc')
+        ds = xr.open_dataset(dirct_climate_scaling)
+        dss[item] = ds
+
+    # Fetch scales for all months
+    scale_each_month = []
+
+    for item in months_in_year:
+        # dataset for specific month
+        ds = dss[item]
+        # lat/lon for temp scaling pattern
+        lats = ds.lat.values
+        lons = ds.lon.values
+
+        # convert site lon from -180/180 into 0/360
+        site_lon = round(site_lon % 360, 2)
+
+        # Determine closest temp pattern lat/lon index
+        # latitude
+        min_lat_diff = min([abs(lat - site_lat) for lat in lats])
+        nearest_lat_index = [
+            abs(lat - site_lat) for lat in lats].index(min_lat_diff)
+
+        # longitude
+        min_lon_diff = min([abs(lon - site_lon) for lon in lons])
+        nearest_lon_index = [
+            abs(lon - site_lon) for lon in lons].index(min_lon_diff)
+
+        # Filter out temperature scaling ratio
+        climate_scale = ds.ratio.isel(
+            lat=nearest_lat_index).isel(lon=nearest_lon_index).item()
+        scale_each_month.append(climate_scale)
+
+    # Compile final scales
+    scales = [scale_each_month[month-1] for month in months]
+
+    return(scales)
