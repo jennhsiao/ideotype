@@ -26,7 +26,7 @@ a.add_argument(
 # Fetch args
 args = a.parse_args()
 
-# Run name
+# Parameters
 run_name = 'control_fixpd'
 wea_folder = str(args.future_year)
 
@@ -57,5 +57,5 @@ siteyears_filtered = pd.read_csv(
     os.path.join(basepath_siteyears, f'siteyears_{run_name}.csv'), dtype=str)
 
 # Convert met data into individual maizsim weather data files
-make_weafile(
-    siteyears_filtered, df_temp, df_rh, df_precip, df_solrad, outpath)
+make_weafile(siteyears_filtered, df_temp, df_rh, df_precip, df_solrad, outpath,
+             climate_treatment=args.future_year)
