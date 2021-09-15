@@ -242,35 +242,38 @@ def read_wea(year_start, year_end, climate_treatment=None):
 
             # Apply climate treatment if requested
             if climate_treatment is not None:
-                lat = df_sites.query(
-                    f'USAF == {siteid_usaf}')['ISH_LAT (dd)'].item()
-                lon = df_sites.query(
-                    f'USAF == {siteid_usaf}')['ISH_LON(dd)'].item()
-                months = list(df.index.month)
-                climate_factor = 'T'
-                scales = scale_climate(lat, lon, months, climate_factor)
+                try:
+                    lat = df_sites.query(
+                        f'USAF == {siteid_usaf}')['ISH_LAT (dd)'].item()
+                    lon = df_sites.query(
+                        f'USAF == {siteid_usaf}')['ISH_LON(dd)'].item()
+                    months = list(df.index.month)
+                    climate_factor = 'T'
+                    scales = scale_climate(lat, lon, months, climate_factor)
 
-                # Calculate temperature anomalies based on scaling pattern
-                # based on CMIP6 SSP3-7.0 scenario
-                if climate_treatment == 2050:
-                    temp_anomaly = 1.4
-                elif climate_treatment == 2100:
-                    temp_anomaly = 3.1
+                    # Calculate temperature anomalies based on scaling pattern
+                    # based on CMIP6 SSP3-7.0 scenario
+                    if climate_treatment == 2050:
+                        temp_anomaly = 1.4
+                    elif climate_treatment == 2100:
+                        temp_anomaly = 3.1
 
-                temp_anomalies = [scale * temp_anomaly for scale in scales]
+                    temp_anomalies = [scale * temp_anomaly for scale in scales]
 
-                # Add temperature anomalies onto temperatures
-                temp_presentday = df.temp
-                temp_future = np.round(temp_presentday + temp_anomalies, 2)
-                df.temp = temp_future
+                    # Add temperature anomalies onto temperatures
+                    temp_presentday = df.temp
+                    temp_future = np.round(temp_presentday + temp_anomalies, 2)
+                    df.temp = temp_future
 
-                # TODO: what to do with dew point temp???
-                # TODO: does this make sense at all?
-                # TODO: what is dew point even?
-                dew_temp_presentday = df.dew_temp
-                dew_temp_future = np.round(
-                    dew_temp_presentday + temp_anomalies, 2)
-                df.dew_temp = dew_temp_future
+                    # TODO: what to do with dew point temp???
+                    # TODO: does this make sense at all?
+                    # TODO: what is dew point even?
+                    dew_temp_presentday = df.dew_temp
+                    dew_temp_future = np.round(
+                        dew_temp_presentday + temp_anomalies, 2)
+                    df.dew_temp = dew_temp_future
+                except(ValueError):
+                    print(year, name.split('/')[-1])
 
             # calculating RH through Clausius Clapeyron
             df.rh = CC_RH(df.temp, df.dew_temp)
