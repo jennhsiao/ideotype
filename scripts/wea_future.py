@@ -38,7 +38,7 @@ if solrad_files == 0:
 
 # Step 1: Read weather files
 print('*** step 1: read wea data')
-read_wea(1961, 2010, int(args.future_year))
+read_wea(1961, 2010, climate_treatment=int(args.future_year))
 # no need to read_solrad since we assume no change in solrad
 # and that data is directly copied from /weadata/process
 
@@ -80,4 +80,4 @@ df_wea.to_csv(
 # Step 5: Convert met data into individual maizsim weather data files
 print('*** step 5: make wea file')
 make_weafile(siteyears_filtered, df_temp, df_rh, df_precip, df_solrad, outpath,
-             climate_treatment=args.future_year)
+             climate_treatment=int(args.future_year))
