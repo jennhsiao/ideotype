@@ -1,6 +1,7 @@
 """Read and combine raw weather data for future climate."""
 
 import argparse
+import glob
 import os
 
 import pandas as pd
@@ -26,6 +27,14 @@ a.add_argument(
 
 # Fetch args
 args = a.parse_args()
+
+# Step 0: Check if solrad.csv files are copied into directory
+solrad_files = len(glob.glob(
+        f'/home/disk/eos8/ach315/upscale/weadata/'
+        f'process_f{args.future_year}/solrad_*.csv'))
+if solrad_files == 0:
+    raise ValueError(
+        f'solrad files not copied to process_f{args.future_year} yet!')
 
 # Step 1: Read weather files
 print('*** step 1: read wea data')
