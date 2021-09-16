@@ -29,7 +29,7 @@ args = a.parse_args()
 
 # Step 1: Read weather files
 print('*** step 1: read wea data')
-read_wea(1961, 2010, args.future_year)
+read_wea(1961, 2010, int(args.future_year))
 # no need to read_solrad since we assume no change in solrad
 # and that data is directly copied from /weadata/process
 
