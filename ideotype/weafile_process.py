@@ -80,7 +80,7 @@ def read_wea(year_start, year_end, climate_treatment=None):
     if climate_treatment is None:
         basepath = dict_fpaths['basepath']
     else:
-        basepath = f'{dict_fpaths["basepath"]}_{climate_treatment}'
+        basepath = f'{dict_fpaths["basepath"]}_f{climate_treatment}'
 
     # Set up years
     if year_start == year_end:
@@ -248,38 +248,49 @@ def read_wea(year_start, year_end, climate_treatment=None):
                     lon = df_sites.query(
                         f'USAF == {siteid_usaf}')['ISH_LON(dd)'].item()
                     months = list(df.index.month)
-                    climate_factor = 'T'
-                    scales = scale_climate(lat, lon, months, climate_factor)
+                    scales_temp = scale_climate(lat, lon, months, 'T')
+                    scales_rh = scale_climate(lat, lon, months, 'RH')
 
                     # Calculate temperature anomalies based on scaling pattern
                     # based on CMIP6 SSP3-7.0 scenario
                     if climate_treatment == 2050:
                         temp_anomaly = 1.4
+                        precip_anomaly = 0.85  # 15% reduction
+
                     elif climate_treatment == 2100:
                         temp_anomaly = 3.1
+                        precip_anomaly = 0.7  # 30% reduction
 
-                    temp_anomalies = [scale * temp_anomaly for scale in scales]
-
-                    # Add temperature anomalies onto temperatures
+                    # Fetch temperature anomalies
+                    temp_anomalies = [
+                        scale * temp_anomaly for scale in scales_temp]
+                    # Apply temperature anomalies
                     temp_presentday = df.temp
                     temp_future = np.round(temp_presentday + temp_anomalies, 2)
                     df.temp = temp_future
 
-                    # TODO: what to do with dew point temp???
-                    # TODO: does this make sense at all?
-                    # TODO: what is dew point even?
-                    dew_temp_presentday = df.dew_temp
-                    dew_temp_future = np.round(
-                        dew_temp_presentday + temp_anomalies, 2)
-                    df.dew_temp = dew_temp_future
                 except(ValueError):
                     print(year, name.split('/')[-1])
 
-            # calculating RH through Clausius Clapeyron
+            # calculate RH through Clausius Clapeyron
             df.rh = CC_RH(df.temp, df.dew_temp)
             if df[df.rh > 100].rh.sum() > 100:
                 print('rh > 100: ', year, name)
 
+            # fetch RH anomalies
+            rh_anomalies = [
+                scale * temp_anomaly for scale in scales_rh]
+            # apply RH anomalies
+            rh_presentday = df.rh
+            rh_future = np.round(rh_presentday + rh_anomalies, 2)
+            df.rh = rh_future
+
+            # apply precip anomalies
+            precip_presentday = df.precip_perhr
+            precip_future = np.round(precip_presentday * precip_anomaly, 2)
+            df.precip_perhr = precip_future
+
+            # stack site data
             arr_temp_sites = np.vstack([arr_temp_sites, df.temp])
             arr_rh_sites = np.vstack([arr_rh_sites, df.rh])
             arr_precip_sites = np.vstack([arr_precip_sites, df.precip_perhr])
@@ -798,7 +809,8 @@ def wea_filter(siteyears, area_threshold, irri_threshold, yearspersite):
 
 def make_weafile(siteyears_filtered,
                  df_temp, df_rh, df_precip, df_solrad,
-                 outpath):
+                 outpath,
+                 climate_treatment=None):
     """
     Make individual maizsim weather files.
 
@@ -872,7 +884,16 @@ def make_weafile(siteyears_filtered,
         df_wea.temp = list(df_temp.loc[timestamps, site])
         df_wea.rh = list(df_rh.loc[timestamps, site])
         df_wea.precip = list(df_precip.loc[timestamps, site])
-        df_wea.co2 = 400
+
+        # CO2 levels for future climate
+        if climate_treatment is not None:
+            if climate_treatment == 2050:
+                df_wea.co2 = 550
+            elif climate_treatment == 2100:
+                df_wea.co2 = 850
+        else:
+            df_wea.co2 = 400
+
         # 2. Use converted local datetime as time info in df_wea
         df_wea.jday = [int(datetime.strftime(
             dt_local, '%j')) for dt_local in datetimes_local]
