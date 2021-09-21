@@ -1,0 +1,6 @@
+run_name: f2050
+sims: sims_f2050.csv
+sites: site_summary.csv
+siteyears: siteyears_control_fixpd.csv
+wea: wea_summary_f2050.csv  # share same weather file with fixpd
+params: params_present.csv
