@@ -37,6 +37,7 @@ csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
 if os.path.isfile(csvfile):
     print(f'{csvfile} exists already!')
 else:
+    print('query yield')
     query, results, df = query_yield(fpath_db, phenos)
     df.to_csv(csvfile, index=False)
 
@@ -46,6 +47,7 @@ csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
 if os.path.isfile(csvfile):
     print(f'{csvfile} exists already!')
 else:
+    print('query phys')
     query, results, df = query_phys(fpath_db, phenos)
     df.to_csv(csvfile, index=False)
 
@@ -55,6 +57,7 @@ csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
 if os.path.isfile(csvfile):
     print(f'{csvfile} exists already!')
 else:
+    print('query carbon')
     query, results, df = query_carbon(fpath_db, phenos)
     df.to_csv(csvfile, index=False)
 
@@ -64,6 +67,7 @@ csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
 if os.path.isfile(csvfile):
     print(f'{csvfile} exists already!')
 else:
+    print('query mass')
     query, results, df = query_mass(fpath_db, phenos)
     df.to_csv(csvfile, index=False)
 
@@ -73,6 +77,7 @@ csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
 if os.path.isfile(csvfile):
     print(f'{csvfile} exists already!')
 else:
+    print('query pheno')
     query, results, df = query_pheno(fpath_db, phenos)
     df.to_csv(csvfile, index=False)
 
@@ -82,6 +87,7 @@ csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
 if os.path.isfile(csvfile):
     print(f'{csvfile} exists already!')
 else:
+    print('query leaves')
     query, results, df = query_leaves(fpath_db, phenos)
     df.to_csv(csvfile, index=False)
 
@@ -91,6 +97,7 @@ csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
 if os.path.isfile(csvfile):
     print(f'{csvfile} exists already!')
 else:
+    print('query waterstatus')
     query, results, df = query_waterstatus(fpath_db, phenos)
     df.to_csv(csvfile, index=False)
 
@@ -100,6 +107,7 @@ csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
 if os.path.isfile(csvfile):
     print(f'{csvfile} exists already!')
 else:
+    print('query water status sum')
     query, results, df = query_waterstatus_sum(fpath_db, phenos)
     df.to_csv(csvfile, index=False)
 
@@ -109,6 +117,7 @@ csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
 if os.path.isfile(csvfile):
     print(f'{csvfile} exists already!')
 else:
+    print('query water potential')
     time = 5
     query, results, df = query_waterpotential(fpath_db, phenos, time)
     df.to_csv(csvfile, index=False)
