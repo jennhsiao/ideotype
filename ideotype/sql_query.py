@@ -147,53 +147,6 @@ def query_yield(fpath_db, phenos):
     return(query, results, df)
 
 
-def query_pheno(fpath_db, phenos):
-    """
-    Query pheno info.
-
-    Parameters
-    ----------
-    fpath_db : str
-    phenos : list
-        List of top phenotype numbers.
-
-    Returns
-    -------
-    query : sqlalchemy query
-    results : list
-        List of query results.
-
-    """
-    engine = create_engine('sqlite:///' + fpath_db)
-    IdeotypeBase.metadata.bind = engine
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
-
-    query = session.query(Sims.cvar.label('cvar'),
-                          Sims.site.label('site'),
-                          Sims.year.label('year'),
-                          Sims.pheno.label('pheno'),
-                          func.count(distinct(Sims.jday)).label('pheno_days'),
-                          func.min(Sims.jday).label('jday_start'),
-                          func.min(Sims.date).label('date_start')
-                          ).group_by(Sims.cvar,
-                                     Sims.site,
-                                     Sims.year,
-                                     Sims.pheno).filter(
-                                         and_(Sims.cvar.in_(phenos)
-                                              ))
-
-    results = query.all()
-
-    # Construct dataframe from database query
-    columns = []
-    for item in query.column_descriptions:
-        columns.append(item['name'])
-    df = pd.DataFrame(results, columns=columns)
-
-    return(query, results, df)
-
-
 def query_phys(fpath_db, phenos):
     """
     Query phhysiological model outputs during sunlit hours.
@@ -247,9 +200,9 @@ def query_phys(fpath_db, phenos):
     return(query, results, df)
 
 
-def query_photo(fpath_db, phenos):
+def query_carbon(fpath_db, phenos):
     """
-    Query total carbon accumulation across phenostage.
+    Query mean and total carbon accumulation across phenostage.
 
     Parameters
     ----------
@@ -288,6 +241,96 @@ def query_photo(fpath_db, phenos):
     return(query, results, df)
 
 
+def query_mass(fpath_db, phenos):
+    """
+    Query mass.
+
+    Parameters
+    ----------
+    fpath_db : str
+    phenos : list
+
+    """
+    engine = create_engine('sqlite:///' + fpath_db)
+    IdeotypeBase.metadata.bind = engine
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    query = session.query(Sims.cvar.label('cvar'),
+                          Sims.site.label('site'),
+                          Sims.year.label('year'),
+                          Sims.pheno.label('pheno'),
+                          func.max(Sims.DM_total).label('dm_total'),
+                          func.max(Sims.DM_root).label('dm_root'),
+                          func.max(Sims.DM_shoot).label('dm_shoot'),
+                          func.max(Sims.DM_stem).label('dm_stem'),
+                          func.max(Sims.DM_leaf).label('dm_leaf'),
+                          func.max(Sims.DM_ear).label('dm_ear'),
+                          ).group_by(Sims.cvar,
+                                     Sims.year,
+                                     Sims.site,
+                                     Sims.pheno).filter(
+                                         and_(Sims.cvar.in_(phenos)
+                                              ))
+
+    results = query.all()
+
+    # Construct dataframe from database query
+    columns = []
+    for item in query.column_descriptions:
+        columns.append(item['name'])
+    df = pd.DataFrame(results, columns=columns)
+
+    return(query, results, df)
+
+
+def query_pheno(fpath_db, phenos):
+    """
+    Query pheno info.
+
+    Parameters
+    ----------
+    fpath_db : str
+    phenos : list
+        List of top phenotype numbers.
+
+    Returns
+    -------
+    query : sqlalchemy query
+    results : list
+        List of query results.
+
+    """
+    engine = create_engine('sqlite:///' + fpath_db)
+    IdeotypeBase.metadata.bind = engine
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    query = session.query(Sims.cvar.label('cvar'),
+                          Sims.site.label('site'),
+                          Sims.year.label('year'),
+                          Sims.pheno.label('pheno'),
+                          func.count(distinct(Sims.jday)).label('pheno_days'),
+                          func.min(Sims.jday).label('jday_start'),
+                          func.min(Sims.date).label('date_start')
+                          ).group_by(Sims.cvar,
+                                     Sims.site,
+                                     Sims.year,
+                                     Sims.pheno).filter(
+                                         and_(Sims.cvar.in_(phenos)
+                                              ))
+
+    results = query.all()
+
+    # Construct dataframe from database query
+    columns = []
+    for item in query.column_descriptions:
+        columns.append(item['name'])
+    df = pd.DataFrame(results, columns=columns)
+
+    return(query, results, df)
+
+
 def query_leaves(fpath_db, phenos):
     """
     Query physiological model outputs.
@@ -312,42 +355,6 @@ def query_leaves(fpath_db, phenos):
                           func.max(Sims.leaves).label('leaves'),
                           func.max(Sims.leaves_mature).label('leaves_mature'),
                           func.max(Sims.leaves_dropped).label('leaves_dropped')
-                          ).group_by(Sims.cvar,
-                                     Sims.year,
-                                     Sims.site,
-                                     Sims.pheno).filter(
-                                         and_(Sims.cvar.in_(phenos)
-                                              ))
-
-    results = query.all()
-
-    # Construct dataframe from database query
-    columns = []
-    for item in query.column_descriptions:
-        columns.append(item['name'])
-    df = pd.DataFrame(results, columns=columns)
-
-    return(query, results, df)
-
-
-def query_mass(fpath_db, phenos):
-    """
-    """
-    engine = create_engine('sqlite:///' + fpath_db)
-    IdeotypeBase.metadata.bind = engine
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
-
-    query = session.query(Sims.cvar.label('cvar'),
-                          Sims.site.label('site'),
-                          Sims.year.label('year'),
-                          Sims.pheno.label('pheno'),
-                          func.max(Sims.DM_total).label('dm_total'),
-                          func.max(Sims.DM_root).label('dm_root'),
-                          func.max(Sims.DM_shoot).label('dm_shoot'),
-                          func.max(Sims.DM_stem).label('dm_stem'),
-                          func.max(Sims.DM_leaf).label('dm_leaf'),
-                          func.max(Sims.DM_ear).label('dm_ear'),
                           ).group_by(Sims.cvar,
                                      Sims.year,
                                      Sims.site,
