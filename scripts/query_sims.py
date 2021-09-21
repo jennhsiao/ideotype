@@ -7,7 +7,7 @@ import numpy as np
 
 from ideotype.sql_query import (query_yield,
                                 query_phys,
-                                query_photo,
+                                query_carbon,
                                 query_pheno,
                                 query_leaves,
                                 query_mass,
@@ -48,13 +48,13 @@ else:
     query, results, df = query_phys(fpath_db, phenos)
     df.to_csv(csvfile, index=False)
 
-# Query photosynthesis
+# Query carbon gained
 csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
-           f'sims_{args.run_name}_photo_sum.csv')
+           f'sims_{args.run_name}_carbon.csv')
 if os.path.isfile(csvfile):
     print(f'{csvfile} exists already!')
 else:
-    query, results, df = query_photo(fpath_db, phenos)
+    query, results, df = query_carbon(fpath_db, phenos)
     df.to_csv(csvfile, index=False)
 
 # Query mass
@@ -64,6 +64,24 @@ if os.path.isfile(csvfile):
     print(f'{csvfile} exists already!')
 else:
     query, results, df = query_mass(fpath_db, phenos)
+    df.to_csv(csvfile, index=False)
+
+# Query phenology
+csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
+           f'sims_{args.run_name}_phenology.csv')
+if os.path.isfile(csvfile):
+    print(f'{csvfile} exists already!')
+else:
+    query, results, df = query_pheno(fpath_db, phenos)
+    df.to_csv(csvfile, index=False)
+
+# Query morphology
+csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
+           f'sims_{args.run_name}_leaves.csv')
+if os.path.isfile(csvfile):
+    print(f'{csvfile} exists already!')
+else:
+    query, results, df = query_leaves(fpath_db, phenos)
     df.to_csv(csvfile, index=False)
 
 # Query water deficit
@@ -83,22 +101,4 @@ if os.path.isfile(csvfile):
 else:
     time = 5
     query, results, df = query_waterpotential(fpath_db, phenos, time)
-    df.to_csv(csvfile, index=False)
-
-# Query phenology
-csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
-           f'sims_{args.run_name}_phenology.csv')
-if os.path.isfile(csvfile):
-    print(f'{csvfile} exists already!')
-else:
-    query, results, df = query_pheno(fpath_db, phenos)
-    df.to_csv(csvfile, index=False)
-
-# Query morphology
-csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
-           f'sims_{args.run_name}_leaves.csv')
-if os.path.isfile(csvfile):
-    print(f'{csvfile} exists already!')
-else:
-    query, results, df = query_leaves(fpath_db, phenos)
     df.to_csv(csvfile, index=False)
