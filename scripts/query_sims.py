@@ -1,5 +1,8 @@
 """Query sims from database."""
 
+import os
+import argparse
+
 import numpy as np
 
 from ideotype.sql_query import (query_yield,
@@ -11,40 +14,91 @@ from ideotype.sql_query import (query_yield,
                                 query_waterstatus,
                                 query_waterpotential)
 
-fpath_db = '/home/disk/eos8/ach315/upscale/db/present.db'
+# Set up argparse for terminal control
+a = argparse.ArgumentParser(
+    description='additional info to query sims'
+)
+
+a.add_argument(
+    'run_name',
+    type=str,
+    help='run name for batch of simulation experiments')
+
+args = a.parse_args()
+
+# Set up databse path
+fpath_db = f'/home/disk/eos8/ach315/upscale/db/{args.run_name}.db'
 phenos = np.arange(100).tolist()
 
 # Query yield
-query, results, df = query_yield(fpath_db, phenos)
-# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_present_db.csv', index=False)
+csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
+           f'sims_{args.run_name}_yield.csv')
+if os.path.isfile(csvfile):
+    print(f'{csvfile} exists already!')
+else:
+    query, results, df = query_yield(fpath_db, phenos)
+    df.to_csv(csvfile, index=False)
 
 # Query physiology
-query, results, df = query_phys(fpath_db, phenos)
-# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_phys.csv', index=False)
+csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
+           f'sims_{args.run_name}_phys.csv')
+if os.path.isfile(csvfile):
+    print(f'{csvfile} exists already!')
+else:
+    query, results, df = query_phys(fpath_db, phenos)
+    df.to_csv(csvfile, index=False)
 
 # Query photosynthesis
-query, results, df = query_photo(fpath_db, phenos)
-# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_photo_sum.csv', index=False)
+csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
+           f'sims_{args.run_name}_photo_sum.csv')
+if os.path.isfile(csvfile):
+    print(f'{csvfile} exists already!')
+else:
+    query, results, df = query_photo(fpath_db, phenos)
+    df.to_csv(csvfile, index=False)
 
 # Query mass
-query, results, df = query_mass(fpath_db, phenos)
-# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_mass.csv', index=False)
+csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
+           f'sims_{args.run_name}_mass.csv')
+if os.path.isfile(csvfile):
+    print(f'{csvfile} exists already!')
+else:
+    query, results, df = query_mass(fpath_db, phenos)
+    df.to_csv(csvfile, index=False)
 
 # Query water deficit
-query, results, df = query_waterstatus(fpath_db, phenos)
-# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_waterdeficit.csv',
-# index=False)
+csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
+           f'sims_{args.run_name}_waterdeficit.csv')
+if os.path.isfile(csvfile):
+    print(f'{csvfile} exists already!')
+else:
+    query, results, df = query_waterstatus(fpath_db, phenos)
+    df.to_csv(csvfile, index=False)
 
 # Query water potential
-time = 5
-query, results, df = query_waterpotential(fpath_db, phenos, time)
-# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_waterpotential.csv',
-# index=False)
+csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
+           f'sims_{args.run_name}_waterpotential.csv')
+if os.path.isfile(csvfile):
+    print(f'{csvfile} exists already!')
+else:
+    time = 5
+    query, results, df = query_waterpotential(fpath_db, phenos, time)
+    df.to_csv(csvfile, index=False)
 
 # Query phenology
-query, results, df = query_pheno(fpath_db, phenos)
-# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_phenology.csv', index=False)
+csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
+           f'sims_{args.run_name}_phenology.csv')
+if os.path.isfile(csvfile):
+    print(f'{csvfile} exists already!')
+else:
+    query, results, df = query_pheno(fpath_db, phenos)
+    df.to_csv(csvfile, index=False)
 
 # Query morphology
-query, results, df = query_leaves(fpath_db, phenos)
-# df.to_csv('/home/disk/eos8/ach315/ideotype/sims_leaves.csv', index=False)
+csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
+           f'sims_{args.run_name}_leaves.csv')
+if os.path.isfile(csvfile):
+    print(f'{csvfile} exists already!')
+else:
+    query, results, df = query_leaves(fpath_db, phenos)
+    df.to_csv(csvfile, index=False)
