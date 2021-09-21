@@ -12,6 +12,7 @@ from ideotype.sql_query import (query_yield,
                                 query_leaves,
                                 query_mass,
                                 query_waterstatus,
+                                query_waterstatus_sum,
                                 query_waterpotential)
 
 # Set up argparse for terminal control
@@ -68,7 +69,7 @@ else:
 
 # Query phenology
 csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
-           f'sims_{args.run_name}_phenology.csv')
+           f'sims_{args.run_name}_pheno.csv')
 if os.path.isfile(csvfile):
     print(f'{csvfile} exists already!')
 else:
@@ -91,6 +92,15 @@ if os.path.isfile(csvfile):
     print(f'{csvfile} exists already!')
 else:
     query, results, df = query_waterstatus(fpath_db, phenos)
+    df.to_csv(csvfile, index=False)
+
+# Query water deficit sum
+csvfile = (f'/home/disk/eos8/ach315/ideotype/ideotype/data/sims/'
+           f'sims_{args.run_name}_waterdeficit_sum.csv')
+if os.path.isfile(csvfile):
+    print(f'{csvfile} exists already!')
+else:
+    query, results, df = query_waterstatus_sum(fpath_db, phenos)
     df.to_csv(csvfile, index=False)
 
 # Query water potential
