@@ -14,7 +14,7 @@ from SALib.analyze import rbd_fast
 
 from ideotype import DATA_PATH
 from ideotype.init_params import params_sample
-from ideotype.data_process import read_data, process_sims
+from ideotype.data_process import read_data, process_sims, agg_sims
 
 
 def run_rbdfast(N_sample, run_name):
@@ -241,6 +241,9 @@ def prevalent_top_pheno(run_name, n_pheno, w_yield, w_disp, site_threshold):
     Parameters
     ----------
     run_name : str
+    site_threshold : int
+        Threshold for number of sites phenotype should at least have ranked
+        as top performer.
 
     Returns
     -------
@@ -257,6 +260,35 @@ def prevalent_top_pheno(run_name, n_pheno, w_yield, w_disp, site_threshold):
     list_top_phenos.reverse()
 
     return(list_top_phenos)
+
+
+def rank_by_yield(df):
+    """
+    Rank phenotypes by yield only.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        MAIZSIM yield output dataframe.
+        df_sims or df_mature
+
+    """
+    # Prep data
+    groups = ['cvar', 'site']
+    how = 'mean'
+    sim = 'dm_ear'
+
+    mx_mean = agg_sims(df, groups, how, sim)
+    df_yield_means = pd.DataFrame(mx_mean)
+
+    # Sort data based on mean yield value
+    df_yield_means['mean'] = df_yield_means.mean(axis=1)
+
+    # Rank phenos by yield
+    phenos_ranked_by_yield = list(df_yield_means.sort_values(by=['mean'],
+                                  axis=0, ascending=False).index)
+
+    return phenos_ranked_by_yield
 
 
 def rank_all_phenos(run_name, n_pheno, w_yield, w_disp):
@@ -307,6 +339,43 @@ def rank_all_phenos(run_name, n_pheno, w_yield, w_disp):
     return(df_rankings, phenos_ranked)
 
 
+def rank_top_phenos(run_name, n_pheno, w_yield, w_disp):
+    """
+    Rank phenotypes that at least rank top n at sim sites.
+
+    n_pheno : int
+        Ranking that phenotype at least should achieve.
+
+    """
+    df_pheno, mx = identify_top_phenos('present',
+                                       n_pheno=n_pheno,
+                                       w_yield=w_yield,
+                                       w_disp=w_disp)
+
+    top_phenos = []
+    for item in np.arange(n_pheno):
+        # Identify phenotypes in each ranking for each site
+        top_pheno = list(set(df_pheno.iloc[:, item]))
+        top_phenos.extend(top_pheno)
+    # Compile all phenotypes
+    list_top_phenos = list(set(top_phenos))
+
+    # Determine prevalence of phenotype occurrence
+    rank_sums = []
+    for item in list_top_phenos:
+        rank_list = list(mx[item])
+        rank_list_reversed = [(n_pheno + 1) - rank for rank in rank_list]
+        rank_sum = np.nansum(rank_list_reversed)
+        rank_sums.append(rank_sum)
+
+    df_ranksum = pd.DataFrame({'pheno': list_top_phenos,
+                               'rank_sum': rank_sums})
+    top_pheno_ranks = list(df_ranksum.sort_values(
+        'rank_sum', ascending=False)['pheno'])
+
+    return(top_pheno_ranks)
+
+
 def phenostage_climate(df_all, df_gseason_climate,
                        df_waterdeficit, phenostage_num):
     """
@@ -353,3 +422,39 @@ def phenostage_climate(df_all, df_gseason_climate,
     df_wd = pd.DataFrame(mx_wd)
 
     return(df_temp, df_vpd, df_wd)
+
+
+def calc_target_pheno_perct(df_params, phenos_ranked,
+                            target_param, comparison):
+    """
+    Calculate percent of targeted phenotypes with desired param trait.
+
+    df_params : pd.DataFrame
+    phenos_ranked : list
+    target_param : str
+    comparison : str
+        'greater' - select phenos with param value
+            greater than average param value.
+        'less_than' - select phenos with param values
+            less than average param value.
+
+    """
+    # Calculate target parameter mean value
+    target_param_mean = df_params[target_param][:100].mean()
+
+    # Query phenotypes with parameter values greater than parameter mean
+    if comparison == 'greater':
+        phenos_targetparam = list(df_params[:100].query(
+            f'{target_param} > {target_param_mean}').cvar)
+    if comparison == 'less_than':
+        phenos_targetparam = list(df_params[:100].query(
+            f'{target_param} < {target_param_mean}').cvar)
+
+    # Calculate percent
+    phenos = []
+    for pheno in phenos_targetparam:
+        if pheno in phenos_ranked[50:]:
+            phenos.append(pheno)
+    perct = len(phenos)/len(phenos_targetparam)
+
+    return(phenos_targetparam, perct)
