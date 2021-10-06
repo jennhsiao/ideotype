@@ -53,8 +53,6 @@ dirct_sims = os.path.join(init_dict['path_sims'])
 # dirct_sims = '/home/disk/eos8/ach315/upscale/sims/opt/'
 
 # insert values into table for specific run
-# TODO: is there a way to raise some error if tables have values already?
-# TODO: this would signal that instead of make_db I'd want to update_db?
 insert_siteinfo(fpath_siteinfo, fpath_db)
 insert_params(fpath_params, fpath_db, args.run_name)
 insert_weadata(dirct_weadata, fpath_db)
