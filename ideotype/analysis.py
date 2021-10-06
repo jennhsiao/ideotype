@@ -347,7 +347,7 @@ def rank_top_phenos(run_name, n_pheno, w_yield, w_disp):
         Ranking that phenotype at least should achieve.
 
     """
-    df_pheno, mx = identify_top_phenos('present',
+    df_pheno, mx = identify_top_phenos(run_name,
                                        n_pheno=n_pheno,
                                        w_yield=w_yield,
                                        w_disp=w_disp)
