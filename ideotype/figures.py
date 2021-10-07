@@ -4,8 +4,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from palettable.colorbrewer.diverging import PuOr_7
 
 from ideotype.data_process import read_data, process_sims
+from ideotype.analysis import rank_top_phenos
+from ideotype.init_params import params_sample
+from ideotype.utils import fold
 
 
 def plot_sims_heatmap(df, sim, agg_method, phenos_ranked,
@@ -126,10 +130,17 @@ def plot_pheno_summary(df, pheno_stage,
 
     if save is True:
         phenostage_write = pheno_stage.strip('"')
-        plt.savefig(
-            f'/home/disk/eos8/ach315/upscale/figs/'
-            f'bars_pheno_{target}_{phenostage_write}.png',
-            format='png', dpi=800)
+        if target_pheno is None:
+            plt.savefig(
+                f'/home/disk/eos8/ach315/upscale/figs/'
+                f'bars_pheno_{target}_{phenostage_write}.png',
+                format='png', dpi=800)
+        else:
+            plt.savefig(
+                f'/home/disk/eos8/ach315/upscale/figs/'
+                f'bars_pheno_{target}_{phenostage_write}_'
+                f'targetpheno.png',
+                format='png', dpi=800)
 
 
 def plot_site_summary(df, pheno_stage, target, color, alpha, save=False):
@@ -179,3 +190,74 @@ def plot_site_summary(df, pheno_stage, target, color, alpha, save=False):
         plt.savefig(
             f'/home/disk/eos8/ach315/upscale/figs/bars_site_{target}.png',
             format='png', dpi=800)
+
+
+def plot_params_heatmap(df_params, run_name, method,
+                        n_pheno, w_yield, w_disp,
+                        n_phenos_toplot=20, fig_w=9, fig_h=6,
+                        save=None):
+    """
+    Plot params heatmap.
+
+    Parameters
+    ----------
+    df_params : pd.DataFrame
+    run_name : str
+    n_pheno : int
+    w_yield : int
+    w_disp : int
+    top_phenos: list
+        Output of function rank_top_phenos
+    n_phenos_toplot : int
+        -1 - plot all top phenos
+
+    """
+    # Rank top_phenos
+    top_phenos = rank_top_phenos(run_name, n_pheno, w_yield, w_disp)
+
+    # Determined parameters perturbed and perturb range
+    problem, param_values = params_sample('present', 10)
+    param_range = dict(zip(problem['names'], problem['bounds']))
+    params = problem['names']
+    df_params_fold = pd.DataFrame(columns=params)
+
+    # Normalize parameter values
+    if n_phenos_toplot == -1:
+        n_phenos_toplot = len(top_phenos)
+
+    df_highperformance = df_params.iloc[top_phenos[:n_phenos_toplot], :-1]
+
+    for param in params:
+        df_params_fold[param] = fold(df_highperformance[param],
+                                     param_range[param][0],
+                                     param_range[param][1])
+
+    # Visualize
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h))
+
+    ax.imshow(df_params_fold.transpose(), cmap=PuOr_7.mpl_colormap)
+    ax.set_xticks(np.arange(df_highperformance.shape[0]))
+    ax.set_yticks(np.arange(df_highperformance.shape[1]))
+    ax.set_xticklabels(list(df_highperformance.index),
+                       size=10, fontweight='light')
+    ax.set_yticklabels(list(df_highperformance.columns),
+                       size=10, fontweight='light')
+
+    for top_pheno in np.arange(n_phenos_toplot):
+        for param in range(len(params)):
+            ax.text(top_pheno, param,
+                    df_params.transpose().loc[params[param],
+                                              top_phenos[top_pheno]],
+                    ha='center', color='grey', size=7)
+    fig.subplots_adjust(left=0.15)
+
+    if save is True:
+        if n_phenos_toplot == 'all':
+            plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                        f'heatmap_params_{run_name}_ranktop{n_pheno}_all.png',
+                        format='png', dpi=800)
+        else:
+            plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                        f'heatmap_params_{run_name}_'
+                        f'ranktop{n_pheno}_{n_phenos_toplot}.png',
+                        format='png', dpi=800)
