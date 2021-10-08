@@ -321,10 +321,14 @@ def plot_rankchange(n_pheno, w_yield, w_disp, future_run,
         else:
             try:
                 new_pheno = top_phenos_future[item]
-                plt.scatter(item, n_pheno-item, c='grey',
-                            s=200, alpha=0.2, marker='o')
-                plt.text(item-0.5, n_pheno-item-1,
-                         new_pheno, size=10, fontweight='light')
+                if new_pheno in top_phenos_present:
+                    plt.scatter(item, n_pheno-item, c='grey',
+                                alpha=0.8, marker='x')
+                else:
+                    plt.scatter(item, n_pheno-item, c='grey',
+                                s=200, alpha=0.2, marker='o')
+                    plt.text(item-0.5, n_pheno-item-1,
+                             new_pheno, size=10, fontweight='light')
             except IndexError:
                 print('future top ranks less than present day')
 
