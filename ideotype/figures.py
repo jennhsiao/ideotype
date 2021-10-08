@@ -130,7 +130,7 @@ def plot_pheno_summary(df, pheno_stage,
 
     if save is True:
         phenostage_write = pheno_stage.strip('"')
-        if target_pheno is None:
+        if target_phenos is None:
             plt.savefig(
                 f'/home/disk/eos8/ach315/upscale/figs/'
                 f'bars_pheno_{target}_{phenostage_write}.png',
@@ -261,3 +261,97 @@ def plot_params_heatmap(df_params, run_name, method,
                         f'heatmap_params_{run_name}_'
                         f'ranktop{n_pheno}_{n_phenos_toplot}.png',
                         format='png', dpi=800)
+
+
+def plot_rankchange(n_pheno, w_yield, w_disp, future_run,
+                    fig_w=12, fig_h=4, save=None):
+    """
+    Plot rank change.
+
+    Parameters
+    ----------
+    n_pheno : int
+    w_yield : int
+    w_disp : int
+    future_run : str
+    n_phenos_toplot : int
+    save : bool
+
+    """
+    # Prep ranks
+    top_phenos_present = rank_top_phenos('present', n_pheno, w_yield, w_disp)
+    top_phenos_future = rank_top_phenos(future_run, n_pheno, w_yield, w_disp)
+
+    rank_diffs = []
+    new_ranks = []
+    for item, pheno in enumerate(top_phenos_present):
+        try:
+            new_rank = top_phenos_future.index(pheno)
+            new_ranks.append(new_rank)
+            rank_diffs.append(item-new_rank)
+        except (ValueError):
+            new_ranks.append(new_rank)
+            rank_diffs.append(np.nan)
+
+    # Visualization
+    fig = plt.figure(figsize=(fig_w, fig_h))
+    ax = fig.add_subplot(1, 1, 1)
+
+    phenos = top_phenos_present[:]
+
+    y1s = []
+    y2s = []
+    for item, pheno in enumerate(phenos):
+        y1s.append(n_pheno-item)
+        y2s.append((n_pheno-item) + rank_diffs[item])
+
+        if rank_diffs[item] < 0:
+            plt.arrow(item, n_pheno-item, 0, rank_diffs[item],
+                      head_width=0.8,
+                      length_includes_head=True,
+                      head_starts_at_zero=True,
+                      color='tab:orange', alpha=0.8)
+        elif rank_diffs[item] > 0:
+            plt.arrow(item, n_pheno-item, 0, rank_diffs[item],
+                      head_width=0.8,
+                      length_includes_head=True,
+                      color='tab:purple', alpha=0.8)
+        elif rank_diffs[item] == 0:
+            plt.scatter(item, n_pheno-item, c='grey', alpha=0.8, marker='_')
+        else:
+            try:
+                new_pheno = top_phenos_future[item]
+                plt.scatter(item, n_pheno-item, c='grey',
+                            s=200, alpha=0.2, marker='o')
+                plt.text(item-0.5, n_pheno-item-1,
+                         new_pheno, size=10, fontweight='light')
+            except IndexError:
+                print('future top ranks less than present day')
+
+    # x-axis
+    ax.set_xlim(-1, len(top_phenos_present))
+    ax.xaxis.tick_top()
+    ax.set_xticks(np.arange(len(top_phenos_present)))
+    ax.set_xticklabels(top_phenos_present, fontweight='light',
+                       fontsize=10, rotation=90)
+
+    # y-axis
+    min_y = min(min(y1s), min(y2s))
+    min_y_rounded = round(min_y/5)*5
+    plt.ylabel('ranking', fontweight='light', size=14)
+    ax.set_ylim(min_y_rounded-1, n_pheno+1)
+    ax.set_yticks(np.arange(min_y_rounded, n_pheno+1, 5))
+    ax.set_yticklabels(np.arange(0, abs(min_y_rounded)+n_pheno+1, 5)[::-1],
+                       fontweight='light')
+
+    # patch
+    rect = plt.Rectangle((-1, 0), len(top_phenos_present)+1, n_pheno+1,
+                         facecolor='grey', alpha=0.1)
+    ax.add_patch(rect)
+
+    # save
+    if save is True:
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'rankchange_{future_run}_top{n_pheno}'
+                    f'_y{w_yield}_d{w_disp}.png',
+                    format='png', dpi=800)
