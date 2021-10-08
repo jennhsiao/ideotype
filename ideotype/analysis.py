@@ -376,6 +376,77 @@ def rank_top_phenos(run_name, n_pheno, w_yield, w_disp):
     return(top_pheno_ranks)
 
 
+def identify_improved_phenos(n_pheno, w_yield, w_disp,
+                             future_run, rank_cutoff=20):
+    """
+    Identify improved phenotypes.
+
+    Parameters
+    ----------
+    n_pheno : int
+    w_yield : int
+    w_disp : int
+    future_run : str
+        run_name of future sim ('f2050', 'f2100')
+    rank_cutoff : int
+        Cut-off rank to be considered as 'top-ranking'.
+
+    Returns
+    -------
+    phenos_improved : list
+        All phenotypes that had positive rank change.
+    phenos_targeted : list
+        All phenotypes that had positive rank change and
+        also had final rank within rank_cutoff.
+    phenos_new : list
+        All phenotypes that ranked within rank_cutoff,
+        but was not originally one of the top ranked phenotypes.
+
+    """
+    # Rank top phenos
+    top_phenos_present = rank_top_phenos('present', n_pheno, w_yield, w_disp)
+    top_phenos_future = rank_top_phenos(future_run, n_pheno, w_yield, w_disp)
+
+    # Calculate rank difference & identify new ranks
+    rank_diffs = []
+    new_ranks = []
+    for item, pheno in enumerate(top_phenos_present):
+        try:
+            new_rank = top_phenos_future.index(pheno)
+            new_ranks.append(new_rank)
+            rank_diffs.append(item-new_rank)
+        except (ValueError):
+            new_ranks.append(np.nan)
+            rank_diffs.append(np.nan)
+
+    # Compile into dataframe
+    df_ranks = pd.DataFrame({'top_phenos_present': top_phenos_present,
+                             'new_rank': new_ranks,
+                             'rank_diff': rank_diffs})
+    df_ranks_sorted = df_ranks.sort_values('rank_diff', ascending=False)
+
+    # Improved & targeted phenos
+    phenos_improved = list(df_ranks_sorted.query(
+        'rank_diff>0')['top_phenos_present'])
+    phenos_targeted = list(df_ranks_sorted.query('rank_diff>0').query(
+        f'new_rank<{rank_cutoff}')['top_phenos_present'])
+
+    # New phenos
+    pheno_select = [
+        count for count, pheno in enumerate(rank_diffs) if pheno is np.nan]
+    phenos_new = []
+    for item in pheno_select:
+        if item < rank_cutoff:
+            try:
+                new_pheno = top_phenos_future[item]
+                if new_pheno not in top_phenos_present:
+                    phenos_new.append(new_pheno)
+            except(ValueError):
+                print('future top ranks less than present day')
+
+    return(phenos_improved, phenos_targeted, phenos_new)
+
+
 def phenostage_climate(df_all, df_gseason_climate,
                        df_waterdeficit, phenostage_num):
     """
