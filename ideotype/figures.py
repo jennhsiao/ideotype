@@ -192,28 +192,23 @@ def plot_site_summary(df, pheno_stage, target, color, alpha, save=False):
             format='png', dpi=800)
 
 
-def plot_params_heatmap(df_params, run_name, method,
-                        n_pheno, w_yield, w_disp,
+def plot_params_heatmap(df_params, top_phenos,
                         n_phenos_toplot=20, fig_w=9, fig_h=6,
-                        save=None):
+                        save=None, save_text=None):
     """
     Plot params heatmap.
 
     Parameters
     ----------
     df_params : pd.DataFrame
-    run_name : str
-    n_pheno : int
-    w_yield : int
-    w_disp : int
     top_phenos: list
-        Output of function rank_top_phenos
+        List of phenos to plot.
     n_phenos_toplot : int
         -1 - plot all top phenos
 
     """
     # Rank top_phenos
-    top_phenos = rank_top_phenos(run_name, n_pheno, w_yield, w_disp)
+#    top_phenos = rank_top_phenos(run_name, n_pheno, w_yield, w_disp)
 
     # Determined parameters perturbed and perturb range
     problem, param_values = params_sample('present', 10)
@@ -223,6 +218,9 @@ def plot_params_heatmap(df_params, run_name, method,
 
     # Normalize parameter values
     if n_phenos_toplot == -1:
+        n_phenos_toplot = len(top_phenos)
+
+    if n_phenos_toplot > len(top_phenos):
         n_phenos_toplot = len(top_phenos)
 
     df_highperformance = df_params.iloc[top_phenos[:n_phenos_toplot], :-1]
@@ -252,15 +250,9 @@ def plot_params_heatmap(df_params, run_name, method,
     fig.subplots_adjust(left=0.15)
 
     if save is True:
-        if n_phenos_toplot == 'all':
-            plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
-                        f'heatmap_params_{run_name}_ranktop{n_pheno}_all.png',
-                        format='png', dpi=800)
-        else:
-            plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
-                        f'heatmap_params_{run_name}_'
-                        f'ranktop{n_pheno}_{n_phenos_toplot}.png',
-                        format='png', dpi=800)
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'heatmap_params_{save_text}.png',
+                    format='png', dpi=800)
 
 
 def plot_rankchange(n_pheno, w_yield, w_disp, future_run,
