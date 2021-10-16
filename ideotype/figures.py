@@ -5,6 +5,8 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from palettable.colorbrewer.diverging import PuOr_7
+from palettable.cartocolors.sequential import PurpOr_6
+from palettable.colorbrewer.sequential import YlGn_9
 
 from ideotype.data_process import read_data, process_sims
 from ideotype.analysis import rank_top_phenos
@@ -13,7 +15,9 @@ from ideotype.utils import fold
 
 
 def plot_sims_heatmap(df, sim, agg_method, phenos_ranked,
-                      cmap, vmins, vmaxs, save=False):
+                      cmap, vmins, vmaxs,
+                      yfont_size=5, fig_w=20, fig_h=18,
+                      save=False):
     """
     Plot out simulation heatmaps.
 
@@ -41,12 +45,15 @@ def plot_sims_heatmap(df, sim, agg_method, phenos_ranked,
     phenostages = [['"Emerged"'],
                    ['"Tasselinit"'],
                    ['"Tasseled"', '"Silked"'],
+                   # ['"Silked"'],
                    ['"grainFill"']]
     titles = ['Emerged', 'Tassel initiation',
-              'Tasseled & Silked', 'Grain Filling']
+              'Tasseled & Silked',
+              # 'Silked',
+              'Grain Filling']
 
     # Visualization
-    fig = plt.figure(figsize=(20, 18))
+    fig = plt.figure(figsize=(fig_w, fig_h))
 
     for index in np.arange(4):
         phenostage = phenostages[index]
@@ -61,9 +68,9 @@ def plot_sims_heatmap(df, sim, agg_method, phenos_ranked,
         ax.set_xlabel('sites', fontweight='light', size=12)
         ax.set_ylabel('phenotypes', fontweight='light', size=12)
         plt.xticks(fontweight='light', fontsize=10)
-        ax.set_yticks(np.arange(0.5, 100.5))
+        ax.set_yticks(np.arange(0.5, len(phenos_ranked)+0.5))
         ax.set_yticklabels(phenos_ranked, fontweight='light',
-                           size=5, rotation=0)
+                           size=yfont_size, rotation=0)
 
     plt.suptitle(f'{sim}', fontweight='light', x=0.5, y=0.93, size=20)
     fig.subplots_adjust(wspace=0.08)
@@ -351,3 +358,101 @@ def plot_rankchange(n_pheno, w_yield, w_disp, future_run,
                     f'rankchange_{future_run}_top{n_pheno}'
                     f'_y{w_yield}_d{w_disp}.png',
                     format='png', dpi=800)
+
+
+def plot_cspace_rank(phenos_targeted, mx_present, mx_future,
+                     df_climate_x_present, df_climate_y_present,
+                     df_climate_x_future, df_climate_y_future,
+                     climate_x, climate_y):
+    """
+    Plot out rank in cspace.
+
+    Parameters
+    ----------
+    phenos_targeted : list
+    climate_x : str
+    climate_y : str
+
+    """
+    fig = plt.figure(figsize=(16, 10))
+
+    for item, pheno in enumerate(phenos_targeted):
+        ax = fig.add_subplot(4, 5, item+1)
+
+        # current climate
+        ax.scatter(df_climate_x_present.iloc[pheno],
+                   df_climate_y_present.iloc[pheno],
+                   marker='o', facecolors='none', edgecolors='grey',
+                   alpha=0.6, s=60)
+        ax.scatter(df_climate_x_present.iloc[pheno],
+                   df_climate_y_present.iloc[pheno],
+                   c=mx_present[pheno],
+                   cmap=PurpOr_6.mpl_colormap.reversed(),
+                   vmin=0, vmax=20, alpha=0.4, s=60)
+
+        # future climate
+        ax.scatter(df_climate_x_future.iloc[pheno],
+                   df_climate_y_future.iloc[pheno],
+                   marker='^', facecolor='none', edgecolors='grey',
+                   alpha=0.6, s=60)
+        ax.scatter(df_climate_x_future.iloc[pheno],
+                   df_climate_y_future.iloc[pheno],
+                   c=mx_future[pheno], cmap=PurpOr_6.mpl_colormap.reversed(),
+                   marker='^', vmin=0, vmax=20, alpha=0.4, s=60)
+
+        ax.set_xlim(8, 35)
+        ax.set_ylim(0, 4.1)
+        ax.set_xlabel(climate_x, fontweight='light')
+        ax.set_ylabel(climate_y, fontweight='light')
+        ax.annotate(pheno, (12, 3.2), fontweight='light', size=10)
+
+
+def plot_cspace_yield(phenos_targeted, df_grouped_present, df_grouped_future,
+                      df_climate_x_present, df_climate_y_present,
+                      df_climate_x_future, df_climate_y_future,
+                      climate_x, climate_y):
+    """
+    Plot out yield in cspace.
+
+    Parameters
+    ----------
+    phenos_targeted : list
+    climate_x : str
+    climate_y : str
+
+    """
+    fig = plt.figure(figsize=(16, 10))
+
+    for item, pheno in enumerate(phenos_targeted):
+        df_present = df_grouped_present[df_grouped_present.cvar == pheno]
+        df_future = df_grouped_future[df_grouped_future.cvar == pheno]
+
+        ax = fig.add_subplot(4, 5, item+1)
+
+        # current climate
+        ax.scatter(df_climate_x_present.iloc[pheno],
+                   df_climate_y_present.iloc[pheno],
+                   marker='o', facecolors='none', edgecolors='grey',
+                   alpha=0.6, s=60)
+        ax.scatter(df_climate_x_present.iloc[pheno],
+                   df_climate_y_present.iloc[pheno],
+                   c=df_present.dm_ear,
+                   cmap=YlGn_9.mpl_colormap,
+                   vmin=80, vmax=250, alpha=0.6, s=60)
+
+        # future climate
+        ax.scatter(df_climate_x_future.iloc[pheno],
+                   df_climate_y_future.iloc[pheno],
+                   marker='^', facecolor='none', edgecolors='grey',
+                   alpha=0.6, s=60)
+        ax.scatter(df_climate_x_future.iloc[pheno],
+                   df_climate_y_future.iloc[pheno],
+                   c=df_future.dm_ear,
+                   cmap=YlGn_9.mpl_colormap,
+                   vmin=80, vmax=250, alpha=0.6, s=60)
+
+        ax.set_xlim(8, 35)
+        ax.set_ylim(0, 4.1)
+        ax.set_xlabel(climate_x, fontweight='light')
+        ax.set_ylabel(climate_y, fontweight='light')
+        ax.annotate(pheno, (12, 3.2), fontweight='light', size=10)
