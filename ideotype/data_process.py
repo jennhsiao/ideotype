@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 
 from ideotype.utils import get_filelist
+from ideotype import DATA_PATH
 
 
 def read_sims(path):
@@ -331,6 +332,13 @@ def process_sims(df, sites, phenos, phenostage, sim, agg_method):
                 df_phenostage = df_phenostage.append(
                     df[df.pheno == pheno_stage])
 
+            if df_phenostage.dtypes[sim] == 'O':
+                # appending data with date-time columns
+                # can make dtype of other columns wonky
+                # and could turn into 'object'
+                # correct for that here
+                df_phenostage[sim] = df_phenostage[sim].astype(float)
+
     # Group phyiology outputs by phenotype & site
     if agg_method == 'mean':
         df_grouped = df_phenostage.groupby(['cvar', 'site']).mean()
@@ -358,3 +366,106 @@ def process_sims(df, sites, phenos, phenostage, sim, agg_method):
                 mx_phys[count_x, count_y] = queried_phys
 
     return(mx_phys)
+
+
+def fetch_sim_values(df, pheno_stage, target, phenos_ranked, sites=None):
+    """
+    Fetch simulation values.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+    pheno_stage : str
+    target : str
+    phenos_ranked : list
+    sites : list
+
+    """
+    # subset sites if needed
+    if sites is not None:
+        # ** set is an unordered data structure
+        # so does not preserve the insertion order
+        # when converting set into list,
+        # order can get messed up
+        sites_all = list(set(df.site))
+        sites_all.sort()
+        sites_south = sites_all[:30]
+        sites_north = sites_all[30:]
+
+        if sites == 'south':
+            df_sub = df[df.site.isin(sites_south)]
+        elif sites == 'north':
+            df_sub = df[df.site.isin(sites_north)]
+
+    else:
+        df_sub = df
+
+    # group df
+    df_grouped = df_sub.groupby(['cvar', 'pheno']).mean().reset_index()
+    sim_values = []
+
+    # fetch sim values
+    for pheno in phenos_ranked:
+        df_bool = df_grouped[
+            (df_grouped.pheno == pheno_stage) &
+            (df_grouped.cvar == pheno)][target].shape[0]
+        if df_bool == 0:
+            sim_values.append(np.nan)
+        else:
+            sim_value = df_grouped[
+                (df_grouped.pheno == pheno_stage) &
+                (df_grouped.cvar == pheno)][target].values.item()
+            sim_values.append(sim_value)
+
+    return(sim_values)
+
+
+def fetch_norm_mean_disp(run_name):
+    """
+    Fetch normalized yield mean and yield dispersion.
+
+    Parameters
+    ----------
+    run_name : str
+
+    """
+    df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
+        os.path.join(DATA_PATH, 'files', f'filepaths_{run_name}.yml'))
+
+    yield_mean = df_all.groupby('cvar').mean().dm_ear
+    yield_variance = df_all.groupby('cvar').var().dm_ear
+    yield_disp = yield_variance/yield_mean
+    yield_mean_norm = (
+        yield_mean-yield_mean.min())/(yield_mean.max()-yield_mean.min())
+    yield_disp_norm = (
+        yield_disp-yield_disp.min())/(yield_disp.max()-yield_disp.min())
+
+    return(yield_mean_norm, yield_disp_norm)
+
+
+def fetch_mean_disp_diff(run_name_present, run_name_future, phenos):
+    """
+    Fetch difference in yield mean & yield dispersion.
+
+    Parameters
+    ----------
+    run_name_present : str
+    run_name_future : str
+    phenos : list
+
+    """
+    yield_mean_norm_present, yield_disp_norm_present = fetch_norm_mean_disp(
+        run_name_present)
+    yield_mean_norm_future, yield_disp_norm_future = fetch_norm_mean_disp(
+        run_name_future)
+
+    diffs_yield = []
+    diffs_disp = []
+
+    for pheno in phenos:
+        diffs_yield.append(
+            yield_mean_norm_future[pheno] - yield_mean_norm_present[pheno])
+        diffs_disp.append(
+            yield_disp_norm_future[pheno] - yield_disp_norm_present[pheno])
+
+    return(diffs_yield, diffs_disp)
