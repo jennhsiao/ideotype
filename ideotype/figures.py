@@ -7,16 +7,20 @@ import matplotlib.pyplot as plt
 from palettable.colorbrewer.diverging import PuOr_7
 from palettable.cartocolors.sequential import PurpOr_6
 from palettable.colorbrewer.sequential import YlGn_9
+from palettable.wesanderson import Mendl_4
 
-from ideotype.data_process import read_data, process_sims
+from ideotype.data_process import (read_data,
+                                   process_sims,
+                                   fetch_norm_mean_disp,
+                                   fetch_mean_disp_diff)
 from ideotype.analysis import rank_top_phenos
 from ideotype.init_params import params_sample
 from ideotype.utils import fold
 
 
 def plot_sims_heatmap(df, sim, agg_method, phenos_ranked,
-                      cmap, vmins, vmaxs,
-                      yfont_size=5, fig_w=20, fig_h=18,
+                      cmap, vmins=None, vmaxs=None,
+                      yfont_size=8, fig_w=20, fig_h=18,
                       save=False):
     """
     Plot out simulation heatmaps.
@@ -45,11 +49,10 @@ def plot_sims_heatmap(df, sim, agg_method, phenos_ranked,
     phenostages = [['"Emerged"'],
                    ['"Tasselinit"'],
                    ['"Tasseled"', '"Silked"'],
-                   # ['"Silked"'],
                    ['"grainFill"']]
-    titles = ['Emerged', 'Tassel initiation',
+    titles = ['Emerged',
+              'Tassel initiation',
               'Tasseled & Silked',
-              # 'Silked',
               'Grain Filling']
 
     # Visualization
@@ -61,9 +64,14 @@ def plot_sims_heatmap(df, sim, agg_method, phenos_ranked,
         df_sims = pd.DataFrame(mx_sims).reindex(phenos_ranked)
 
         ax = fig.add_subplot(2, 2, index+1)
-        sns.heatmap(df_sims, cmap=cmap,
-                    vmin=vmins[index], vmax=vmaxs[index],
-                    cbar_kws={'shrink': 0.5})
+        if (vmins is None) & (vmaxs is None):
+            sns.heatmap(df_sims, cmap=cmap,
+                        cbar_kws={'shrink': 0.5})
+        else:
+            sns.heatmap(df_sims, cmap=cmap,
+                        vmin=vmins[index], vmax=vmaxs[index],
+                        cbar_kws={'shrink': 0.5})
+
         ax.set_title(f'{titles[index]}', fontweight='light', size=14)
         ax.set_xlabel('sites', fontweight='light', size=12)
         ax.set_ylabel('phenotypes', fontweight='light', size=12)
@@ -214,9 +222,6 @@ def plot_params_heatmap(df_params, top_phenos,
         -1 - plot all top phenos
 
     """
-    # Rank top_phenos
-#    top_phenos = rank_top_phenos(run_name, n_pheno, w_yield, w_disp)
-
     # Determined parameters perturbed and perturb range
     problem, param_values = params_sample('present', 10)
     param_range = dict(zip(problem['names'], problem['bounds']))
@@ -410,7 +415,7 @@ def plot_cspace_rank(phenos_targeted, mx_present, mx_future,
 def plot_cspace_yield(phenos_targeted, df_grouped_present, df_grouped_future,
                       df_climate_x_present, df_climate_y_present,
                       df_climate_x_future, df_climate_y_future,
-                      climate_x, climate_y):
+                      climate_x, climate_y, vmin=80, vmax=250):
     """
     Plot out yield in cspace.
 
@@ -438,7 +443,7 @@ def plot_cspace_yield(phenos_targeted, df_grouped_present, df_grouped_future,
                    df_climate_y_present.iloc[pheno],
                    c=df_present.dm_ear,
                    cmap=YlGn_9.mpl_colormap,
-                   vmin=80, vmax=250, alpha=0.6, s=60)
+                   vmin=vmin, vmax=vmax, alpha=0.6, s=60)
 
         # future climate
         ax.scatter(df_climate_x_future.iloc[pheno],
@@ -449,10 +454,112 @@ def plot_cspace_yield(phenos_targeted, df_grouped_present, df_grouped_future,
                    df_climate_y_future.iloc[pheno],
                    c=df_future.dm_ear,
                    cmap=YlGn_9.mpl_colormap,
-                   vmin=80, vmax=250, alpha=0.6, s=60)
+                   marker='^',
+                   vmin=vmin, vmax=vmax, alpha=0.6, s=60)
 
         ax.set_xlim(8, 35)
         ax.set_ylim(0, 4.1)
         ax.set_xlabel(climate_x, fontweight='light')
         ax.set_ylabel(climate_y, fontweight='light')
         ax.annotate(pheno, (12, 3.2), fontweight='light', size=10)
+
+
+def plot_mean_disp_change(run_name_present, run_name_future, phenos):
+    """
+    Plot yield mean and yield dispersion change.
+
+    Parameters
+    ----------
+    run_name_present : str
+    run_name_future : str
+    phenos : list
+
+    """
+    yield_mean_norm_present, yield_disp_norm_present = fetch_norm_mean_disp(
+        run_name_present)
+    yield_mean_norm_future, yield_disp_norm_future = fetch_norm_mean_disp(
+        run_name_future)
+    diffs_yield, diffs_disp = fetch_mean_disp_diff(
+        run_name_present, run_name_future, phenos)
+
+    fig = plt.figure(figsize=(10, 5))
+    ax = fig.add_subplot()
+    ax.scatter(yield_mean_norm_present, yield_disp_norm_present,
+               c='slategrey', s=100, alpha=0.2)
+    ax.scatter(yield_mean_norm_present[phenos],
+               yield_disp_norm_present[phenos],
+               c='tab:purple', s=100, alpha=0.4)
+
+    for item, pheno in enumerate(phenos):
+        plt.arrow(yield_mean_norm_present[pheno],
+                  yield_disp_norm_present[pheno],
+                  diffs_yield[item], diffs_disp[item],
+                  color='grey', alpha=0.5,
+                  head_width=0.01)
+
+    for pheno in phenos:
+        ax.annotate(pheno, (yield_mean_norm_present[pheno],
+                            yield_disp_norm_present[pheno]), c='grey')
+
+    ax.set_ylim(-0.1, 1.1)
+    ax.set_xlim(-0.1, 1.1)
+    ax.set_xlabel('yield mean', fontweight='light', size=14)
+    ax.set_ylabel('dispersion index', fontweight='light', size=14)
+    ax.set_title('Yield mean and disparsion - averaged over all sites',
+                 fontweight='light', size=15)
+
+
+def plot_phenostage_sims(pheno, df_sims, df_sites, df_phenology):
+    """
+    Plot phenostage sims for all years for specified pheno.
+
+    Parameters
+    ----------
+    pheno : int
+    df_sims : pd.DataFrame
+        Output from `read_data` function.
+    df_sites : pd.DataFrame
+        Output from `read_data` function.
+    df_phenology : pd.DataFrame
+        csv data queried from sim database.
+
+    """
+    fig = plt.figure(figsize=(20, 50))
+    sites = df_sites.site
+    phenostages = ['"Germinated"', '"Emerged"', '"Tasselinit"',
+                   '"Tasseled"', '"Silked"', '"grainFill"', '"Matured"']
+    colors = ['#66a61e', '#1b9e77',
+              Mendl_4.mpl_colors[0],
+              Mendl_4.mpl_colors[1],
+              Mendl_4.mpl_colors[3],
+              Mendl_4.mpl_colors[2]]
+
+    for item, site in enumerate(sites):
+        ax = fig.add_subplot(12, 5, item+1)
+        ax.set_title(f'{item}: {site} - {df_sites.iloc[item]["state"]}',
+                     fontweight='light')
+        ax.set_xlim(50, 360)
+        ax.set_ylim(1959, 2007)
+        jday_months = [32, 61, 91, 121, 152, 182, 213, 244, 274, 305, 335]
+        ax.set_xticks(jday_months)
+        ax.set_xticklabels([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                           fontweight='light', fontsize=12)
+
+        years = df_sims.query(f'cvar=={pheno}').query(f'site=="{site}"').year
+        for year in years[:]:
+            df_phenology_sub = df_phenology.query(
+                f'cvar=={pheno}').query(f'site=={site}').query(f'year=={year}')
+
+            jdays = []
+            for phenostage in phenostages:
+                try:
+                    jday = df_phenology_sub[
+                        df_phenology_sub['pheno'] == phenostage].jday.item()
+                    jdays.append(jday)
+                except(ValueError):
+                    jdays.append(np.nan)
+
+            for loc, color in zip(np.arange(len(phenostages)), colors):
+                ax.plot([jdays[loc], jdays[loc+1]], [year, year], color=color)
+
+    fig.subplots_adjust(hspace=0.25)
