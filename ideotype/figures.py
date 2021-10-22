@@ -1,9 +1,12 @@
 """Figure functions."""
 
+import os
+
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from datetime import datetime
 from palettable.colorbrewer.diverging import PuOr_7
 from palettable.cartocolors.sequential import PurpOr_6
 from palettable.colorbrewer.sequential import YlGn_9
@@ -16,6 +19,7 @@ from ideotype.data_process import (read_data,
 from ideotype.analysis import rank_top_phenos
 from ideotype.init_params import params_sample
 from ideotype.utils import fold
+from ideotype import DATA_PATH
 
 
 def plot_sims_heatmap(df, sim, agg_method, phenos_ranked,
@@ -509,12 +513,64 @@ def plot_mean_disp_change(run_name_present, run_name_future, phenos):
                  fontweight='light', size=15)
 
 
-def plot_phenostage_sims(pheno, df_sims, df_sites, df_phenology):
+def plot_sims_yield(run_name, pheno):
+    """
+    Plot detailed sim plots for yield.
+
+    Parameters
+    ----------
+    run_name : str
+    pheno : int
+
+    """
+    df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
+        os.path.join(DATA_PATH, 'files', f'filepaths_{run_name}.yml'))
+
+    cols = ['date', 'jday', 'time',
+            'leaves', 'mature_lvs', 'drop_lvs', 'LA', 'LA_dead', 'LAI',
+            'RH', 'leaf_WP', 'PFD', 'Solrad',
+            'temp_soil', 'temp_air', 'temp_can',
+            'ET_dmd', 'ET_suply', 'Pn', 'Pg', 'resp', 'av_gs',
+            'LAI_sunlit', 'LAI_shaded',
+            'PFD_sunlit', 'PFD_shaded',
+            'An_sunlit', 'An_shaded',
+            'Ag_sunlit', 'Ag_shaded',
+            'gs_sunlit', 'gs_shaded',
+            'VPD', 'N', 'N_dmd', 'N_upt', 'N_leaf', 'PCRL',
+            'dm_total', 'dm_shoot', 'dm_ear', 'dm_totleaf',
+            'dm_dropleaf', 'dm_stem', 'dm_root',
+            'soil_rt', 'mx_rootdept',
+            'available_water', 'soluble_c', 'note']
+
+    fig = plt.figure(figsize=(20, 50))
+    sites = df_sites.site
+
+    for loc in np.arange(60):
+        ax = fig.add_subplot(12, 5, loc+1)
+        ax.set_ylim(0, 350)
+        ax.set_xlim(0, 5000)
+        ax.annotate(f'{loc}: {sites[loc]} - {df_sites.iloc[loc]["state"]}',
+                    (200, 320))
+        site = sites[loc]
+        years = df_sims.query(f'cvar=={pheno}').query(f'site=="{site}"').year
+
+        for year in years:
+            df = pd.read_csv(
+                f'/home/disk/eos8/ach315/upscale/sims/'
+                f'{run_name}/{year}/var_{pheno}/'
+                f'out1_{site}_{year}_var_{pheno}.txt')
+            df.columns = cols
+            ax.plot(df.dm_ear, alpha=0.5)
+            ax.annotate(year, (len(df), list(df.dm_ear)[-1]), color='grey')
+
+
+def plot_sims_phenostage(run_name, pheno, df_sims, df_sites, df_phenology):
     """
     Plot phenostage sims for all years for specified pheno.
 
     Parameters
     ----------
+    run_name : str
     pheno : int
     df_sims : pd.DataFrame
         Output from `read_data` function.
@@ -558,6 +614,21 @@ def plot_phenostage_sims(pheno, df_sims, df_sites, df_phenology):
                     jdays.append(jday)
                 except(ValueError):
                     jdays.append(np.nan)
+
+            if jdays[-1] is np.nan:
+                # check if pheno reached grain-fill
+                # but did not make it to maturity
+                df = pd.read_csv(
+                    f'/home/disk/eos8/ach315/upscale/sims/'
+                    f'{run_name}/{year}/var_{pheno}/'
+                    f'out1_{site}_{year}_var_{pheno}.txt')
+                df.iloc[-1]['date']
+                date = datetime.strptime(df.iloc[-1]['date'], '%m/%d/%Y')
+                jday = int(date.strftime('%j'))
+                if jday >= 333:
+                    # jday 333 = Nov. 29th
+                    # set last day of grain-fill to Nov. 29th
+                    jdays[-1] = 333
 
             for loc, color in zip(np.arange(len(phenostages)), colors):
                 ax.plot([jdays[loc], jdays[loc+1]], [year, year], color=color)
