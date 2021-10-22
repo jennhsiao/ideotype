@@ -513,7 +513,7 @@ def plot_mean_disp_change(run_name_present, run_name_future, phenos):
                  fontweight='light', size=15)
 
 
-def plot_sims_yield(run_name, pheno):
+def plot_sims_raw(run_name, pheno, sites, sim, ymin, ymax):
     """
     Plot detailed sim plots for yield.
 
@@ -521,6 +521,10 @@ def plot_sims_yield(run_name, pheno):
     ----------
     run_name : str
     pheno : int
+    sites : list
+    sim : str
+    ymin : int
+    ymax : int
 
     """
     df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
@@ -543,15 +547,16 @@ def plot_sims_yield(run_name, pheno):
             'available_water', 'soluble_c', 'note']
 
     fig = plt.figure(figsize=(20, 50))
-    sites = df_sites.site
+    sites_all = df_sites.site
 
-    for loc in np.arange(60):
+    for loc, item in enumerate(sites):
         ax = fig.add_subplot(12, 5, loc+1)
-        ax.set_ylim(0, 350)
+        ax.set_ylim(ymin, ymax)
         ax.set_xlim(0, 5000)
-        ax.annotate(f'{loc}: {sites[loc]} - {df_sites.iloc[loc]["state"]}',
-                    (200, 320))
-        site = sites[loc]
+        ax.set_title(f'{item}: '
+                     f'{sites_all[item]} - {df_sites.iloc[item]["state"]}',
+                     fontweight='light')
+        site = sites_all[item]
         years = df_sims.query(f'cvar=={pheno}').query(f'site=="{site}"').year
 
         for year in years:
@@ -560,11 +565,14 @@ def plot_sims_yield(run_name, pheno):
                 f'{run_name}/{year}/var_{pheno}/'
                 f'out1_{site}_{year}_var_{pheno}.txt')
             df.columns = cols
-            ax.plot(df.dm_ear, alpha=0.5)
+            ax.plot(df[sim], alpha=0.5)
             ax.annotate(year, (len(df), list(df.dm_ear)[-1]), color='grey')
 
+    fig.subplots_adjust(hspace=0.25)
 
-def plot_sims_phenostage(run_name, pheno, df_sims, df_sites, df_phenology):
+
+def plot_sims_phenostage(run_name, pheno, sites,
+                         df_sims, df_sites, df_phenology):
     """
     Plot phenostage sims for all years for specified pheno.
 
@@ -581,7 +589,7 @@ def plot_sims_phenostage(run_name, pheno, df_sims, df_sites, df_phenology):
 
     """
     fig = plt.figure(figsize=(20, 50))
-    sites = df_sites.site
+    sites_all = df_sites.site
     phenostages = ['"Germinated"', '"Emerged"', '"Tasselinit"',
                    '"Tasseled"', '"Silked"', '"grainFill"', '"Matured"']
     colors = ['#66a61e', '#1b9e77',
@@ -590,9 +598,10 @@ def plot_sims_phenostage(run_name, pheno, df_sims, df_sites, df_phenology):
               Mendl_4.mpl_colors[3],
               Mendl_4.mpl_colors[2]]
 
-    for item, site in enumerate(sites):
-        ax = fig.add_subplot(12, 5, item+1)
-        ax.set_title(f'{item}: {site} - {df_sites.iloc[item]["state"]}',
+    for loc, item in enumerate(sites):
+        ax = fig.add_subplot(12, 5, loc+1)
+        ax.set_title(f'{item}: '
+                     f'{sites_all[item]} - {df_sites.iloc[item]["state"]}',
                      fontweight='light')
         ax.set_xlim(50, 360)
         ax.set_ylim(1959, 2007)
@@ -601,10 +610,12 @@ def plot_sims_phenostage(run_name, pheno, df_sims, df_sites, df_phenology):
         ax.set_xticklabels([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                            fontweight='light', fontsize=12)
 
-        years = df_sims.query(f'cvar=={pheno}').query(f'site=="{site}"').year
+        years = df_sims.query(
+            f'cvar=={pheno}').query(f'site=="{sites_all[item]}"').year
         for year in years[:]:
             df_phenology_sub = df_phenology.query(
-                f'cvar=={pheno}').query(f'site=={site}').query(f'year=={year}')
+                f'cvar=={pheno}').query(
+                    f'site=={sites_all[item]}').query(f'year=={year}')
 
             jdays = []
             for phenostage in phenostages:
@@ -621,7 +632,7 @@ def plot_sims_phenostage(run_name, pheno, df_sims, df_sites, df_phenology):
                 df = pd.read_csv(
                     f'/home/disk/eos8/ach315/upscale/sims/'
                     f'{run_name}/{year}/var_{pheno}/'
-                    f'out1_{site}_{year}_var_{pheno}.txt')
+                    f'out1_{sites_all[item]}_{year}_var_{pheno}.txt')
                 df.iloc[-1]['date']
                 date = datetime.strptime(df.iloc[-1]['date'], '%m/%d/%Y')
                 jday = int(date.strftime('%j'))
