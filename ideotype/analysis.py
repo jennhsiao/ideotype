@@ -14,7 +14,10 @@ from SALib.analyze import rbd_fast
 
 from ideotype import DATA_PATH
 from ideotype.init_params import params_sample
-from ideotype.data_process import read_data, process_sims, agg_sims
+from ideotype.data_process import (read_data,
+                                   parse_mature,
+                                   process_sims,
+                                   agg_sims)
 
 
 def run_rbdfast(N_sample, run_name):
@@ -130,6 +133,10 @@ def identify_top_phenos(run_name, n_pheno=5, w_yield=1, w_disp=1):
     """
     df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
         os.path.join(DATA_PATH, 'files', f'filepaths_{run_name}.yml'))
+
+    # remove simulations that were stuck
+    df_extended, df_stuck = parse_mature(df_all)
+    df_all.drop(df_stuck.index, inplace=True)
 
     sites = sorted(list(set(df_all.site)))
     phenos = list(set(df_all.cvar))
@@ -361,6 +368,8 @@ def rank_top_phenos(run_name, n_pheno, w_yield, w_disp):
     list_top_phenos = list(set(top_phenos))
 
     # Determine prevalence of phenotype occurrence
+    # while also considering rank
+    # - higher ranks will boost the overall performance
     rank_sums = []
     for item in list_top_phenos:
         rank_list = list(mx[item])
@@ -529,3 +538,33 @@ def calc_target_pheno_perct(df_params, phenos_ranked,
     perct = len(phenos)/len(phenos_targetparam)
 
     return(phenos_targetparam, perct)
+
+
+def fetch_rankchange(future_run, n_pheno, w_yield=1, w_disp=1):
+    """
+    Fetch phenotype rank change.
+
+    Parameters
+    ----------
+    future_run : str
+    n_pheno : int
+
+    """
+    top_phenos_present = rank_top_phenos('present', n_pheno, w_yield, w_disp)
+    top_phenos_future = rank_top_phenos(future_run, n_pheno, w_yield, w_disp)
+
+    rank_diffs = []
+    new_ranks = []
+    for item, pheno in enumerate(top_phenos_present):
+        try:
+            new_rank = top_phenos_future.index(pheno)
+            new_ranks.append(new_rank)
+            rank_diffs.append(item-new_rank)
+        except (ValueError):
+            new_ranks.append(new_rank)
+            rank_diffs.append(np.nan)
+
+    df_rankchange = pd.DataFrame({'phenos': top_phenos_present,
+                                  'rank_change': rank_diffs})
+
+    return df_rankchange
