@@ -9,6 +9,49 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 
 
+def read_sim(sim, year, site, pheno):
+    """
+    Read in single file maizsim outputs.
+
+    Parameters
+    ----------
+    sim : str
+    year : int
+    site : int
+    pheno : int
+
+    Returns
+    -------
+    df_sim : pd.DataFrame
+
+    """
+    filepath_base = '/home/disk/eos8/ach315/upscale/sims/'
+    df_sim = pd.read_csv(
+        os.path.join(filepath_base, sim, str(year),
+                     f'var_{pheno}',
+                     f'out1_{site}_{year}_var_{pheno}.txt'), sep=',')
+
+    cols = ['date', 'jday', 'time',
+            'leaves', 'mature_lvs', 'drop_lvs', 'LA', 'LA_dead', 'LAI',
+            'RH', 'leaf_WP', 'PFD', 'Solrad',
+            'temp_soil', 'temp_air', 'temp_can',
+            'ET_dmd', 'ET_suply', 'Pn', 'Pg', 'resp', 'av_gs',
+            'LAI_sunlit', 'LAI_shaded',
+            'PFD_sunlit', 'PFD_shaded',
+            'An_sunlit', 'An_shaded',
+            'Ag_sunlit', 'Ag_shaded',
+            'gs_sunlit', 'gs_shaded',
+            'VPD', 'N', 'N_dmd', 'N_upt', 'N_leaf', 'PCRL',
+            'dm_total', 'dm_shoot', 'dm_ear', 'dm_totleaf',
+            'dm_dropleaf', 'df_stem', 'df_root',
+            'soil_rt', 'mx_rootdept',
+            'available_water', 'soluble_c', 'note']
+
+    df_sim.columns = cols
+
+    return(df_sim)
+
+
 def fold(val, min, max):
     """
     Transform values normalized between 0-1 back to their regular range.
