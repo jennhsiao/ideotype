@@ -375,7 +375,7 @@ def query_leaves(fpath_db, phenos):
 
 def query_waterstatus(fpath_db, phenos):
     """
-    Query water status.
+    Query water status at noon.
 
     Parameters
     ----------
