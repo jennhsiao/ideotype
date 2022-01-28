@@ -272,7 +272,7 @@ def plot_params_heatmap(df_params, top_phenos,
 
 
 def plot_rankchange(n_pheno, w_yield, w_disp, future_run,
-                    fig_w=12, fig_h=4, save=None):
+                    fig_w=11.5, fig_h=4, save=None):
     """
     Plot rank change.
 
@@ -468,7 +468,9 @@ def plot_cspace_yield(phenos_targeted, df_grouped_present, df_grouped_future,
         ax.annotate(pheno, (12, 3.2), fontweight='light', size=10)
 
 
-def plot_mean_disp_change(run_name_present, run_name_future, phenos):
+def plot_mean_disp_change(run_name_present, run_name_future,
+                          phenos, target_color,
+                          save=None, fig_text=None):
     """
     Plot yield mean and yield dispersion change.
 
@@ -492,7 +494,7 @@ def plot_mean_disp_change(run_name_present, run_name_future, phenos):
                c='slategrey', s=100, alpha=0.2)
     ax.scatter(yield_mean_norm_present[phenos],
                yield_disp_norm_present[phenos],
-               c='tab:purple', s=100, alpha=0.4)
+               c=target_color, s=100, alpha=0.4)
 
     for item, pheno in enumerate(phenos):
         plt.arrow(yield_mean_norm_present[pheno],
@@ -505,15 +507,21 @@ def plot_mean_disp_change(run_name_present, run_name_future, phenos):
         ax.annotate(pheno, (yield_mean_norm_present[pheno],
                             yield_disp_norm_present[pheno]), c='grey')
 
-    ax.set_ylim(-0.1, 1.1)
-    ax.set_xlim(-0.1, 1.1)
+#    ax.set_ylim(-0.1, 1.1)
+#    ax.set_xlim(-0.1, 1.1)
     ax.set_xlabel('yield mean', fontweight='light', size=14)
     ax.set_ylabel('dispersion index', fontweight='light', size=14)
     ax.set_title('Yield mean and disparsion - averaged over all sites',
                  fontweight='light', size=15)
 
+    if save is True:
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'scatter_rankchange_{fig_text}.png',
+                    format='png', dpi=800)
 
-def plot_sims_raw(run_name, pheno, sites, sim, ymin, ymax):
+
+def plot_sims_raw(run_name, pheno, sites,
+                  sim, ymin, ymax, query_time=12):
     """
     Plot detailed sim plots for yield.
 
@@ -552,7 +560,7 @@ def plot_sims_raw(run_name, pheno, sites, sim, ymin, ymax):
     for loc, item in enumerate(sites):
         ax = fig.add_subplot(12, 5, loc+1)
         ax.set_ylim(ymin, ymax)
-        ax.set_xlim(0, 5000)
+        ax.set_xlim(30, 360)
         ax.set_title(f'{item}: '
                      f'{sites_all[item]} - {df_sites.iloc[item]["state"]}',
                      fontweight='light')
@@ -565,8 +573,16 @@ def plot_sims_raw(run_name, pheno, sites, sim, ymin, ymax):
                 f'{run_name}/{year}/var_{pheno}/'
                 f'out1_{site}_{year}_var_{pheno}.txt')
             df.columns = cols
-            ax.plot(df[sim], alpha=0.5)
-            ax.annotate(year, (len(df), list(df.dm_ear)[-1]), color='grey')
+            df_day = df.query(f'time == {query_time}')
+            dates_raw = df_day.date
+            dates_processed = [
+                datetime.strptime(date, '%m/%d/%Y') for date in dates_raw]
+            jdays = ([int(date_processed.strftime('%j'))
+                     for date_processed in dates_processed])
+
+            ax.plot(jdays, df_day[sim], alpha=0.5)
+            ax.annotate(year, (jdays[-1], list(df_day[sim])[-1]),
+                        color='grey', fontweight='light')
 
     fig.subplots_adjust(hspace=0.25)
 
@@ -603,7 +619,7 @@ def plot_sims_phenostage(run_name, pheno, sites,
         ax.set_title(f'{item}: '
                      f'{sites_all[item]} - {df_sites.iloc[item]["state"]}',
                      fontweight='light')
-        ax.set_xlim(50, 360)
+        ax.set_xlim(30, 360)
         ax.set_ylim(1959, 2007)
         jday_months = [32, 61, 91, 121, 152, 182, 213, 244, 274, 305, 335]
         ax.set_xticks(jday_months)
