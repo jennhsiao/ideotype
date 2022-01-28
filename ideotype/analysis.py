@@ -456,6 +456,66 @@ def identify_improved_phenos(n_pheno, w_yield, w_disp,
     return(phenos_improved, phenos_targeted, phenos_new)
 
 
+def identify_rankchanged_phenos(n_pheno, w_yield, w_disp,
+                                future_run, rank_limit):
+    """
+    Identify improved and declined phenotypes and their rank change.
+
+    Parameters
+    ----------
+    n_pheno : int
+    w_yield : float
+    w_disp : float
+    future_run : str
+    rank_limit : int
+
+    Returns
+    -------
+    phenos_improved : list
+    phenos_declined : list
+    phenos_improved_rankchange : list
+    phenos_declined_rankchange : list
+
+    """
+    top_phenos_present = rank_top_phenos('present', n_pheno, w_yield, w_disp)
+    top_phenos_future = rank_top_phenos(future_run, n_pheno, w_yield, w_disp)
+
+    rank_diffs = []
+    new_ranks = []
+    for item, pheno in enumerate(top_phenos_present):
+        try:
+            new_rank = top_phenos_future.index(pheno)
+            new_ranks.append(new_rank)
+            rank_diffs.append(item-new_rank)
+        except (ValueError):
+            new_ranks.append(new_rank)
+            rank_diffs.append(np.nan)
+
+    df_rankchange = pd.DataFrame({'phenos': top_phenos_present,
+                                 'rank_change': rank_diffs})
+
+    phenos_improved = list(
+        df_rankchange.query(
+            f'rank_change>{rank_limit}').sort_values(
+                'rank_change', ascending=False)['phenos'])
+    phenos_improved_rankchange = list(
+        df_rankchange.query(
+            f'rank_change>{rank_limit}').sort_values(
+                'rank_change', ascending=False)['rank_change'])
+
+    phenos_declined = list(
+        df_rankchange.query(
+            f'rank_change<{rank_limit*-1}').sort_values(
+                'rank_change')['phenos'])
+    phenos_declined_rankchange = list(
+        df_rankchange.query(
+            f'rank_change<{rank_limit*-1}').sort_values(
+                'rank_change')['rank_change'])
+
+    return(phenos_improved, phenos_declined,
+           phenos_improved_rankchange, phenos_declined_rankchange)
+
+
 def phenostage_climate(df_all, df_gseason_climate,
                        df_waterdeficit, phenostage_num):
     """
