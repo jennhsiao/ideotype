@@ -431,10 +431,24 @@ def fetch_norm_mean_disp(run_name):
     """
     df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
         os.path.join(DATA_PATH, 'files', f'filepaths_{run_name}.yml'))
+    df_extended, df_stuck = parse_mature(df_all)
+    df_all.drop(df_stuck.index, inplace=True)
 
-    yield_mean = df_all.groupby('cvar').mean().dm_ear
-    yield_variance = df_all.groupby('cvar').var().dm_ear
-    yield_disp = yield_variance/yield_mean
+    df = df_all
+    groups = ['cvar', 'site']
+    sim = 'dm_ear'
+
+    mx_mean = agg_sims(df, groups, 'mean', sim)
+    mx_variance = agg_sims(df, groups, 'variance', sim)
+    mx_disp = np.divide(mx_variance, mx_mean)
+    df_mean = pd.DataFrame(mx_mean)
+    df_disp = pd.DataFrame(mx_disp)
+    yield_mean = df_mean.mean(axis=1)
+    yield_disp = df_disp.mean(axis=1)
+
+#    yield_mean = df_all.groupby('cvar').mean().dm_ear
+#    yield_variance = df_all.groupby('cvar').var().dm_ear
+#    yield_disp = yield_variance/yield_mean
     yield_mean_norm = (
         yield_mean-yield_mean.min())/(yield_mean.max()-yield_mean.min())
     yield_disp_norm = (
@@ -469,3 +483,104 @@ def fetch_mean_disp_diff(run_name_present, run_name_future, phenos):
             yield_disp_norm_future[pheno] - yield_disp_norm_present[pheno])
 
     return(diffs_yield, diffs_disp)
+
+
+def fetch_emps(run_name):
+    """
+    Fetch emergent properties.
+
+    Parameters
+    ----------
+    run_name : str
+
+    Return
+    ------
+    df_emps_combined : pd.DataFrame
+    df_emps_std : pd.DataFrame
+
+    """
+    # Read in data etc.
+    df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
+        f'/home/disk/eos8/ach315/ideotype/ideotype/data/files/'
+        f'filepaths_{run_name}.yml')
+    df_extended, df_stuck = parse_mature(df_all)
+    df_all.drop(df_stuck.index, inplace=True)
+
+    # set site as int for dataframe emrging purposes
+    df_all.site = df_all.site.astype(int)
+    df_stuck.site = df_stuck.site.astype(int)
+    df_wea.site = df_wea.site.astype(int)
+
+    # Queried maizsim outputs
+    df_phys = pd.read_csv(os.path.join(
+        DATA_PATH, 'sims', f'sims_{run_name}_phys.csv'))
+    df_leaves = pd.read_csv(os.path.join(
+        DATA_PATH, 'sims', f'sims_{run_name}_leaves.csv'))
+    df_waterdeficit = pd.read_csv(os.path.join(
+        DATA_PATH, 'sims', f'sims_{run_name}_waterdeficit.csv'))
+    df_phenology = pd.read_csv(
+        os.path.join(DATA_PATH, 'sims', f'sims_{run_name}_pheno.csv'))
+    start_dates = [int(
+        datetime.strptime(
+            date, '%m/%d/%Y').strftime(
+                '%j')) for date in df_phenology.date_start]
+    df_phenology['jday'] = start_dates
+
+    # grain-fill start date & duration
+    df_pheno_grouped = df_phenology[
+        df_phenology.pheno == '"grainFill"'].groupby(
+        ['cvar', 'site']).mean().reset_index()[
+            ['cvar', 'site', 'pheno_days', 'jday']]
+
+    # edate
+    df_pheno_gdate = df_phenology[
+        df_phenology.pheno == '"Emerged"'].groupby(
+        ['cvar', 'site']).mean().reset_index()[
+            ['cvar', 'site', 'jday']]
+    df_pheno_gdate.columns = ['cvar', 'site', 'edate']
+    df_pheno_grouped = df_pheno_grouped.merge(
+        df_pheno_gdate, how='left', on=['cvar', 'site'])
+
+    # photosynthesis
+    df_phys_grouped = df_phys[
+        df_phys.pheno == '"grainFill"'].groupby(
+        ['cvar', 'site']).mean().reset_index()[
+            ['cvar', 'site', 'An', 'gs']]
+
+    # leaf area
+    df_leaves_grouped = df_leaves[
+        df_leaves.pheno == '"Tasselinit"'].groupby(
+        ['cvar', 'site']).mean().reset_index()[
+            ['cvar', 'site', 'LA']]
+
+    # water deficit
+    df_wdsum = df_waterdeficit[
+        df_waterdeficit.pheno == '"Emerged"'].groupby(
+        ['cvar', 'site']).mean().reset_index()[
+            ['cvar', 'site', 'water_deficit_mean']]
+
+    # merge all
+    df_emps = df_pheno_grouped.merge(
+        df_phys_grouped, how='left', on=['cvar', 'site'])
+    df_emps = df_emps.merge(
+        df_leaves_grouped, how='left', on=['cvar', 'site'])
+    df_emps = df_emps.merge(
+        df_wdsum, how='left', on=['cvar', 'site'])
+
+    # average within each phenotype
+    df_emps_combined = df_emps.groupby('cvar').mean()
+    df_emps_combined.reset_index(inplace=True)
+
+    # standardize df_emps
+    emps = ['pheno_days', 'jday', 'edate',
+            'An', 'gs', 'LA', 'water_deficit_mean']
+    df_emps_std = pd.DataFrame(columns=emps)
+    for item, emp in enumerate(emps):
+        emp_values = df_emps_combined[emp]
+        emp_values_std = [(emp_value - emp_values.min())/(
+            emp_values.max()-emp_values.min()) for emp_value in emp_values]
+        df_emps_std[emp] = emp_values_std
+
+    df_emps_std['cvar'] = df_emps_combined.cvar
+
+    return(df_emps_combined, df_emps_std)
