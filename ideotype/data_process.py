@@ -584,3 +584,50 @@ def fetch_emps(run_name):
     df_emps_std['cvar'] = df_emps_combined.cvar
 
     return(df_emps_combined, df_emps_std)
+
+
+def fetch_sens(df_all_present, df_all_f2100, phenogroups):
+    """
+    Fetch yield sensitivity.
+
+    Parameters
+    ----------
+    df_all_present : pd.DataFrame
+    df_all_f2100 : pd.DataFrame
+    phenogroups : list
+
+    Returns
+    -------
+    sens : list
+
+    """
+    # fetch data for strategy
+    sens = []
+    for item, phenos in enumerate(phenogroups):
+        df_s = df_all_present[
+            df_all_present.cvar.isin(phenos)].reset_index(drop=True)
+        df_s_present = df_s.copy()[[
+            'year', 'cvar', 'site', 'dm_ear', 'temp', 'vpd', 'precip']]
+
+        df_s_f2100 = df_all_f2100[
+            df_all_f2100.cvar.isin(phenos)].reset_index(drop=True)[
+                ['year', 'cvar', 'site', 'dm_ear', 'temp', 'vpd', 'precip']]
+        df_s_f2100.site = df_s_f2100.site.astype(int)
+        df_s_merged = df_s_present.merge(
+            df_s_f2100, how='left', on=['year', 'cvar', 'site'])
+        df_s_mergedmean = df_s_merged.groupby('site').mean()
+
+        xs_present = df_s_mergedmean.temp_x.tolist()
+        ys_present = df_s_mergedmean.dm_ear_x.tolist()
+        xs_f2100 = df_s_mergedmean.temp_y.tolist()
+        ys_f2100 = df_s_mergedmean.dm_ear_y.tolist()
+
+        for item in np.arange(df_s_mergedmean.shape[0]):
+            x1 = xs_present[item]
+            x2 = xs_f2100[item]
+            y1 = ys_present[item]
+            y2 = ys_f2100[item]
+            sen = ((y2-y1)/y1)/(x2-x1)*100
+            sens.append(sen)
+
+    return(sens)
