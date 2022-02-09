@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 from datetime import datetime
 from palettable.colorbrewer.diverging import PuOr_7
 from palettable.cartocolors.sequential import PurpOr_6
@@ -16,7 +17,7 @@ from ideotype.data_process import (read_data,
                                    process_sims,
                                    fetch_norm_mean_disp,
                                    fetch_mean_disp_diff)
-from ideotype.analysis import rank_top_phenos
+from ideotype.analysis import rank_top_phenos, calc_pcc_emps
 from ideotype.init_params import params_sample
 from ideotype.utils import fold
 from ideotype import DATA_PATH
@@ -661,3 +662,166 @@ def plot_sims_phenostage(run_name, pheno, sites,
                 ax.plot([jdays[loc], jdays[loc+1]], [year, year], color=color)
 
     fig.subplots_adjust(hspace=0.25)
+
+
+def plot_pcc_emps(run_name, save=False):
+    """
+    Plot PCC & emps.
+
+    Parameters
+    ----------
+    run_name : str
+
+    """
+    # fecth PCC
+    df_pcc = calc_pcc_emps(run_name)
+
+    # visualization
+    fig = plt.figure(figsize=(8, 4))
+
+    # yield
+    ax1 = fig.add_subplot(1, 2, 1)
+    cc = ['colors']*df_pcc.shape[0]
+    for n, r in enumerate(df_pcc.pcc_mean):
+        if r < 0:
+            cc[n] = '#e08214'
+        if r > 0:
+            cc[n] = '#8073ac'
+
+    ax1.barh(list(reversed(df_pcc.emps)),
+             list(reversed(df_pcc.pcc_mean)),
+             height=0.7, color=list(reversed(cc)), ecolor='grey', alpha=0.8)
+    ax1.set_xlabel('PCC with \nhigh yield', size=12, fontweight='light')
+    ax1.set_xlim(-0.62, 0.62)
+
+    plt.axvline(x=0, color='grey', linewidth=0.5)
+    ax1.set_xticks([-0.5, 0, 0.5])
+    ax1.set_xticklabels([-0.5, 0, 0.5], fontweight='light')
+    ax1.set_yticks(np.arange(df_pcc.shape[0]))
+    ax1.set_yticklabels(['grain-fill start time',
+                         'grain-fill duration',
+                         'leaf area',
+                         'water deficit',
+                         'photosynthesis',
+                         'stomatal cond.',
+                         'emergence time'][::-1],
+                        fontweight='light', fontsize=12)
+
+    # dispersion
+    ax2 = fig.add_subplot(1, 2, 2)
+    cc = ['colors']*df_pcc.shape[0]
+    for n, r in enumerate(df_pcc.pcc_disp):
+        if r < 0:
+            cc[n] = '#e08214'
+        if r > 0:
+            cc[n] = '#8073ac'
+
+    ax2.barh(list(reversed(df_pcc.emps)),
+             list(reversed(df_pcc.pcc_disp)),
+             height=0.7, color=list(reversed(cc)), ecolor='grey', alpha=0.8)
+    ax2.set_xlabel('PCC with \nlow disp.', size=12, fontweight='light')
+    ax2.set_xlim(-0.62, 0.62)
+
+    plt.axvline(x=0, color='grey', linewidth=0.5)
+    ax2.set_xticks([-0.5, 0, 0.5])
+    ax2.set_xticklabels([-0.5, 0, 0.5], fontweight='light')
+    ax2.set_yticks(np.arange(df_pcc.shape[0]))
+    ax2.set_yticklabels(['', '', '', '', '', '', ''])
+
+    fig.subplots_adjust(left=0.3, bottom=0.3, wspace=0.1, right=0.8)
+
+    if save is True:
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'pcc_emps_{run_name}.png',
+                    format='png', dpi=800)
+
+
+def plot_pcc_emps_board(run_name, save=False):
+    """
+    Plot PCC & emps.
+
+    Parameters
+    ----------
+    run_name : str
+
+    """
+    # fetch PCC
+    df_pcc = calc_pcc_emps(run_name)
+
+    # visualization
+    fig = plt.figure(figsize=(6, 6))
+    ax = fig.add_subplot(1, 1, 1)
+
+    # markers
+    markers = ['v', '>', 'D', 'X', '*', 'o', '^']
+    sizes = [100, 100, 80, 100, 180, 100, 100]
+    pcc_means = df_pcc.pcc_mean
+    pcc_disps = df_pcc.pcc_disp
+
+    # scatter
+    for item in np.arange(df_pcc.shape[0]):
+        ax.scatter(pcc_means[item], pcc_disps[item],
+                   color='grey', s=sizes[item],
+                   marker=markers[item])
+
+    # annotate
+    emps_text = ['grain-fill \nstart time',
+                 'grain-fill \nduration',
+                 'leaf area',
+                 'water deficit',
+                 'photosynthesis',
+                 'stomatal \nconduct.',
+                 'emergence time']
+    x_adjust = [-0.08, 0.02, -0.1, -0.25, 0.05, -0.18, -0.02]
+    y_adjust = [-0.17, 0.02, -0.1, 0.06, -0.01, -0.16, 0.06]
+
+    for count, emp in enumerate(emps_text):
+        ax.annotate(emp, (pcc_means[count] + x_adjust[count],
+                    pcc_disps[count] + y_adjust[count]),
+                    size=13, alpha=0.7)
+
+    # plot specs
+    plt.xlim(-0.72, 0.72)
+    plt.ylim(-0.72, 0.72)
+
+    # annotations
+    ax.axvline(x=0, color='grey', linewidth=0.5)
+    ax.axhline(y=0, color='grey', linewidth=0.5)
+
+    ax.arrow(-0.6, -0.84, 1.2, 0, color='grey', alpha=0.3,
+             head_length=0.03, head_width=0.04, clip_on=False)
+    ax.arrow(0.6, -0.84, -1.2, 0, color='grey', alpha=0.3,
+             head_length=0.03, head_width=0.04, clip_on=False)
+    ax.arrow(-0.9, -0.6, 0, 1.2, color='grey', alpha=0.3,
+             head_length=0.03, head_width=0.04, clip_on=False)
+    ax.arrow(-0.9, 0.6, 0, -1.2, color='grey', alpha=0.3,
+             head_length=0.03, head_width=0.04, clip_on=False)
+
+    ax.annotate('Low value corr. \nw/ high yield', (-0.3, -0.92),
+                ha='center', va='center', fontweight='light', fontsize=12,
+                annotation_clip=False)
+    ax.annotate('High value corr. \nw/ high yield', (0.3, -0.92),
+                ha='center', va='center', fontweight='light', fontsize=12,
+                annotation_clip=False)
+    ax.annotate('Low value corr. \nw/ low disp.', (-0.97, -0.3),
+                ha='center', va='center', fontweight='light',
+                fontsize=12, rotation=90,
+                annotation_clip=False)
+    ax.annotate('High value corr. \nw/ low disp.', (-0.97, 0.3),
+                ha='center', va='center', fontweight='light',
+                fontsize=12, rotation=90,
+                annotation_clip=False)
+
+    # antagonistic regions
+    rect = mpatches.Rectangle((-0.85, 0), 0.85, 0.85,
+                              facecolor='grey', alpha=0.2)
+    plt.gca().add_patch(rect)
+    rect = mpatches.Rectangle((0, -0.85), 0.85, 0.85,
+                              facecolor='grey', alpha=0.2)
+    plt.gca().add_patch(rect)
+
+    fig.subplots_adjust(left=0.18, bottom=0.18)
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
+                    'scatter_pcc_yield_disp_emp.png', format='png', dpi=800)
