@@ -4,6 +4,7 @@ import os
 import collections
 
 import pandas as pd
+import pingouin as pg
 import numpy as np
 from numpy import genfromtxt
 from sklearn.decomposition import PCA
@@ -17,7 +18,8 @@ from ideotype.init_params import params_sample
 from ideotype.data_process import (read_data,
                                    parse_mature,
                                    process_sims,
-                                   agg_sims)
+                                   agg_sims,
+                                   fetch_emps)
 
 
 def run_rbdfast(N_sample, run_name):
@@ -106,6 +108,100 @@ def linear_mod(df, features, target, test_size=0.33):
     r2 = r2_score(y, y_pred)
 
     return coefs, mse, r2
+
+
+def calc_pcc_emps(run_name):
+    """
+    Calculate PCC.
+
+    Parameters
+    ----------
+    run_name : str
+
+    Returns
+    -------
+    df_pcc : pd.DataFrame
+
+    """
+    # Read in data etc.
+    df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
+        f'/home/disk/eos8/ach315/ideotype/'
+        f'ideotype/data/files/filepaths_{run_name}.yml')
+    df_extended, df_stuck = parse_mature(df_all)
+    df_all.drop(df_stuck.index, inplace=True)
+
+    df = df_all
+    groups = ['cvar', 'site']
+    sim = 'dm_ear'
+
+    mx_mean = agg_sims(df, groups, 'mean', sim)
+    mx_variance = agg_sims(df, groups, 'variance', sim)
+    mx_disp = np.divide(mx_variance, mx_mean)
+
+    means = mx_mean.flatten()
+    disps = np.array(mx_disp*-1).flatten()
+
+    means = mx_mean.mean(axis=1)
+    disps = mx_disp.mean(axis=1)*-1
+    means = np.delete(means, 6)
+    disps = np.delete(disps, 6)
+
+    df_emps, df_emps_std = fetch_emps(run_name)
+    df_pcc = df_emps.copy()
+    df_pcc['mean'] = means
+    df_pcc['disp'] = disps
+
+    # calculate PCC
+    emps = ['jday', 'pheno_days', 'LA',
+            'water_deficit_mean', 'An', 'gs', 'edate']
+
+    # mean
+    rs_mean = []
+    ps = []
+    cis_mean = []
+
+    for item, emp in enumerate(emps):
+        covars = emps.copy()
+        covars.remove(emp)
+        pcc = pg.partial_corr(
+            df_pcc, x=emp, y='mean', x_covar=covars)
+        rs_mean.append(pcc['r']['pearson'])
+        ps.append(pcc['p-val']['pearson'])
+        cis_mean.append(pcc['CI95%']['pearson'])
+
+    # dispersion
+    rs_disp = []
+    ps = []
+    cis_disp = []
+
+    for item, emp in enumerate(emps):
+        covars = emps.copy()
+        covars.remove(emp)
+        pcc = pg.partial_corr(
+            df_pcc, x=emp, y='disp', x_covar=covars)
+        rs_disp.append(pcc['r']['pearson'])
+        ps.append(pcc['p-val']['pearson'])
+        cis_disp.append(pcc['CI95%']['pearson'])
+
+    xerrs = []
+    for item in np.arange(len(emps)):
+        xerr = round(cis_mean[item][1] - cis_mean[item][0], 2)
+        xerrs.append(xerr)
+
+    yerrs = []
+    for item in np.arange(len(emps)):
+        yerr = round(cis_disp[item][1] - cis_disp[item][0], 2)
+        yerrs.append(yerr)
+
+    # change signs for water deficit for more intuitive interpretation
+    rs_mean[-4] = rs_mean[-4]*-1
+    rs_disp[-4] = rs_disp[-4]*-1
+
+    df_pcc = pd.DataFrame({'emps': emps,
+                           'pcc_mean': rs_mean,
+                           'pcc_disp': rs_disp})
+
+    return(df_pcc)
 
 
 def identify_top_phenos(run_name, n_pheno=5, w_yield=1, w_disp=1):
