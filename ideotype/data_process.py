@@ -577,8 +577,9 @@ def fetch_emps(run_name):
     df_emps_std = pd.DataFrame(columns=emps)
     for item, emp in enumerate(emps):
         emp_values = df_emps_combined[emp]
-        emp_values_std = [(emp_value - emp_values.min())/(
-            emp_values.max()-emp_values.min()) for emp_value in emp_values]
+        emp_values = [abs(emp_value) for emp_value in emp_values]
+        emp_values_std = [(emp_value - min(emp_values))/(
+            max(emp_values)-min(emp_values)) for emp_value in emp_values]
         df_emps_std[emp] = emp_values_std
 
     df_emps_std['cvar'] = df_emps_combined.cvar
