@@ -825,3 +825,65 @@ def plot_pcc_emps_board(run_name, save=False):
     if save is True:
         plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
                     'scatter_pcc_yield_disp_emp.png', format='png', dpi=800)
+
+
+def plot_pca_strategies(df_emps_sub, n_clusters, df_pca, pca,
+                        phenos_target, cs, save=False):
+    """
+    Plot phenotype strategies with PCA.
+
+    Parameters
+    ----------
+    pca : PCA
+        output from run_pca
+    df_pca : pd.DataFrmae
+        output from run_pca
+    phenos_target : list
+        list of phenos to plot solid
+
+    """
+    fig = plt.figure(figsize=(7, 6))
+    ax = fig.add_subplot()
+
+    xs = df_pca.iloc[:, 0:2].iloc[:, 0]
+    ys = df_pca.iloc[:, 0:2].iloc[:, 1]
+    coeff = np.transpose(pca.components_[0:2, :])
+    n = coeff.shape[0]
+    scalex = 1.0/(xs.max() - xs.min())
+    scaley = 1.0/(ys.max() - ys.min())
+
+    df_emps_pca = df_emps_sub.reset_index(drop=True).copy()
+    df_emps_pca['pc1'] = xs*scalex
+    df_emps_pca['pc2'] = ys*scaley
+
+    for group in np.arange(n_clusters):
+        df_emps_group = df_emps_pca.query(f'group=={group}')
+        df_solid = df_emps_group[df_emps_group.cvar.isin(phenos_target)]
+        ax.scatter(df_emps_group['pc1'], df_emps_group['pc2'],
+                   facecolor='none', edgecolor=cs[group],
+                   linewidth=2, s=300, alpha=0.8)
+        ax.scatter(df_solid['pc1'], df_solid['pc2'],
+                   facecolor=cs[group], s=300, alpha=0.6)
+
+    for item, pheno in enumerate(df_emps_sub.cvar):
+        ax.annotate(pheno, (list(xs*scalex)[item], list(ys*scaley)[item]),
+                    c='grey', size=10)
+    for item in range(n):
+        plt.arrow(0, 0, coeff[item, 0], coeff[item, 1],
+                  color='grey', alpha=0.5,
+                  linewidth=0.5, head_width=0.02)
+
+    ax.set_xlim(-0.75, 0.75)
+    ax.set_ylim(-0.95, 0.95)
+    ax.set_xlabel('PC1', fontweight='light', fontsize=12)
+    ax.set_ylabel('PC2', fontweight='light', fontsize=12)
+
+    x_adjusts = [0.15, 0.03, 0.02, 0.05, -0.05]
+    y_adjusts = [0, 0.05, -0.05, 0.05, 0]
+
+    labels = df_emps_sub.columns[1:-1]
+    for item, label in enumerate(labels):
+        plt.text(coeff[item, 0]+x_adjusts[item],
+                 coeff[item, 1]+y_adjusts[item],
+                 label, color='grey', fontsize=12,
+                 ha='center', va='center')
