@@ -948,5 +948,5 @@ def plot_strategies(emps, emps_text, targeted_groups,
 
     if save is True:
         plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
-                    f'scatterlines_strategies_{save_text}',
+                    f'scatterlines_strategies_{save_text}.png',
                     format='png', dpi=800)
