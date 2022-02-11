@@ -828,7 +828,7 @@ def plot_pcc_emps_board(run_name, save=False):
 
 
 def plot_pca_strategies(df_emps_sub, n_clusters, df_pca, pca,
-                        phenos_target, cs, save=False):
+                        phenos_target, cs, save=False, save_text=None):
     """
     Plot phenotype strategies with PCA.
 
@@ -874,7 +874,7 @@ def plot_pca_strategies(df_emps_sub, n_clusters, df_pca, pca,
                   linewidth=0.5, head_width=0.02)
 
     ax.set_xlim(-0.75, 0.75)
-    ax.set_ylim(-0.95, 0.95)
+    ax.set_ylim(-1.05, 1.05)
     ax.set_xlabel('PC1', fontweight='light', fontsize=12)
     ax.set_ylabel('PC2', fontweight='light', fontsize=12)
 
@@ -887,3 +887,66 @@ def plot_pca_strategies(df_emps_sub, n_clusters, df_pca, pca,
                  coeff[item, 1]+y_adjusts[item],
                  label, color='grey', fontsize=12,
                  ha='center', va='center')
+
+    if save is True:
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'scatter_strategies_pca_{save_text}.png',
+                    format='png', dpi=800)
+
+
+def plot_strategies(emps, emps_text, targeted_groups,
+                    df_clusters, df_emps_std, cs,
+                    save=False, save_text=None):
+    """
+    Plot out strategies.
+
+    Parameters
+    ----------
+    emps : list of text
+    emps_text : list of text
+    top_groups : list
+    df_clusters : pd.DataFrame
+    df_emps_std : pd.DataFrame
+    cs : list
+
+    """
+    # visualization
+    fig = plt.figure(figsize=(7, 7))
+    ax = fig.add_subplot()
+
+    for item, group in enumerate(targeted_groups):
+        phenos = list(df_clusters.query(f'group=={group}').cvar)
+        emps_mean = df_emps_std[df_emps_std.cvar.isin(phenos)].mean()[emps]
+        ax.plot(np.arange(len(emps)), emps_mean,
+                color=cs[group], linewidth=2, alpha=0.6)
+        ax.scatter(np.arange(len(emps)), emps_mean,
+                   color=cs[group], s=100, alpha=0.8)
+
+    ax.set_xlim(-0.5, len(emps)-0.5)
+    ax.set_ylim(-0.1, 1.1)
+    ax.set_xticks(np.arange(len(emps)))
+    ax.set_xticklabels(emps_text, rotation=45, fontweight='light', fontsize=12)
+    ax.set_yticks([0, 0.5, 1])
+    ax.set_yticklabels([0, 0.5, 1])
+    ax.set_ylabel('standardized emergent property value',
+                  fontweight='light', fontsize=12)
+    ax.axhline(y=0.5, color='grey', linewidth=0.5, linestyle=':')
+
+    ax.arrow(len(emps)-0.2, 0, 0, 1, color='grey', alpha=0.5,
+             head_length=0.03, head_width=0.2, clip_on=False)
+    ax.arrow(len(emps)-0.2, 1, 0, -1, color='grey', alpha=0.5,
+             head_length=0.03, head_width=0.2, clip_on=False)
+
+    ax.annotate('Lower than \naverage', (len(emps)+0.2, 0.25),
+                ha='center', va='center', fontweight='light',
+                fontsize=12, rotation=90, annotation_clip=False)
+    ax.annotate('Higher than \naverage', (len(emps)+0.2, 0.75),
+                ha='center', va='center', fontweight='light',
+                fontsize=12, rotation=90, annotation_clip=False)
+
+    fig.subplots_adjust(left=0.3, right=0.7, bottom=0.3)
+
+    if save is True:
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'scatterlines_strategies_{save_text}',
+                    format='png', dpi=800)
