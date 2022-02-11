@@ -632,3 +632,61 @@ def fetch_sens(df_all_present, df_all_f2100, phenogroups):
             sens.append(sen)
 
     return(sens)
+
+
+def process_clusters(df_clusters, n_clusters,
+                     phenos_top20, phenos_improved, phenos_declined,
+                     target, predict_threshold):
+    """
+    Process clustered phenotypes.
+
+    Parameters
+    ----------
+    df_clusters : pd.DataFrame
+    phenos_top20 : list
+    phenos_improved : list
+    phenos_declined : list
+    target : str
+        top20
+        improved
+        declined
+
+    Returns
+    -------
+    pheno_groups : list
+
+    """
+    df_clusters['top20'] = 0
+    top20_index = list(df_clusters[df_clusters.cvar.isin(phenos_top20)].index)
+    df_clusters.loc[top20_index, 'top20'] = 1
+
+    df_clusters['improved'] = 0
+    improved_index = list(df_clusters[
+        df_clusters.cvar.isin(phenos_improved)].index)
+    df_clusters.loc[improved_index, 'improved'] = 1
+
+    df_clusters['declined'] = 0
+    declined_index = list(df_clusters[
+        df_clusters.cvar.isin(phenos_declined)].index)
+    df_clusters.loc[declined_index, 'declined'] = 1
+
+    targeted_groups = []
+    for group in np.arange(n_clusters):
+        phenos_target = df_clusters.query(
+            f'group=={group}').query(f'{target}==1').shape[0]
+        phenos_total = df_clusters.query(f'group=={group}').shape[0]
+        if phenos_target/phenos_total >= predict_threshold:
+            targeted_groups.append(group)
+
+    # assemble into phenogroups
+    pheno_groups = []
+    for group in targeted_groups:
+        pheno_group = list(df_clusters.query(f'group=={group}').cvar)
+        pheno_groups.append(pheno_group)
+
+    # melt phenogroups into phenos list
+    pheno_groups_melt = []
+    for item in pheno_groups:
+        pheno_groups_melt.extend(item)
+
+    return(targeted_groups, pheno_groups)
