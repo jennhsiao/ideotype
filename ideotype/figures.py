@@ -691,7 +691,7 @@ def plot_pcc_emps(run_name, save=False):
     ax1.barh(list(reversed(df_pcc.emps)),
              list(reversed(df_pcc.pcc_mean)),
              height=0.7, color=list(reversed(cc)), ecolor='grey', alpha=0.8)
-    ax1.set_xlabel('PCC with \nhigh yield', size=12, fontweight='light')
+    ax1.set_xlabel('PCC with \n high yield', size=12, fontweight='light')
     ax1.set_xlim(-0.62, 0.62)
 
     plt.axvline(x=0, color='grey', linewidth=0.5)
@@ -719,7 +719,8 @@ def plot_pcc_emps(run_name, save=False):
     ax2.barh(list(reversed(df_pcc.emps)),
              list(reversed(df_pcc.pcc_disp)),
              height=0.7, color=list(reversed(cc)), ecolor='grey', alpha=0.8)
-    ax2.set_xlabel('PCC with \nlow disp.', size=12, fontweight='light')
+    ax2.set_xlabel('PCC with \n high yield stability.',
+                   size=12, fontweight='light')
     ax2.set_xlim(-0.62, 0.62)
 
     plt.axvline(x=0, color='grey', linewidth=0.5)
@@ -772,13 +773,188 @@ def plot_pcc_emps_board(run_name, save=False):
                  'photosynthesis',
                  'stomatal \nconduct.',
                  'emergence time']
-    x_adjust = [-0.08, 0.02, -0.1, -0.25, 0.05, -0.18, -0.02]
-    y_adjust = [-0.17, 0.02, -0.1, 0.06, -0.01, -0.16, 0.06]
+
+    x_adjust = [-0.08, 0.04, -0.1, -0.18, 0.05, -0.18, 0.04]
+    y_adjust = [-0.17, -0.04, -0.1, 0.06, -0.01, -0.16, -0.01]
 
     for count, emp in enumerate(emps_text):
         ax.annotate(emp, (pcc_means[count] + x_adjust[count],
                     pcc_disps[count] + y_adjust[count]),
                     size=13, alpha=0.7)
+
+    # plot specs
+    plt.xlim(-0.72, 0.72)
+    plt.ylim(-0.72, 0.72)
+
+    # annotations
+    ax.axvline(x=0, color='grey', linewidth=0.5)
+    ax.axhline(y=0, color='grey', linewidth=0.5)
+
+    ax.arrow(-0.6, -0.84, 1.2, 0, color='grey', alpha=0.3,
+             head_length=0.03, head_width=0.04, clip_on=False)
+    ax.arrow(0.6, -0.84, -1.2, 0, color='grey', alpha=0.3,
+             head_length=0.03, head_width=0.04, clip_on=False)
+    ax.arrow(-0.9, -0.6, 0, 1.2, color='grey', alpha=0.3,
+             head_length=0.03, head_width=0.04, clip_on=False)
+    ax.arrow(-0.9, 0.6, 0, -1.2, color='grey', alpha=0.3,
+             head_length=0.03, head_width=0.04, clip_on=False)
+
+    ax.annotate('Low value corr. \nw/ high yield', (-0.3, -0.92),
+                ha='center', va='center', fontweight='light', fontsize=12,
+                annotation_clip=False)
+    ax.annotate('High value corr. \nw/ high yield', (0.3, -0.92),
+                ha='center', va='center', fontweight='light', fontsize=12,
+                annotation_clip=False)
+    ax.annotate('Low value corr. \nw/ high stability', (-0.97, -0.3),
+                ha='center', va='center', fontweight='light',
+                fontsize=12, rotation=90,
+                annotation_clip=False)
+    ax.annotate('High value corr. \nw/ high stability', (-0.97, 0.3),
+                ha='center', va='center', fontweight='light',
+                fontsize=12, rotation=90,
+                annotation_clip=False)
+
+    # antagonistic regions
+    rect = mpatches.Rectangle((-0.85, 0), 0.85, 0.85,
+                              facecolor='grey', alpha=0.2)
+    plt.gca().add_patch(rect)
+    rect = mpatches.Rectangle((0, -0.85), 0.85, 0.85,
+                              facecolor='grey', alpha=0.2)
+    plt.gca().add_patch(rect)
+
+    fig.subplots_adjust(left=0.18, bottom=0.18)
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
+                    'scatter_pcc_yield_stability_emp.png',
+                    format='png', dpi=800)
+
+
+def plot_pcc_emps_board_highlight(df_pcc, run_name, save=False):
+    """
+    Plot PCC & emps w/ highlighted emps.
+
+    Parameters
+    ----------
+    df_pcc : pd.DataFrame
+    run_name : str
+
+    """
+    rs_mean = df_pcc.pcc_mean
+    rs_disp = df_pcc.pcc_disp
+
+    # visualization
+    fig = plt.figure(figsize=(6, 6))
+    ax = fig.add_subplot(1, 1, 1)
+
+    markers = ['v', '>', 'D', 'X', '*', 'o', '^']
+    sizes = [100, 100, 80, 100, 180, 100, 100]
+    c1 = 'mediumvioletred'
+    c2 = 'grey'
+    colors = [c1, c1, c1, c2, c2, c2, c2]
+    a1 = 1
+    a2 = 0.3
+    alphas = [a1, a1, a1, a2, a2, a2, a2]
+
+    for item in np.arange(len(rs_mean)):
+        ax.scatter(rs_mean[item], rs_disp[item],
+                   color=colors[item], s=sizes[item],
+                   marker=markers[item],
+                   alpha=alphas[item])
+
+    # annotate
+    emps_text = ['grain-fill \nstart time',
+                 'grain-fill \nduration',
+                 'leaf area',
+                 'water deficit',
+                 'photosynthesis',
+                 'stomatal \nconduct.',
+                 'emergence time']
+    x_adjust = [-0.08, 0.04, -0.1, -0.25, 0.05, -0.18, -0.02]
+    y_adjust = [-0.17, -0.04, -0.1, 0.06, -0.01, -0.16, 0.06]
+
+    for count, emp in enumerate(emps_text):
+        ax.annotate(emp, (rs_mean[count] + x_adjust[count],
+                    rs_disp[count] + y_adjust[count]),
+                    size=13, alpha=alphas[count])
+    # plot specs
+    plt.xlim(-0.72, 0.72)
+    plt.ylim(-0.72, 0.72)
+
+    # annotations
+    ax.axvline(x=0, color='grey', linewidth=0.5)
+    ax.axhline(y=0, color='grey', linewidth=0.5)
+
+    ax.arrow(-0.6, -0.84, 1.2, 0, color='grey', alpha=0.3,
+             head_length=0.03, head_width=0.04, clip_on=False)
+    ax.arrow(0.6, -0.84, -1.2, 0, color='grey', alpha=0.3,
+             head_length=0.03, head_width=0.04, clip_on=False)
+    ax.arrow(-0.9, -0.6, 0, 1.2, color='grey', alpha=0.3,
+             head_length=0.03, head_width=0.04, clip_on=False)
+    ax.arrow(-0.9, 0.6, 0, -1.2, color='grey', alpha=0.3,
+             head_length=0.03, head_width=0.04, clip_on=False)
+
+    ax.annotate('Low value corr. \nw/ high yield', (-0.3, -0.92),
+                ha='center', va='center', fontweight='light', fontsize=12,
+                annotation_clip=False)
+    ax.annotate('High value corr. \nw/ high yield', (0.3, -0.92),
+                ha='center', va='center', fontweight='light', fontsize=12,
+                annotation_clip=False)
+    ax.annotate('Low value corr. \nw/ high stability', (-0.97, -0.3),
+                ha='center', va='center', fontweight='light',
+                fontsize=12, rotation=90,
+                annotation_clip=False)
+    ax.annotate('High value corr. \nw/ high stability', (-0.97, 0.3),
+                ha='center', va='center', fontweight='light',
+                fontsize=12, rotation=90,
+                annotation_clip=False)
+
+    # antagonistic regions
+    rect = mpatches.Rectangle((-0.85, 0), 0.85, 0.85,
+                              facecolor='grey', alpha=0.2)
+    plt.gca().add_patch(rect)
+    rect = mpatches.Rectangle((0, -0.85), 0.85, 0.85,
+                              facecolor='grey', alpha=0.2)
+    plt.gca().add_patch(rect)
+
+    fig.subplots_adjust(left=0.18, bottom=0.18)
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
+                    'scatter_pcc_yield_stability_emp_highlighted.png',
+                    format='png', dpi=800)
+
+
+def plot_pcc_emps_board_shift(df_pcc_present, df_pcc_future,
+                              run_name, save=False):
+    """
+    Plot PCC & emps shifts.
+
+    Parameters
+    ----------
+    df_pcc_presebt : pd.DataFrame
+    df_pcc_future : pd.DataFrame
+    run_name : str
+
+    """
+    rs_mean_present = df_pcc_present.pcc_mean
+    rs_disp_present = df_pcc_present.pcc_disp
+    rs_mean_f2100 = df_pcc_future.pcc_mean
+    rs_disp_f2100 = df_pcc_future.pcc_disp
+
+    emps_text = ['grain-fill \nstart time',
+                 'grain-fill \nduration',
+                 'leaf area',
+                 'water deficit',
+                 'photosynthesis',
+                 'stomatal \nconduct.',
+                 'emergence time']
+    x_adjust = [-0.08, 0.02, -0.1, -0.25, 0.05, -0.18, -0.02]
+    y_adjust = [-0.17, 0.02, -0.1, 0.06, -0.01, -0.16, 0.06]
+
+    # visualization
+    fig = plt.figure(figsize=(6, 6))
+    ax = fig.add_subplot(1, 1, 1)
 
     # plot specs
     plt.xlim(-0.72, 0.72)
@@ -812,6 +988,32 @@ def plot_pcc_emps_board(run_name, save=False):
                 fontsize=12, rotation=90,
                 annotation_clip=False)
 
+    emps = ['jday', 'pheno_days', 'LA', 'water_deficit_mean',
+            'An', 'gs', 'edate']
+    markers = ['v', '>', 'D', 'X', '*', 'o', '^']
+    sizes = [100, 100, 80, 100, 180, 100, 100]
+
+    for item in np.arange(len(emps)):
+        ax.scatter(rs_mean_present[item], rs_disp_present[item],
+                   c='grey', s=sizes[item],
+                   marker=markers[item])
+
+    for item in np.arange(len(emps)):
+        ax.arrow(rs_mean_present[item], rs_disp_present[item],
+                 rs_mean_f2100[item]-rs_mean_present[item],
+                 rs_disp_f2100[item]-rs_disp_present[item],
+                 color='grey',
+                 overhang=0.8, head_length=0.03, head_width=0.03, alpha=0.6)
+
+    emps = ['jday', 'pheno_days', 'LA', 'water_deficit_mean',
+            'An', 'gs', 'edate']
+    x_adjust = [-0.08, 0.02, -0.1, -0.25, 0.05, -0.18, -0.02]
+    y_adjust = [-0.17, 0.02, -0.1, 0.06, -0.01, -0.16, 0.06]
+    for count, emp in enumerate(emps_text):
+        ax.annotate(emp, (rs_mean_present[count] + x_adjust[count],
+                    rs_disp_present[count] + y_adjust[count]),
+                    size=13, alpha=0.7)
+
     # antagonistic regions
     rect = mpatches.Rectangle((-0.85, 0), 0.85, 0.85,
                               facecolor='grey', alpha=0.2)
@@ -824,7 +1026,8 @@ def plot_pcc_emps_board(run_name, save=False):
 
     if save is True:
         plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
-                    'scatter_pcc_yield_disp_emp.png', format='png', dpi=800)
+                    'scatter_pcc_yield_stability_emp_shifts.png',
+                    format='png', dpi=800)
 
 
 def plot_pca_strategies(df_emps_sub, n_clusters, df_pca, pca,
@@ -894,7 +1097,8 @@ def plot_pca_strategies(df_emps_sub, n_clusters, df_pca, pca,
                     format='png', dpi=800)
 
 
-def plot_strategies(emps, emps_text, targeted_groups,
+def plot_strategies(emps, emps_text,
+                    targeted_groups, targeted_phenos,
                     df_clusters, df_emps_std, cs,
                     save=False, save_text=None):
     """
@@ -904,7 +1108,10 @@ def plot_strategies(emps, emps_text, targeted_groups,
     ----------
     emps : list of text
     emps_text : list of text
-    top_groups : list
+    targeted_groups : list
+    targeted_phenos : list
+        list of phenos in which to select from
+        e.g. phenos_top20, phenos_improved, phenos_declined
     df_clusters : pd.DataFrame
     df_emps_std : pd.DataFrame
     cs : list
@@ -916,6 +1123,10 @@ def plot_strategies(emps, emps_text, targeted_groups,
 
     for item, group in enumerate(targeted_groups):
         phenos = list(df_clusters.query(f'group=={group}').cvar)
+        x = np.array(phenos)
+        y = np.array(targeted_phenos)
+        phenos = list(x[np.isin(x, y)])
+
         emps_mean = df_emps_std[df_emps_std.cvar.isin(phenos)].mean()[emps]
         ax.plot(np.arange(len(emps)), emps_mean,
                 color=cs[group], linewidth=2, alpha=0.6)
