@@ -138,9 +138,6 @@ def calc_pcc_emps(run_name):
     mx_variance = agg_sims(df, groups, 'variance', sim)
     mx_disp = np.divide(mx_variance, mx_mean)
 
-    means = mx_mean.flatten()
-    disps = np.array(mx_disp*-1).flatten()
-
     means = mx_mean.mean(axis=1)
     disps = mx_disp.mean(axis=1)*-1
     means = np.delete(means, 6)
