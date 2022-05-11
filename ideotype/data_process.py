@@ -485,6 +485,38 @@ def fetch_mean_disp_diff(run_name_present, run_name_future, phenos):
     return(diffs_yield, diffs_disp)
 
 
+def fetch_mean_stability_diff(run_name_present, run_name_future, phenos):
+    """
+    Fetch difference in yield mean & yield dispersion.
+
+    Parameters
+    ----------
+    run_name_present : str
+    run_name_future : str
+    phenos : list
+
+    """
+    yield_mean_norm_present, yield_disp_norm_present = fetch_norm_mean_disp(
+        run_name_present)
+    yield_mean_norm_future, yield_disp_norm_future = fetch_norm_mean_disp(
+        run_name_future)
+
+    yield_stability_norm_present = 1-yield_disp_norm_present
+    yield_stability_norm_future = 1-yield_disp_norm_future
+
+    diffs_yield = []
+    diffs_stability = []
+
+    for pheno in phenos:
+        diffs_yield.append(
+            yield_mean_norm_future[pheno] - yield_mean_norm_present[pheno])
+        diffs_stability.append(
+            yield_stability_norm_future[pheno] - yield_stability_norm_present[
+                pheno])
+
+    return(diffs_yield, diffs_stability)
+
+
 def fetch_emps(run_name):
     """
     Fetch emergent properties.
