@@ -15,6 +15,7 @@ from palettable.wesanderson import Mendl_4
 
 from ideotype.data_process import (read_data,
                                    process_sims,
+                                   agg_sims,
                                    fetch_norm_mean_disp,
                                    fetch_mean_disp_diff)
 from ideotype.analysis import rank_top_phenos, calc_pcc_emps
@@ -269,6 +270,115 @@ def plot_params_heatmap(df_params, top_phenos,
     if save is True:
         plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
                     f'heatmap_params_{save_text}.png',
+                    format='png', dpi=800)
+
+
+def plot_yield_disp_scatter(df, save=None):
+    """
+    Plot yield vs. yield stability scatter plot.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+    save : bool
+
+    """
+    groups = ['cvar', 'site']
+    sim = 'dm_ear'
+
+    mx_mean = agg_sims(df, groups, 'mean', sim)
+    mx_variance = agg_sims(df, groups, 'variance', sim)
+    mx_disp = np.divide(mx_variance, mx_mean)
+    df_mean = pd.DataFrame(mx_mean)
+    df_disp = pd.DataFrame(mx_disp)
+
+    means = df_mean.mean(axis=1)
+    disps = df_disp.mean(axis=1)
+
+    fig = plt.figure(figsize=(8, 5))
+
+    ax = fig.add_subplot()
+    ax.scatter(means, disps, c='slategrey', s=100, alpha=0.5)
+    for item in np.arange(100):
+        ax.annotate(item, (means[item], disps[item]), c='grey')
+
+    ax.set_xlabel('yield mean', fontweight='light', size=14)
+    ax.set_ylabel('dispersion index', fontweight='light', size=14)
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
+                    'scatter_yield_stab.png',
+                    format='png', dpi=800)
+
+
+def plot_yield_stability_scatter_norm(save=None):
+    """
+    Plot normalized yield vs. yield stability scatter plot.
+
+    Parameters
+    ----------
+    save : bool
+
+    """
+    # fetch normalized mean & disp values
+    yield_mean_norm, yield_disp_norm = fetch_norm_mean_disp('present')
+    yield_stability_norm = 1-yield_disp_norm
+
+    # visulization
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot()
+    ax.scatter(yield_mean_norm, yield_stability_norm, c='slategrey',
+               s=100, alpha=0.5)
+    for i in np.arange(100):
+        ax.annotate(i, (yield_mean_norm[i], yield_stability_norm[i]), c='grey')
+
+    ax.set_xlabel('standardized yield mean', fontweight='light', size=14)
+    ax.set_ylabel('standardized yield stability index',
+                  fontweight='light', size=14)
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
+                    'scatter_yield_stab_norm.png',
+                    format='png', dpi=800)
+
+
+def plot_yield_stability_scatter_performance(save=None):
+    """
+    Plot yield vs. yield stability w/ performance.
+
+    Parameters
+    ----------
+    save : bool
+
+    """
+    targeted_phenos = rank_top_phenos('present', 20, 1, 1)
+
+    # fetch normalized mean & disp values
+    yield_mean_norm, yield_disp_norm = fetch_norm_mean_disp('present')
+
+    # visulization
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot()
+    yield_stability_norm = 1-yield_disp_norm
+    ax.scatter(yield_mean_norm, yield_stability_norm,
+               marker='o', facecolor='none', edgecolor='slategray',
+               s=100, alpha=0.5)
+    ax.scatter(yield_mean_norm[targeted_phenos],
+               yield_stability_norm[targeted_phenos],
+               c=np.arange(len(targeted_phenos)),
+               cmap=PurpOr_6.mpl_colormap.reversed(),
+               s=100, alpha=0.6)
+
+    for i in np.arange(100):
+        ax.annotate(i, (yield_mean_norm[i], yield_stability_norm[i]), c='grey')
+    ax.set_xlabel('standardized yield mean', fontweight='light', size=14)
+    ax.set_ylabel('standardized yield stability', fontweight='light', size=14)
+
+#    fig.colorbar(sc, shrink=0.5, extend='both')
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
+                    'scatter_yield_stab_stand_performance.png',
                     format='png', dpi=800)
 
 
