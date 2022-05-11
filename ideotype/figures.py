@@ -11,6 +11,8 @@ from datetime import datetime
 from palettable.colorbrewer.diverging import PuOr_7
 from palettable.cartocolors.sequential import PurpOr_6
 from palettable.colorbrewer.sequential import YlGn_9
+from palettable.colorbrewer.sequential import BuPu_7
+from palettable.cmocean.sequential import Tempo_10
 from palettable.wesanderson import Mendl_4
 
 from ideotype.data_process import (read_data,
@@ -18,7 +20,10 @@ from ideotype.data_process import (read_data,
                                    agg_sims,
                                    fetch_norm_mean_disp,
                                    fetch_mean_disp_diff)
-from ideotype.analysis import rank_top_phenos, calc_pcc_emps
+from ideotype.analysis import (rank_top_phenos,
+                               rank_all_phenos,
+                               identify_top_phenos,
+                               calc_pcc_emps)
 from ideotype.init_params import params_sample
 from ideotype.utils import fold
 from ideotype import DATA_PATH
@@ -379,6 +384,184 @@ def plot_yield_stability_scatter_performance(save=None):
     if save is True:
         plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
                     'scatter_yield_stab_stand_performance.png',
+                    format='png', dpi=800)
+
+
+def plot_yield_disp_heatmap(df, run_name, save=None):
+    """
+    Plot yield and yield dispersion heatmap.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+    run_name : str
+    save : bool
+
+    """
+    # Rank all phenos
+    df_rankings, phenos_ranked = rank_all_phenos(run_name, 100, 1, 1)
+
+    # Aggregate data
+    groups = ['cvar', 'site']
+    sim = 'dm_ear'
+
+    mx_mean = agg_sims(df, groups, 'mean', sim)
+    mx_variance = agg_sims(df, groups, 'variance', sim)
+    mx_disp = np.divide(mx_variance, mx_mean)
+    df_yield_means = pd.DataFrame(mx_mean)
+    df_yield_vars = pd.DataFrame(mx_disp)
+
+    # Data for plotting
+    dfs = [df_yield_means, df_yield_vars]
+    cmaps = [Tempo_10.mpl_colormap, BuPu_7.mpl_colors]
+
+    vmins = [50, 0]
+    vmaxs = [250, 15]
+    labels = ['yield (g/plant)', 'yield dispersion']
+
+    # Visualiztion
+    fig = plt.figure(figsize=(20, 15))
+    for index, df, cmap, vmin, vmax, label in zip(
+            [1, 2], dfs, cmaps, vmins, vmaxs, labels):
+        ax = fig.add_subplot(1, 2, index)
+        sns.heatmap(df.reindex(phenos_ranked), cmap=cmap,
+                    cbar_kws={'shrink': 0.2}, vmin=vmin, vmax=vmax)
+
+        # set labels
+        ax.set_xlabel('site', size=15, fontweight='light')
+        ax.set_ylabel('trait - management combination',
+                      size=15, fontweight='light')
+        ax.figure.axes[-1].set_ylabel(label, size=12)
+
+        # customize ticklabels
+        ax.set_xticks(np.arange(0.5, 60.5))
+        ax.set_xticklabels(np.arange(60), fontweight='light',
+                           size=8, rotation=90)
+        ax.set_yticks(np.arange(0.5, 100.5))
+        ax.set_yticklabels(phenos_ranked, fontweight='light',
+                           size=8, rotation=0)
+
+    fig.subplots_adjust(wspace=0.05)
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
+                    'heatmap_yield_disp_all_rankall.png',
+                    format='png', dpi=800)
+
+
+def plot_performance_heatmap(df, run_name, w_yield, w_disp, save=None):
+    """
+    Plot performance heatmap.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+    run_name : str
+    w_yield : float
+        Weight on yield, value between 0-1
+    w_disp : float
+        Weight on yield dispersion (stability), value between 0-1
+    save : bool
+
+    """
+    # Identify sites and phenotypes
+    sites = sorted(list(set(df.site)))
+
+    # Parameters for identify_top_phenos
+    n_pheno = 20
+    w_yield = 1
+    w_disp = 1
+
+    # Identify top phenos
+    df_pheno, mx = identify_top_phenos(run_name, n_pheno=n_pheno,
+                                       w_yield=w_yield, w_disp=w_disp)
+    top_phenos = rank_top_phenos(run_name, 20, 1, 1)
+    mx_sub = pd.DataFrame(mx).reindex(top_phenos)
+
+    # Visualization
+    fig = plt.figure(figsize=(10, 15))
+    ax = fig.add_subplot(1, 1, 1)
+    hmap = sns.heatmap(mx_sub, cmap=PurpOr_6.mpl_colormap.reversed(),
+                       vmin=0, vmax=n_pheno, cbar_kws={'shrink': 0.2})
+
+    ax.set_title('Top performing plant types', fontweight='light', size=15)
+    ax.set_xlabel('site', fontweight='light', size=13)
+    ax.set_ylabel('trait-management combination', fontweight='light', size=13)
+    ax.figure.axes[-1].set_ylabel('performance', size=12, fontweight='light')
+
+    plt.xticks(np.arange(len(sites)))
+    ax.set_xticklabels(sites, fontsize=6, fontweight='light', rotation=90)
+    ax.set_yticks(np.arange(0.5, 100.5))
+    y_labels = [np.nan]*100
+    y_labels[:len(top_phenos)] = top_phenos
+
+    hmap.axhline(y=0, color='grey', linewidth=1.5)
+    hmap.axhline(y=mx.shape[0]-0.5, color='grey', linewidth=1.5)
+    hmap.axvline(x=0, color='grey', linewidth=1.5)
+    hmap.axvline(x=mx.shape[1], color='grey', linewidth=1.5)
+
+    ax.set_xticklabels(np.arange(len(sites)), fontsize=8,
+                       fontweight='light', rotation=90)
+    ax.set_yticklabels(y_labels, fontsize=8, fontweight='light', rotation=0)
+
+    if save is True:
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'heatmap_performance_sorted_'
+                    f'{run_name}_topchoice{n_pheno}_y{w_yield}_d{w_disp}.png',
+                    format='png', dpi=800)
+
+
+def plot_top_performance_heatmap(df, run_name, n_pheno,
+                                 w_yield, w_disp, save=None):
+    """
+    Plot top performing plant type heatmap.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+    run_name : str
+    n_pheno : int
+    w_yield : float
+    w_disp : float
+    save : bool
+
+    """
+    # Identify sites and phenotypes
+    sites = sorted(list(set(df.site)))
+
+    # Identify top phenos
+    df_pheno, mx = identify_top_phenos(run_name, n_pheno=n_pheno,
+                                       w_yield=w_yield, w_disp=w_disp)
+    top_phenos = rank_top_phenos(run_name, n_pheno, w_yield, w_disp)
+    mx_ranked = pd.DataFrame(mx).reindex(top_phenos).reset_index(drop=True)
+    mx_sub = mx_ranked[:len(top_phenos)]
+
+    # Visualization
+    fig = plt.figure(figsize=(9, 7))
+    ax = fig.add_subplot(1, 1, 1)
+    hmap = sns.heatmap(mx_sub, cmap=PurpOr_6.mpl_colormap.reversed(),
+                       vmin=0, vmax=n_pheno, cbar_kws={'shrink': 0.3})
+
+    ax.set_title('Top performing plant types', fontweight='light', size=15)
+    ax.set_xlabel('site', fontweight='light', size=14)
+    ax.set_ylabel('trait-management combination', fontweight='light', size=14)
+    ax.figure.axes[-1].set_ylabel('performance', size=12, fontweight='light')
+
+    plt.xticks(np.arange(len(sites)))
+    ax.set_xticklabels(
+        np.arange(len(sites)), fontsize=7, fontweight='light', rotation=90)
+    ax.set_yticks(np.arange(0.5, len(top_phenos)+0.5))
+    ax.set_yticklabels(top_phenos, fontsize=7, fontweight='light', rotation=0)
+
+    hmap.axhline(y=0, color='grey', linewidth=1.5)
+    hmap.axhline(y=mx_sub.shape[0], color='grey', linewidth=1.5)
+    hmap.axvline(x=0, color='grey', linewidth=1.5)
+    hmap.axvline(x=mx_sub.shape[1], color='grey', linewidth=1.5)
+
+    if save is True:
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'heatmap_performance_sorted_toponly_'
+                    f'{run_name}_topchoice{n_pheno}_y{w_yield}_d{w_disp}.png',
                     format='png', dpi=800)
 
 
