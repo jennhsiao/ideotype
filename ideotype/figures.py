@@ -8,6 +8,10 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from datetime import datetime
+
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+
 from palettable.colorbrewer.diverging import PuOr_7
 from palettable.cartocolors.sequential import PurpOr_6
 from palettable.colorbrewer.sequential import YlGn_9
@@ -605,6 +609,101 @@ def plot_top_performance_heatmap(df, run_name, n_pheno,
         plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
                     f'heatmap_performance_sorted_toponly_'
                     f'{run_name}_topchoice{n_pheno}_y{w_yield}_d{w_disp}.png',
+                    format='png', dpi=800)
+
+
+def plot_top_performance_maps(df_sites, run_name, n_pheno,
+                              w_yield, w_disp, save=None):
+    """
+    Plot maps of top performers performance.
+
+    Parameters
+    ----------
+    df_sites : pd.DataFrame
+    run_name : str
+    n_pheno : int
+    w_yield : float
+    w_disp : float
+    save : bool
+
+    """
+    # Rank top phenos
+    top_phenos = rank_top_phenos(run_name, n_pheno=n_pheno,
+                                 w_yield=w_yield, w_disp=w_disp)
+
+    # Identify ranking for each site for top phenos
+    df_pheno, mx = identify_top_phenos(run_name, n_pheno, w_yield, w_disp)
+
+    # Visualization
+    fig = plt.figure(figsize=(16, 10))
+
+    for item, pheno in enumerate(top_phenos[:20]):
+        ax = fig.add_subplot(4, 5, item+1,
+                             projection=ccrs.AlbersEqualArea(
+                                 central_latitude=39.5,
+                                 central_longitude=-98.35))
+        ax.set_extent([-123, -72, 19, 53])
+        ax.scatter(df_sites.lon, df_sites.lat, transform=ccrs.PlateCarree(),
+                   c=mx[pheno], cmap=PurpOr_6.mpl_colormap.reversed(),
+                   vmin=5, vmax=25, alpha=0.7, s=20)
+        ax.add_feature(cfeature.BORDERS, edgecolor='grey')
+        ax.add_feature(cfeature.COASTLINE, edgecolor='grey')
+        ax.add_feature(cfeature.STATES, edgecolor='grey', linewidth=0.5)
+        ax.set_title(pheno, fontweight='light')
+
+    fig.subplots_adjust(wspace=0)
+
+    if save is True:
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'maps_ranktop{n_pheno}_{run_name}.png',
+                    format='png', dpi=800)
+
+
+def plot_top_performance_maps_shift(df_sites, run_name_today, run_name_future,
+                                    n_pheno, w_yield, w_disp, save=None):
+    """
+    Visualize future performance of top 20 plant types identified today.
+
+    Parameters
+    ----------
+    df_sites : pd.DataFrame
+    run_name_today : str
+    run_name_future: str
+    n_pheno : int
+    w_yield : float
+    w_disp : float
+    save : bool
+
+    """
+    # Rank top phenos
+    top_phenos = rank_top_phenos(run_name_today, n_pheno=n_pheno,
+                                 w_yield=w_yield, w_disp=w_disp)
+
+    # Identify ranking for each site for top phenos
+    df_pheno, mx = identify_top_phenos(run_name_future, n_pheno,
+                                       w_yield, w_disp)
+
+    # Visualize future performance of top 20 plant types identified today
+    fig = plt.figure(figsize=(16, 10))
+
+    for item, pheno in enumerate(top_phenos[:20]):
+        ax = fig.add_subplot(4, 5, item+1, projection=ccrs.AlbersEqualArea(
+            central_latitude=39.5, central_longitude=-98.35))
+        ax.set_extent([-123, -72, 19, 53])
+        ax.scatter(df_sites.lon, df_sites.lat, transform=ccrs.PlateCarree(),
+                   c=mx[pheno], cmap=PurpOr_6.mpl_colormap.reversed(),
+                   vmin=5, vmax=25, alpha=0.6, s=20)
+        ax.add_feature(cfeature.BORDERS, edgecolor='grey')
+        ax.add_feature(cfeature.COASTLINE, edgecolor='grey')
+        ax.add_feature(cfeature.STATES, edgecolor='grey', linewidth=0.5)
+        ax.set_title(pheno, fontweight='light')
+
+    fig.subplots_adjust(wspace=0)
+
+    if save is True:
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'maps_ranktop{n_pheno}_'
+                    f'{run_name_today}_{run_name_future}_shift.png',
                     format='png', dpi=800)
 
 
