@@ -23,10 +23,12 @@ from ideotype.data_process import (read_data,
                                    process_sims,
                                    agg_sims,
                                    fetch_norm_mean_disp,
-                                   fetch_mean_disp_diff)
+                                   fetch_mean_disp_diff,
+                                   fetch_mean_stability_diff)
 from ideotype.analysis import (rank_top_phenos,
                                rank_all_phenos,
                                identify_top_phenos,
+                               identify_rankchanged_phenos,
                                calc_pcc_emps)
 from ideotype.init_params import params_sample
 from ideotype.utils import fold
@@ -431,6 +433,71 @@ def plot_yield_stability_scatter_performance(save=None):
     if save is True:
         plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
                     'scatter_yield_stab_stand_performance.png',
+                    format='png', dpi=800)
+
+
+def plot_yield_stability_scatter_shift(run_name_present, run_name_future,
+                                       n_pheno, w_yield, w_disp, rank_limit,
+                                       save=None):
+    """
+    Plot shift in yield and stability space.
+
+    Parameters
+    ----------
+    run_name_present : str
+    run_name_future : str
+    phenos_improved : list
+    phenos_declined : list
+
+    """
+    # identify pheno rankchanges
+    (phenos_improved, phenos_declined,
+     phenos_improved_rc, phenos_declined_rc) = identify_rankchanged_phenos(
+        n_pheno, w_yield, w_disp, run_name_future, rank_limit)
+
+    # visualization
+    phenos = phenos_improved + phenos_declined
+
+    yield_mean_norm_present, yield_disp_norm_present = fetch_norm_mean_disp(
+        run_name_present)
+    yield_mean_norm_future, yield_disp_norm_future = fetch_norm_mean_disp(
+        run_name_future)
+    yield_stability_norm_present = 1-yield_disp_norm_present
+
+    diffs_yield, diffs_stability = fetch_mean_stability_diff(
+        run_name_present, run_name_future, phenos)
+
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot()
+    ax.scatter(yield_mean_norm_present, yield_stability_norm_present,
+               color='slategrey', s=100, alpha=0.2)
+    ax.scatter(yield_mean_norm_present[phenos_improved],
+               yield_stability_norm_present[phenos_improved],
+               c='tab:purple',
+               vmin=0, vmax=15, s=100, alpha=0.6)
+
+    ax.scatter(yield_mean_norm_present[phenos_declined],
+               yield_stability_norm_present[phenos_declined],
+               c='tab:orange',
+               vmin=-15, vmax=0, s=100, alpha=0.6)
+
+    for item, pheno in enumerate(phenos):
+        plt.arrow(yield_mean_norm_present[pheno],
+                  yield_stability_norm_present[pheno],
+                  diffs_yield[item], diffs_stability[item],
+                  color='grey', alpha=0.3,
+                  head_width=0.01)
+
+    for pheno in phenos:
+        ax.annotate(pheno, (yield_mean_norm_present[pheno],
+                            yield_stability_norm_present[pheno]), c='grey')
+
+    ax.set_xlabel('yield mean', fontweight='light', size=14)
+    ax.set_ylabel('yield stability', fontweight='light', size=14)
+
+    if save is True:
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'scatter_yield_stability_shift_y{w_yield}_d{w_disp}.png',
                     format='png', dpi=800)
 
 
