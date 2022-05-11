@@ -1,10 +1,10 @@
 setup:
-  run_name: control_dympd_shallowsoil
+  run_name: control_dympd_soil1
   path_project: /home/disk/eos8/ach315/upscale/
   base_path: /home/disk/eos8/ach315/upscale/
   path_wea: ['weadata', 'data', 'control']
   path_init_standards: ['inits', 'standards', 'control']
-  path_init_soils: ['inits', 'soils', 'soils_shallow100']
+  path_init_soils: ['inits', 'soils', 'soils_1']
   path_params: params_control.csv
   path_maizsim: /home/disk/eos8/ach315/MAIZSIM_v142
   siteyears: siteyears_control_fixpd.csv
