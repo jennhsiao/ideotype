@@ -218,6 +218,49 @@ def plot_site_summary(df, pheno_stage, target, color, alpha, save=False):
             format='png', dpi=800)
 
 
+def plot_params_heatmap_all(df_params, save=None):
+    """
+    Plot params heatmap for all plant types.
+
+    Parameters
+    ----------
+    df_params : pd.DataFrame
+    save : bool
+
+    """
+    # Determined parameters perturbed and perturb range
+    problem, param_values = params_sample('present', 10)
+    param_range = dict(zip(problem['names'], problem['bounds']))
+    params = problem['names']
+    df_params_fold = pd.DataFrame(columns=params)
+
+    # Rank phenos
+    df_rankings, phenos_ranked = rank_all_phenos('present', 100, 1, 1)
+
+    # Normalize parameter values
+    df_params_ordered = df_params.iloc[phenos_ranked, :-1]
+    for param in params:
+        df_params_fold[param] = fold(df_params_ordered[param],
+                                     param_range[param][0],
+                                     param_range[param][1])
+
+    # Visualize
+    fig, ax = plt.subplots(figsize=(25, 6))
+    ax.imshow(df_params_fold.transpose(), cmap=PuOr_7.mpl_colormap)
+    ax.set_xticks(np.arange(df_params_ordered.shape[0]))
+    ax.set_yticks(np.arange(df_params_ordered.shape[1]))
+    ax.set_xticklabels(list(df_params_ordered.index),
+                       size=10, fontweight='light')
+    ax.set_yticklabels(list(df_params_ordered.columns),
+                       size=10, fontweight='light')
+    fig.subplots_adjust(left=0.15)
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/'
+                    'figs/heatmap_params_all.png',
+                    format='png', dpi=800)
+
+
 def plot_params_heatmap(df_params, top_phenos,
                         n_phenos_toplot=20, fig_w=9, fig_h=6,
                         save=None, save_text=None):
