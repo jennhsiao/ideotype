@@ -14,6 +14,7 @@ import cartopy.feature as cfeature
 
 from palettable.colorbrewer.diverging import PuOr_7
 from palettable.cartocolors.sequential import PurpOr_6
+from palettable.cartocolors.qualitative import Vivid_8
 from palettable.colorbrewer.sequential import YlGn_9
 from palettable.colorbrewer.sequential import BuPu_7
 from palettable.cmocean.sequential import Tempo_10
@@ -24,7 +25,8 @@ from ideotype.data_process import (read_data,
                                    agg_sims,
                                    fetch_norm_mean_disp,
                                    fetch_mean_disp_diff,
-                                   fetch_mean_stability_diff)
+                                   fetch_mean_stability_diff,
+                                   process_clusters)
 from ideotype.analysis import (rank_top_phenos,
                                rank_all_phenos,
                                identify_top_phenos,
@@ -1599,10 +1601,10 @@ def plot_pca_strategies(df_emps_sub, n_clusters, df_pca, pca,
                     format='png', dpi=800)
 
 
-def plot_strategies(emps, emps_text,
-                    targeted_groups, targeted_phenos,
-                    df_clusters, df_emps_std, cs,
-                    save=False, save_text=None):
+def _plot_strategies(emps, emps_text,
+                     targeted_groups, targeted_phenos,
+                     df_clusters, df_emps_std, cs,
+                     save=False, save_text=None):
     """
     Plot out strategies.
 
@@ -1617,6 +1619,8 @@ def plot_strategies(emps, emps_text,
     df_clusters : pd.DataFrame
     df_emps_std : pd.DataFrame
     cs : list
+    save : bool
+    save_text : str
 
     """
     # visualization
@@ -1663,3 +1667,76 @@ def plot_strategies(emps, emps_text,
         plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
                     f'scatterlines_strategies_{save_text}.png',
                     format='png', dpi=800)
+
+
+def plot_strategies(n_pheno, w_yield, w_disp,
+                    future_run, rank_limit, df_clusters, n_clusters,
+                    target, target_select, target_threshold,
+                    df_emps_std, save=None):
+    """
+    Pro-process data & plot out strategies.
+
+    Parameters
+    ----------
+    n_pheno : int
+    w_yield : float
+    w_disp : float
+    future_run : str
+    rank_limit : int
+        Rank difference in order to be considered 'improved' or 'declined'
+        e.g., if rank_limit = 5, a plant type would have to improve at least
+        5 ranks shifting from current into future climate in order to be
+        considered as an 'improved' plant type.
+    df_clusters : pd.DataFrame
+    n_clusters : int
+        Number of clusters used to cluster plant types into strategies.
+    target : str
+        'top20'
+        'improved'
+        'declined'
+    target_select : int
+        'top20' - 0
+        'improved' - 1
+        'declined' -2
+    target_threshold : float
+    df_emps_std : pd.DataFrame
+    save : bool
+
+    """
+    # manually assign strategies colors
+    cs_vivid8 = Vivid_8.mpl_colors
+    cs = [np.nan]*n_clusters
+    cs[int(df_clusters.query('cvar==58').group)] = cs_vivid8[0]
+    cs[int(df_clusters.query('cvar==4').group)] = cs_vivid8[1]
+    cs[int(df_clusters.query('cvar==88').group)] = cs_vivid8[2]
+    cs[int(df_clusters.query('cvar==89').group)] = cs_vivid8[3]
+    cs[int(df_clusters.query('cvar==5').group)] = cs_vivid8[4]
+    cs[int(df_clusters.query('cvar==15').group)] = cs_vivid8[5]
+    cs[int(df_clusters.query('cvar==55').group)] = cs_vivid8[6]
+    cs[int(df_clusters.query('cvar==24').group)] = cs_vivid8[7]
+
+    # fetch top phenos
+    phenos_topall = rank_top_phenos('present', n_pheno, w_yield, w_disp)
+    phenos_top20 = phenos_topall[:20]
+
+    # identify improved & declined phenos
+    (phenos_improved, phenos_declined,
+     pup_rc, pdown_rc) = identify_rankchanged_phenos(
+        n_pheno, w_yield, w_disp, future_run, rank_limit)
+
+    # process clusters
+    emps = ['jday', 'pheno_days', 'LA']
+    emps_text = ['grain-fill start', 'grain-fill duration', 'leaf area']
+
+    targeted_groups, pheno_groups = process_clusters(
+        df_clusters, n_clusters,
+        phenos_top20, phenos_improved, phenos_declined,
+        target, target_threshold)
+
+    # specify target phenos
+    targeted_phenos = [phenos_top20, phenos_improved, phenos_declined][
+        target_select]
+
+    # visualization
+    _plot_strategies(emps, emps_text, targeted_groups, targeted_phenos,
+                     df_clusters, df_emps_std, cs, save)
