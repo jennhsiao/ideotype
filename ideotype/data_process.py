@@ -685,9 +685,11 @@ def process_clusters(df_clusters, n_clusters,
 
     Returns
     -------
+    targeted_groups : list
     pheno_groups : list
 
     """
+    # assign phenotype as top20, improved, or declined
     df_clusters['top20'] = 0
     top20_index = list(df_clusters[df_clusters.cvar.isin(phenos_top20)].index)
     df_clusters.loc[top20_index, 'top20'] = 1
@@ -702,6 +704,7 @@ def process_clusters(df_clusters, n_clusters,
         df_clusters.cvar.isin(phenos_declined)].index)
     df_clusters.loc[declined_index, 'declined'] = 1
 
+    # identify target groups
     targeted_groups = []
     for group in np.arange(n_clusters):
         phenos_target = df_clusters.query(
