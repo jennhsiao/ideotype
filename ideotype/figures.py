@@ -26,7 +26,8 @@ from ideotype.data_process import (read_data,
                                    fetch_norm_mean_disp,
                                    fetch_mean_disp_diff,
                                    fetch_mean_stability_diff,
-                                   process_clusters)
+                                   process_clusters,
+                                   fetch_emps)
 from ideotype.analysis import (rank_top_phenos,
                                rank_all_phenos,
                                identify_top_phenos,
@@ -1604,7 +1605,7 @@ def plot_pca_strategies(df_emps_sub, n_clusters, df_pca, pca,
 def _plot_strategies(emps, emps_text,
                      targeted_groups, targeted_phenos,
                      df_clusters, df_emps_std, cs,
-                     save=False, save_text=None):
+                     save=None, save_text=None):
     """
     Plot out strategies.
 
@@ -1672,9 +1673,9 @@ def _plot_strategies(emps, emps_text,
 def plot_strategies(n_pheno, w_yield, w_disp,
                     future_run, rank_limit, df_clusters, n_clusters,
                     target, target_select, target_threshold,
-                    df_emps_std, save=None):
+                    df_emps_std, save=None, save_text=None):
     """
-    Pro-process data & plot out strategies.
+    Pre-process data & plot out strategies.
 
     Parameters
     ----------
@@ -1739,4 +1740,149 @@ def plot_strategies(n_pheno, w_yield, w_disp,
 
     # visualization
     _plot_strategies(emps, emps_text, targeted_groups, targeted_phenos,
-                     df_clusters, df_emps_std, cs, save)
+                     df_clusters, df_emps_std, cs, save, save_text)
+
+
+def plot_strategies_shift(n_pheno, w_yield, w_disp,
+                          future_run, rank_limit,
+                          target_threshold, n_clusters,
+                          save=None, save_text=None):
+    """
+    Pre-process data & plot out strategy shifts by 2100.
+
+    Parameters
+    ----------
+    n_pheno : int
+    w_yield : float
+    w_disp : float
+
+    """
+    # read in clustered data
+    df_clusters = pd.read_csv(
+        '/home/disk/eos8/ach315/ideotype/'
+        'ideotype/data/strategies_cluster/'
+        'phenos_strategies_phenomorph_cluster_8.csv')
+
+    # fetch top phenos
+    phenos_topall = rank_top_phenos('present', n_pheno, w_yield, w_disp)
+    phenos_top20 = phenos_topall[:20]
+
+    # identify improved & declined phenos
+    (phenos_improved, phenos_declined,
+     pup_rc, pdown_rc) = identify_rankchanged_phenos(
+        n_pheno, w_yield, w_disp, future_run, rank_limit)
+
+    # fetch emps
+    emps = ['jday', 'pheno_days', 'LA']
+    emps_text = ['grain-fill start', 'grain-fill duration', 'leaf area']
+    df_emps, df_emps_std = fetch_emps('present')
+
+    # identify top20 target groups
+    target = 'top20'
+    targeted_groups_top20, pheno_groups = process_clusters(
+        df_clusters, n_clusters,
+        phenos_top20, phenos_improved, phenos_declined,
+        target, target_threshold)
+
+    dict_targets = dict(zip(targeted_groups_top20, pheno_groups))
+
+    # identify improved target groups
+    target = 'improved'
+    targeted_groups_improved, pheno_groups_improved = process_clusters(
+        df_clusters, n_clusters,
+        phenos_top20, phenos_improved, phenos_declined,
+        target, target_threshold)
+
+    # identify declined target groups
+    target = 'declined'
+    targeted_groups_declined, pheno_groups_declined = process_clusters(
+        df_clusters, n_clusters,
+        phenos_top20, phenos_improved, phenos_declined,
+        target, target_threshold)
+
+    # identify strategy groups with no rank change
+    targeted_groups_rankchanged = (
+        targeted_groups_improved + targeted_groups_declined)
+    targeted_groups_nochange = list(
+        set(targeted_groups_top20) - set(targeted_groups_rankchanged))
+
+    # identify strategy groups previously in top20 that ended up declining
+    targeted_groups_truedecline = [
+        item for item in targeted_groups_declined if
+        item in targeted_groups_top20]
+
+    # manually assign strategies colors
+    cs_vivid8 = Vivid_8.mpl_colors
+    cs = [np.nan]*n_clusters
+    cs[int(df_clusters.query('cvar==58').group)] = cs_vivid8[0]
+    cs[int(df_clusters.query('cvar==4').group)] = cs_vivid8[1]
+    cs[int(df_clusters.query('cvar==88').group)] = cs_vivid8[2]
+    cs[int(df_clusters.query('cvar==89').group)] = cs_vivid8[3]
+    cs[int(df_clusters.query('cvar==5').group)] = cs_vivid8[4]
+    cs[int(df_clusters.query('cvar==15').group)] = cs_vivid8[5]
+    cs[int(df_clusters.query('cvar==55').group)] = cs_vivid8[6]
+    cs[int(df_clusters.query('cvar==24').group)] = cs_vivid8[7]
+
+    # visualization
+    fig = plt.figure(figsize=(7, 7))
+    ax = fig.add_subplot()
+
+    # strategies that improved
+    for group in targeted_groups_improved:
+        phenos = list(df_clusters.query(f'group=={group}').cvar)
+        x = np.array(phenos)
+        y = np.array(phenos_improved)
+        phenos = list(x[np.isin(x, y)])
+
+        emps_mean = df_emps_std[df_emps_std.cvar.isin(phenos)].mean()[emps]
+        ax.plot(np.arange(len(emps)), emps_mean,
+                color=cs[group], linewidth=2, alpha=0.6)
+        ax.scatter(np.arange(len(emps)), emps_mean,
+                   color=cs[group], s=100, alpha=0.8)
+
+    # strategies with similar performance
+    for group in targeted_groups_nochange:
+        phenos = dict_targets[group]
+        emps_mean = df_emps_std[df_emps_std.cvar.isin(phenos)].mean()[emps]
+        ax.plot(np.arange(len(emps)), emps_mean,
+                color=cs[group], linewidth=2, linestyle='--', alpha=0.6)
+        ax.scatter(np.arange(len(emps)), emps_mean,
+                   color=cs[group], s=100, facecolors='none', alpha=0.8)
+
+    # strategies that declined in performance
+    for group in targeted_groups_truedecline:
+        phenos = dict_targets[group]
+        emps_mean = df_emps_std[df_emps_std.cvar.isin(phenos)].mean()[emps]
+        ax.plot(np.arange(len(emps)), emps_mean,
+                color=cs[group], linewidth=2, linestyle=':', alpha=0.3)
+        ax.scatter(np.arange(len(emps)), emps_mean,
+                   color=cs[group], s=100, facecolor='none', alpha=0.3)
+
+    ax.set_xlim(-0.5, len(emps)-0.5)
+    ax.set_ylim(-0.1, 1.1)
+    ax.set_xticks(np.arange(len(emps)))
+    ax.set_xticklabels(emps_text, rotation=45, fontweight='light', fontsize=12)
+    ax.set_yticks([0, 0.5, 1])
+    ax.set_yticklabels([0, 0.5, 1])
+    ax.set_ylabel('standardized emergent property value',
+                  fontweight='light', fontsize=12)
+    ax.axhline(y=0.5, color='grey', linewidth=0.5, linestyle=':')
+
+    ax.arrow(len(emps)-0.2, 0, 0, 1, color='grey', alpha=0.5,
+             head_length=0.03, head_width=0.2, clip_on=False)
+    ax.arrow(len(emps)-0.2, 1, 0, -1, color='grey', alpha=0.5,
+             head_length=0.03, head_width=0.2, clip_on=False)
+
+    ax.annotate('Lower than \naverage', (len(emps)+0.2, 0.25),
+                ha='center', va='center', fontweight='light',
+                fontsize=12, rotation=90, annotation_clip=False)
+    ax.annotate('Higher than \naverage', (len(emps)+0.2, 0.75),
+                ha='center', va='center', fontweight='light',
+                fontsize=12, rotation=90, annotation_clip=False)
+
+    fig.subplots_adjust(left=0.3, right=0.7, bottom=0.3)
+
+    if save is True:
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'scatterlines_strategies_f2100_shift_{save_text}.png',
+                    format='png', dpi=800)
