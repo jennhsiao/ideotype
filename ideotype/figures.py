@@ -352,7 +352,7 @@ def plot_yield_disp_scatter(df, save=None):
     means = df_mean.mean(axis=1)
     disps = df_disp.mean(axis=1)
 
-    fig = plt.figure(figsize=(8, 5))
+    fig = plt.figure(figsize=(6, 6))
 
     ax = fig.add_subplot()
     ax.scatter(means, disps, c='slategrey', s=100, alpha=0.5)
@@ -382,7 +382,7 @@ def plot_yield_stability_scatter_norm(save=None):
     yield_stability_norm = 1-yield_disp_norm
 
     # visulization
-    fig = plt.figure(figsize=(8, 5))
+    fig = plt.figure(figsize=(6, 6))
     ax = fig.add_subplot()
     ax.scatter(yield_mean_norm, yield_stability_norm, c='slategrey',
                s=100, alpha=0.5)
@@ -414,7 +414,7 @@ def plot_yield_stability_scatter_performance(save=None):
     yield_mean_norm, yield_disp_norm = fetch_norm_mean_disp('present')
 
     # visulization
-    fig = plt.figure(figsize=(8, 5))
+    fig = plt.figure(figsize=(6, 6))
     ax = fig.add_subplot()
     yield_stability_norm = 1-yield_disp_norm
     ax.scatter(yield_mean_norm, yield_stability_norm,
@@ -470,7 +470,7 @@ def plot_yield_stability_scatter_shift(run_name_present, run_name_future,
     diffs_yield, diffs_stability = fetch_mean_stability_diff(
         run_name_present, run_name_future, phenos)
 
-    fig = plt.figure(figsize=(8, 5))
+    fig = plt.figure(figsize=(6, 6))
     ax = fig.add_subplot()
     ax.scatter(yield_mean_norm_present, yield_stability_norm_present,
                color='slategrey', s=100, alpha=0.2)
@@ -1711,8 +1711,8 @@ def plot_strategies(n_pheno, w_yield, w_disp,
     cs[int(df_clusters.query('cvar==4').group)] = cs_vivid8[1]
     cs[int(df_clusters.query('cvar==88').group)] = cs_vivid8[2]
     cs[int(df_clusters.query('cvar==89').group)] = cs_vivid8[3]
-    cs[int(df_clusters.query('cvar==5').group)] = cs_vivid8[4]
-    cs[int(df_clusters.query('cvar==15').group)] = cs_vivid8[5]
+    cs[int(df_clusters.query('cvar==15').group)] = cs_vivid8[4]
+    cs[int(df_clusters.query('cvar==5').group)] = cs_vivid8[5]
     cs[int(df_clusters.query('cvar==55').group)] = cs_vivid8[6]
     cs[int(df_clusters.query('cvar==24').group)] = cs_vivid8[7]
 
@@ -1818,8 +1818,8 @@ def plot_strategies_shift(n_pheno, w_yield, w_disp,
     cs[int(df_clusters.query('cvar==4').group)] = cs_vivid8[1]
     cs[int(df_clusters.query('cvar==88').group)] = cs_vivid8[2]
     cs[int(df_clusters.query('cvar==89').group)] = cs_vivid8[3]
-    cs[int(df_clusters.query('cvar==5').group)] = cs_vivid8[4]
-    cs[int(df_clusters.query('cvar==15').group)] = cs_vivid8[5]
+    cs[int(df_clusters.query('cvar==15').group)] = cs_vivid8[4]
+    cs[int(df_clusters.query('cvar==5').group)] = cs_vivid8[5]
     cs[int(df_clusters.query('cvar==55').group)] = cs_vivid8[6]
     cs[int(df_clusters.query('cvar==24').group)] = cs_vivid8[7]
 
