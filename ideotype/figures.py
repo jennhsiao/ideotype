@@ -1,6 +1,7 @@
 """Figure functions."""
 
 import os
+import itertools
 
 import numpy as np
 import pandas as pd
@@ -27,7 +28,8 @@ from ideotype.data_process import (read_data,
                                    fetch_mean_disp_diff,
                                    fetch_mean_stability_diff,
                                    process_clusters,
-                                   fetch_emps)
+                                   fetch_emps,
+                                   fetch_sim_values)
 from ideotype.analysis import (rank_top_phenos,
                                rank_all_phenos,
                                identify_top_phenos,
@@ -501,6 +503,115 @@ def plot_yield_stability_scatter_shift(run_name_present, run_name_future,
     if save is True:
         plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
                     f'scatter_yield_stability_shift_y{w_yield}_d{w_disp}.png',
+                    format='png', dpi=800)
+
+
+def plot_yield_stability_scatter_strategies(target, save=None):
+    """
+    Plot top-performing strategies in yield - stability space.
+
+    Parameters
+    ----------
+    target : str
+        'top20', 'improved'
+    save : bool
+
+    """
+    # read in clustered data
+    df_clusters = pd.read_csv(
+        '/home/disk/eos8/ach315/ideotype/'
+        'ideotype/data/strategies_cluster/'
+        'phenos_strategies_phenomorph_cluster_8.csv')
+
+    # manually assign strategies colors
+    n_clusters = 8
+    cs_vivid8 = Vivid_8.mpl_colors
+    cs = [np.nan]*n_clusters
+    cs[int(df_clusters.query('cvar==58').group)] = cs_vivid8[0]
+    cs[int(df_clusters.query('cvar==4').group)] = cs_vivid8[1]
+    cs[int(df_clusters.query('cvar==88').group)] = cs_vivid8[2]
+    cs[int(df_clusters.query('cvar==89').group)] = cs_vivid8[3]
+    cs[int(df_clusters.query('cvar==15').group)] = cs_vivid8[4]
+    cs[int(df_clusters.query('cvar==5').group)] = cs_vivid8[5]
+    cs[int(df_clusters.query('cvar==55').group)] = cs_vivid8[6]
+    cs[int(df_clusters.query('cvar==24').group)] = cs_vivid8[7]
+
+    # parameters
+    n_pheno = 20
+    w_yield = 1
+    w_disp = 1
+    future_run = 'f2100'
+    rank_limit = 5
+
+    # fetch top phenos
+    phenos_topall = rank_top_phenos('present', n_pheno, w_yield, w_disp)
+    phenos_top20 = phenos_topall[:20]
+
+    # identify improved & declined phenos
+    (phenos_improved, phenos_declined,
+     pup_rc, pdown_rc) = identify_rankchanged_phenos(
+        n_pheno, w_yield, w_disp, future_run, rank_limit)
+
+    if target == 'top20':
+        targeted_groups, pheno_groups = process_clusters(
+            df_clusters, n_clusters,
+            phenos_top20, phenos_improved, phenos_declined,
+            'top20', 0.5)
+
+        dict_target = {}
+        targeted_phenos = phenos_top20
+        for group in targeted_groups:
+            x = np.array(df_clusters.query(f'group=={group}').cvar)
+            y = np.array(targeted_phenos)
+            phenos = list(x[np.isin(x, y)])
+            dict_target[group] = phenos
+
+    elif target == 'improved':
+        targeted_groups, pheno_groups = process_clusters(
+            df_clusters, n_clusters,
+            phenos_top20, phenos_improved, phenos_declined,
+            'improved', 0.5)
+
+        dict_target = {}
+        targeted_phenos = phenos_improved
+        for group in targeted_groups:
+            x = np.array(df_clusters.query(f'group=={group}').cvar)
+            y = np.array(targeted_phenos)
+            phenos = list(x[np.isin(x, y)])
+            dict_target[group] = phenos
+
+    # fetch normalized mean & disp values
+    yield_mean_norm, yield_disp_norm = fetch_norm_mean_disp('present')
+    yield_stability_norm = 1-yield_disp_norm
+
+    # visulization
+    fig = plt.figure(figsize=(6, 6))
+    ax = fig.add_subplot()
+    ax.scatter(yield_mean_norm, yield_stability_norm,
+               s=100, alpha=0.5, marker='o',
+               facecolor='none', edgecolor='slategray')
+
+    for item in dict_target:
+        phenos = dict_target[item]
+        ax.scatter(yield_mean_norm[phenos], yield_stability_norm[phenos],
+                   color=cs[item], alpha=0.6, s=100)
+
+    dict_list = dict_target.values()
+    phenos_to_annotate = list(itertools.chain(*dict_list))
+
+    for item in phenos_to_annotate:
+        ax.annotate(item,
+                    (yield_mean_norm[item],
+                     yield_stability_norm[item]), c='grey')
+
+    ax.set_xlabel('standardized yield mean', fontweight='light', size=14)
+    ax.set_ylabel('standardized yield stability index',
+                  fontweight='light', size=14)
+
+    if save is True:
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'scatter_yield_stab_stand_'
+                    f'strategies_present_{target}.png',
                     format='png', dpi=800)
 
 
@@ -1671,9 +1782,9 @@ def _plot_strategies(emps, emps_text,
 
 
 def plot_strategies(n_pheno, w_yield, w_disp,
-                    future_run, rank_limit, df_clusters, n_clusters,
+                    future_run, rank_limit,
                     target, target_select, target_threshold,
-                    df_emps_std, save=None, save_text=None):
+                    save=None, save_text=None):
     """
     Pre-process data & plot out strategies.
 
@@ -1688,9 +1799,6 @@ def plot_strategies(n_pheno, w_yield, w_disp,
         e.g., if rank_limit = 5, a plant type would have to improve at least
         5 ranks shifting from current into future climate in order to be
         considered as an 'improved' plant type.
-    df_clusters : pd.DataFrame
-    n_clusters : int
-        Number of clusters used to cluster plant types into strategies.
     target : str
         'top20'
         'improved'
@@ -1700,10 +1808,16 @@ def plot_strategies(n_pheno, w_yield, w_disp,
         'improved' - 1
         'declined' -2
     target_threshold : float
-    df_emps_std : pd.DataFrame
     save : bool
 
     """
+    # read in clustered data
+    df_clusters = pd.read_csv('/home/disk/eos8/ach315/ideotype/ideotype/'
+                              'data/strategies_cluster/'
+                              'phenos_strategies_phenomorph_cluster_8.csv')
+
+    n_clusters = 8
+
     # manually assign strategies colors
     cs_vivid8 = Vivid_8.mpl_colors
     cs = [np.nan]*n_clusters
@@ -1728,6 +1842,9 @@ def plot_strategies(n_pheno, w_yield, w_disp,
     # process clusters
     emps = ['jday', 'pheno_days', 'LA']
     emps_text = ['grain-fill start', 'grain-fill duration', 'leaf area']
+
+    # fetch emps
+    df_emps, df_emps_std = fetch_emps('present')
 
     targeted_groups, pheno_groups = process_clusters(
         df_clusters, n_clusters,
@@ -1885,4 +2002,140 @@ def plot_strategies_shift(n_pheno, w_yield, w_disp,
     if save is True:
         plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
                     f'scatterlines_strategies_f2100_shift_{save_text}.png',
+                    format='png', dpi=800)
+
+
+def plot_scatter_mechanisms(run_name, phenostage,
+                            save=None, save_text=None):
+    """
+    Plot mechanisms scatter plot.
+
+    Parameters
+    ----------
+    run_name : str
+        run set to plot.
+    phenostage : str
+        '"Emerged"'
+        '"grainFill"'
+
+    """
+    # read in queried maizsim outptus
+    df_phys = pd.read_csv(
+        os.path.join(DATA_PATH, 'sims', f'sims_{run_name}_phys.csv'))
+    df_carbon = pd.read_csv(
+        os.path.join(DATA_PATH, 'sims', f'sims_{run_name}_carbon.csv'))
+    df_waterdeficit = pd.read_csv(
+        os.path.join(DATA_PATH, 'sims', f'sims_{run_name}_waterdeficit.csv'))
+
+    # read in clustered data
+    df_clusters = pd.read_csv(
+        '/home/disk/eos8/ach315/ideotype/'
+        'ideotype/data/strategies_cluster/'
+        'phenos_strategies_phenomorph_cluster_8.csv')
+
+    # manually set up color palette
+    from palettable.cartocolors.qualitative import Vivid_8
+    n_clusters = 8
+    cs_vivid8 = Vivid_8.mpl_colors
+    cs = [np.nan]*n_clusters
+    cs[int(df_clusters.query('cvar==58').group)] = cs_vivid8[0]
+    cs[int(df_clusters.query('cvar==4').group)] = cs_vivid8[1]
+    cs[int(df_clusters.query('cvar==88').group)] = cs_vivid8[2]
+    cs[int(df_clusters.query('cvar==89').group)] = cs_vivid8[3]
+    cs[int(df_clusters.query('cvar==15').group)] = cs_vivid8[4]
+    cs[int(df_clusters.query('cvar==5').group)] = cs_vivid8[5]
+    cs[int(df_clusters.query('cvar==55').group)] = cs_vivid8[6]
+    cs[int(df_clusters.query('cvar==24').group)] = cs_vivid8[7]
+
+    # parameters
+    n_pheno = 20
+    w_yield = 1
+    w_disp = 1
+    future_run = 'f2100'
+    rank_limit = 5
+
+    # fetch top phenos
+    phenos_topall = rank_top_phenos('present', n_pheno, w_yield, w_disp)
+    phenos_top20 = phenos_topall[:20]
+
+    # identify improved & declined phenos
+    (phenos_improved, phenos_declined,
+     pup_rc, pdown_rc) = identify_rankchanged_phenos(
+        n_pheno, w_yield, w_disp, future_run, rank_limit)
+
+    # identify target phenos & strategy groups
+    targeted_groups, pheno_groups = process_clusters(
+        df_clusters, n_clusters,
+        phenos_top20, phenos_improved, phenos_declined,
+        'top20', 0.5)
+
+    dict_top20 = {}
+    targeted_phenos = phenos_top20
+    for group in targeted_groups:
+        x = np.array(df_clusters.query(f'group=={group}').cvar)
+        y = np.array(targeted_phenos)
+        phenos = list(x[np.isin(x, y)])
+        dict_top20[group] = phenos
+
+    # identify phenos
+    phenos_all = np.arange(100)
+
+    # phenos
+    phenos = list(itertools.chain(*list(dict_top20.values())))
+
+    # colors
+    colors = []
+    for item in dict_top20:
+        phenos_count = len(dict_top20[item])
+        colors.append([cs[item]]*phenos_count)
+    colors = list(itertools.chain(*colors))
+
+    # mechanisms
+    dfs = [df_phys, df_phys, df_carbon, df_waterdeficit]
+    mechanisms = ['An', 'pn', 'pn_sum', 'water_deficit_mean']
+    xlabels = ['leaf-level photo.',
+               'whole-plant photo.',
+               'photo. through time',
+               'mean water deficit']
+
+    # visualization
+    fig = plt.figure(figsize=(4, 5))
+
+    for count, (df, mechanism) in enumerate(zip(dfs, mechanisms)):
+        ax = fig.add_subplot(1, 4, count+1)
+        sims_all = fetch_sim_values(df, phenostage, mechanism, phenos_all)
+        sims = fetch_sim_values(df, phenostage, mechanism, phenos)
+        sims_std = [(sim - min(sims_all))/max(sims_all) for sim in sims]
+
+        if count == 3:
+            sims_all = [sim*-1 for sim in sims_all]
+            sims = [sim*-1 for sim in sims]
+            sims_std = [(sim - min(sims_all))/max(sims_all) for sim in sims]
+
+        ax.scatter([1]*len(phenos), sims_std,
+                   s=200, c=colors, alpha=0.6, clip_on=False)
+
+        ax.spines['left'].set_visible(True)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+
+        ax.set_xticks([0])
+        ax.set_xticklabels([0])
+        ax.set_xlabel(xlabels[count], rotation=45, labelpad=10,
+                      fontsize=10, fontweight='light')
+        ax.set_ylim(0, 1)
+        ax.set_yticks([0, 0.5, 1])
+
+        if count == 0:
+            ax.set_yticklabels([0, 0.5, 1])
+        else:
+            ax.set_yticklabels(['', '', ''])
+        ax.tick_params(axis='y', direction='in', pad=10)
+
+    fig.subplots_adjust(wspace=0, bottom=0.3)
+
+    if save is True:
+        plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
+                    f'scatter_mechanisms_{save_text}.png',
                     format='png', dpi=800)
