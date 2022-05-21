@@ -8,7 +8,9 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+from numpy import linspace
 from datetime import datetime
+from scipy.stats.kde import gaussian_kde
 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -22,6 +24,7 @@ from palettable.cmocean.sequential import Tempo_10
 from palettable.wesanderson import Mendl_4
 
 from ideotype.data_process import (read_data,
+                                   parse_mature,
                                    process_sims,
                                    agg_sims,
                                    fetch_norm_mean_disp,
@@ -29,7 +32,8 @@ from ideotype.data_process import (read_data,
                                    fetch_mean_stability_diff,
                                    process_clusters,
                                    fetch_emps,
-                                   fetch_sim_values)
+                                   fetch_sim_values,
+                                   fetch_sens)
 from ideotype.analysis import (rank_top_phenos,
                                rank_all_phenos,
                                identify_top_phenos,
@@ -2139,3 +2143,140 @@ def plot_scatter_mechanisms(run_name, phenostage,
         plt.savefig(f'/home/disk/eos8/ach315/upscale/figs/'
                     f'scatter_mechanisms_{save_text}.png',
                     format='png', dpi=800)
+
+
+def plot_yield_sensitivity_lines(save=None):
+    """
+    Plot yield sensitivity line plots.
+
+    Parameters
+    ----------
+    save : bool
+
+    """
+    # Read in present-day data
+    run_name = 'present'
+    df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
+        f'/home/disk/eos8/ach315/ideotype/ideotype/'
+        f'data/files/filepaths_{run_name}.yml')
+    df_extended, df_stuck = parse_mature(df_all)
+    df_all.drop(df_stuck.index, inplace=True)
+    df_all.site = df_all.site.astype(int)
+    df_wea.site = df_wea.site.astype(int)
+
+    # Read in future sims data
+    run_name = 'f2100'
+    df_sims, df_sites, df_wea, df_params, df_all_f2100, df_matured = read_data(
+        f'/home/disk/eos8/ach315/ideotype/ideotype/'
+        f'data/files/filepaths_{run_name}.yml')
+    df_extended, df_stuck = parse_mature(df_all_f2100)
+    df_all_f2100.drop(df_stuck.index, inplace=True)
+
+    # identify pheno rankchanges
+    n_pheno = 20
+    w_yield = 1
+    w_disp = 1
+    future_run = 'f2100'
+    rank_limit = 10
+
+    (phenos_improved, phenos_declined,
+     phenos_improved_rc, phenos_declined_rc) = identify_rankchanged_phenos(
+        n_pheno, w_yield, w_disp,
+        future_run, rank_limit)
+
+    # set phenogroups
+    phenogroups = [phenos_improved, phenos_declined]
+    sens = fetch_sens(df_all, df_all_f2100, phenogroups)
+
+    # set up points
+    p1s = [0, 60]
+    p2s = [60, 120]
+
+    # set up colors
+    c1 = 'tab:purple'
+    c2 = 'tab:orange'
+    cols = [c1, c2]
+
+    # set up temp bins
+    n_bins = 5
+
+    # visualization
+    # a) yield sensitivity PDFs
+    # (https://stackoverflow.com/questions/15415455/
+    # plotting-probability-density-function-by-sample-with-matplotlib)
+
+    fig = plt.figure(figsize=(12, 5))
+    ax1 = fig.add_subplot(1, 2, 1)
+
+    for item in np.arange(2):
+        data = sens[p1s[item]:p2s[item]]
+        kde = gaussian_kde(data)
+        dist_space = linspace(min(data), max(data), 1000)
+        ax1.plot(dist_space, kde(dist_space),
+                 c=cols[item], alpha=0.8, linewidth=2.5)
+
+    ax1.set_xlabel('yield sensitivity (% yield loss / temp.)',
+                   fontsize=12, fontweight='light')
+    ax1.set_ylabel('probability density', fontsize=12, fontweight='light')
+    ax1.annotate('a)', xy=(0.05, 0.9),
+                 xycoords='axes fraction', fontsize=12)
+
+    # b) yield sensitivity across temp bins
+    ax2 = fig.add_subplot(1, 2, 2)
+
+    phenogroups = [phenos_improved, phenos_declined]
+    for pos, (phenos, c) in enumerate(zip(phenogroups, cols)):
+        df_s = df_all[df_all.cvar.isin(phenos)]
+        bins = pd.cut(df_s.temp, n_bins, labels=np.arange(n_bins).tolist())
+        df_sub = df_s.copy()
+        df_sub.loc[:, 'bins'] = bins
+        mid_yield_present = [
+            round(np.percentile(
+                df_sub.query(
+                    f'bins=={item}').dm_ear, 50), 2) for item in np.arange(
+                        n_bins)]
+        temp_means_present = df_sub.groupby('bins').mean().temp
+
+        df_s = df_all_f2100[df_all_f2100.cvar.isin(phenos)]
+        bins = pd.cut(df_s.temp, n_bins, labels=np.arange(n_bins).tolist())
+        df_sub = df_s.copy()
+        df_sub.loc[:, 'bins'] = bins
+        mid_yield_f2100 = [
+            round(np.percentile(
+                df_sub.query(
+                    f'bins=={item}').dm_ear, 50), 2) for item in np.arange(
+                        n_bins)]
+        temp_means_f2100 = df_sub.groupby('bins').mean().temp
+
+        # calculate yield sensitivity (yield diff per degree warming)
+        temp_diff = [temp_means_f2100[item] - temp_means_present[item]
+                     for item in np.arange(n_bins)]
+        mid_yield_diff = [mid_yield_f2100[item] - mid_yield_present[item]
+                          for item in np.arange(n_bins)]
+        dy_dt = [((
+            mid_yield_diff[item]/mid_yield_present[item]) / temp_diff[
+                item])*100 for item in np.arange(n_bins)]
+
+        ax2.scatter(np.arange(n_bins), dy_dt, color=c, s=100, alpha=0.8)
+        ax2.plot(np.arange(n_bins), dy_dt, color=c, linewidth=3, alpha=0.8)
+
+    ax2.set_xlim(-0.5, 4.5)
+    ax2.set_ylim(-13.2, 0)
+    ax2.set_xticks(np.arange(n_bins))
+    ax2.set_xticklabels(np.arange(-2, 3))
+    ax2.set_xlabel('climatological temp. percentile',
+                   fontweight='light', fontsize=12)
+    ax2.set_ylabel('yield sensitivity', fontweight='light', fontsize=12)
+    ax2.annotate('b)', xy=(0.05, 0.9),
+                 xycoords='axes fraction', fontsize=12)
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
+                    'lines_yield_sensitivity.png',
+                    format='png', dpi=800)
+
+
+def plot_yield_sensitivity_heatmap():
+    """
+    """
+    pass
