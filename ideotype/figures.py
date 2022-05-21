@@ -2162,7 +2162,6 @@ def plot_yield_sensitivity_lines(save=None):
     df_extended, df_stuck = parse_mature(df_all)
     df_all.drop(df_stuck.index, inplace=True)
     df_all.site = df_all.site.astype(int)
-    df_wea.site = df_wea.site.astype(int)
 
     # Read in future sims data
     run_name = 'f2100'
@@ -2276,7 +2275,96 @@ def plot_yield_sensitivity_lines(save=None):
                     format='png', dpi=800)
 
 
-def plot_yield_sensitivity_heatmap():
+def plot_yield_sensitivity_heatmap(save=None):
     """
+    Plot yield sensitivity heatmap across climate space.
+
+    Parameters
+    ----------
+    save : bool
+
     """
-    pass
+    # Read in present-day data
+    run_name = 'present'
+    df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
+        f'/home/disk/eos8/ach315/ideotype/ideotype/'
+        f'data/files/filepaths_{run_name}.yml')
+    df_extended, df_stuck = parse_mature(df_all)
+    df_all.drop(df_stuck.index, inplace=True)
+    df_all.site = df_all.site.astype(int)
+
+    # Read in future sims data
+    run_name = 'f2100'
+    df_sims, df_sites, df_wea, df_params, df_all_f2100, df_matured = read_data(
+        f'/home/disk/eos8/ach315/ideotype/ideotype/'
+        f'data/files/filepaths_{run_name}.yml')
+    df_extended, df_stuck = parse_mature(df_all_f2100)
+    df_all_f2100.drop(df_stuck.index, inplace=True)
+
+    # identify pheno rankchanges
+    n_pheno = 20
+    w_yield = 1
+    w_disp = 1
+    future_run = 'f2100'
+    rank_limit = 10
+
+    (phenos_improved, phenos_declined,
+     phenos_improved_rc, phenos_declined_rc) = identify_rankchanged_phenos(
+        n_pheno, w_yield, w_disp,
+        future_run, rank_limit)
+
+    # set up phenogroups & climate bins
+    phenogroups = [phenos_improved, phenos_declined]
+    n_bins_temp = 9
+    n_bins_precip = 9
+
+    # visualization
+    fig = plt.figure(figsize=(12, 10))
+
+    for item, phenos in enumerate(phenogroups):
+        df_s = df_all[df_all.cvar.isin(phenos)].reset_index(drop=True)
+        bins_temp = pd.cut(df_s.temp,
+                           n_bins_temp,
+                           labels=np.arange(n_bins_temp).tolist())
+        bins_precip = pd.cut(df_s.precip,
+                             n_bins_precip,
+                             labels=np.arange(n_bins_precip).tolist())
+        df_s_present = df_s.copy()[['year', 'cvar', 'site', 'dm_ear']]
+        df_s_present['bins_temp'] = bins_temp
+        df_s_present['bins_precip'] = bins_precip
+
+        df_s_f2100 = df_all_f2100[
+            df_all_f2100.cvar.isin(phenos)].reset_index(drop=True)[
+                ['year', 'cvar', 'site', 'dm_ear']]
+        df_s_f2100.site = df_s_f2100.site.astype(int)
+        df_s_merged = df_s_present.merge(df_s_f2100,
+                                         how='left',
+                                         on=['year', 'cvar', 'site'])
+
+        mx = np.zeros((n_bins_precip, n_bins_temp))
+        for bin_precip in np.arange(n_bins_precip):
+            for bin_temp in np.arange(n_bins_temp):
+                dm_ear_present = df_s_merged.query(
+                    f'bins_temp=={bin_temp}').query(
+                    f'bins_precip=={bin_precip}').dm_ear_x.mean()
+                dm_ear_f2100 = df_s_merged.query(
+                    f'bins_temp=={bin_temp}').query(
+                    f'bins_precip=={bin_precip}').dm_ear_y.mean()
+                mx[(n_bins_precip-bin_precip-1), bin_temp] = (
+                    (dm_ear_f2100 - dm_ear_present)/dm_ear_present)*100
+
+        ax = fig.add_subplot(2, 2, item+1)
+        sns.heatmap(mx, cmap=PuOr_7.mpl_colormap,
+                    vmin=-40, vmax=40, cbar_kws={'shrink': 0.5})
+
+        ax.set_xlabel('temp. precentiles', fontweight='light', fontsize=14)
+        ax.set_xticks(np.arange(0.5, 9.5))
+        ax.set_xticklabels(np.arange(-4, 5), fontweight='light')
+        ax.set_ylabel('precip. percentiles', fontweight='light', fontsize=14)
+        ax.set_yticks(np.arange(0.5, 9.5)[::-1])
+        ax.set_yticklabels(np.arange(-4, 5), fontweight='light', rotation=0)
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
+                    'heatmap_cspace_yieldloss_temp_precip.png',
+                    format='png', dpi=800)
