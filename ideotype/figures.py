@@ -2403,7 +2403,7 @@ def plot_cspace_sites_map(run_name, save=None):
                  color=colors[item],
                  label=texts[item])[0] for item in np.arange(4)]
 
-    fig = plt.figure(figsize=(8, 5))
+    fig = plt.figure(figsize=(9, 5))
     extent = [-123, -72, 19, 53]
 
     ax = fig.add_subplot(1, 1, 1, projection=ccrs.AlbersEqualArea(
@@ -2495,3 +2495,265 @@ def plot_cspace_sites_scatter(run_name, save=None):
     if save is True:
         plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
                     'scatter_climate_cspace.png', format='png', dpi=800)
+
+
+def plot_strategies_performance_cspace(run_name, save=None):
+    """
+    Plot heatmap of strategy performances between cspace.
+
+    Parameters
+    ----------
+    run_name : str
+    save : bool
+
+    """
+    # parameters
+    n_pheno = 20
+    w_yield = 1
+    w_disp = 1
+    future_run = 'f2100'
+    rank_limit = 5
+    n_clusters = 8
+
+    # fetch top phenos
+    phenos_topall = rank_top_phenos('present', n_pheno, w_yield, w_disp)
+    phenos_top20 = phenos_topall[:20]
+
+    # read in clustered data
+    df_clusters = pd.read_csv(
+        '/home/disk/eos8/ach315/ideotype/'
+        'ideotype/data/strategies_cluster/'
+        'phenos_strategies_phenomorph_cluster_8.csv')
+
+    # identify improved & declined phenos
+    (phenos_improved, phenos_declined,
+     pup_rc, pdown_rc) = identify_rankchanged_phenos(
+        n_pheno, w_yield, w_disp, future_run, rank_limit)
+
+    # identify target phenos & strategy groups
+    targeted_groups, pheno_groups = process_clusters(
+        df_clusters, n_clusters,
+        phenos_top20, phenos_improved, phenos_declined,
+        'top20', 0.5)
+
+    dict_top20 = {}
+    targeted_phenos = phenos_top20
+    for group in targeted_groups:
+        x = np.array(df_clusters.query(f'group=={group}').cvar)
+        y = np.array(targeted_phenos)
+        phenos = list(x[np.isin(x, y)])
+        dict_top20[group] = phenos
+
+    # identify improved target groups
+    targeted_groups_improved, pheno_groups_improved = process_clusters(
+        df_clusters, n_clusters,
+        phenos_top20, phenos_improved, phenos_declined,
+        'improved', 0.5)
+
+    dict_improved = {}
+    targeted_phenos = phenos_improved
+
+    for group in targeted_groups_improved:
+        x = np.array(df_clusters.query(f'group=={group}').cvar)
+        y = np.array(targeted_phenos)
+        phenos = list(x[np.isin(x, y)])
+        dict_improved[group] = phenos
+
+    # assemble top phenos for plotting
+    # manually ordering of strategies:
+    # 4 - Slow Aging
+    # 1 - Early Starting
+    # 6 - High Yielding
+    # 7 - Stress Averting
+    top_phenos = list(
+        itertools.chain(
+            *[dict_top20[4], dict_top20[1], dict_top20[6], dict_top20[7]]))
+    new_top_pheno_groups = list(
+        set(list(dict_improved.keys())) - set(list(dict_top20.keys())))
+
+    new_top_phenos = []
+    for top_group in new_top_pheno_groups:
+        new_top_phenos.append(dict_improved[top_group])
+
+    new_top_phenos = list(itertools.chain(*new_top_phenos))
+    top_phenos.extend(new_top_phenos)
+
+    # identify top pheno performance
+    df_pheno, mx = identify_top_phenos(run_name, 20, 1, 1)
+
+    # set up clustered sites info
+    df_clustered_sites = pd.read_csv(
+        '/home/disk/eos8/ach315/ideotype/ideotype/'
+        'data/climate_cluster/sites_clusered.csv')
+
+    km0_sites = df_clustered_sites.query('group==0').index.tolist()
+    km1_sites = df_clustered_sites.query('group==1').index.tolist()
+    km2_sites = df_clustered_sites.query('group==2').index.tolist()
+    km3_sites = df_clustered_sites.query('group==3').index.tolist()
+
+    # visualization
+    fig = plt.figure(figsize=(12, 2))
+
+    sites = [km0_sites, km1_sites, km2_sites, km3_sites]
+
+    mx_scores = np.zeros((4, len(top_phenos)))
+    for pos, site in enumerate(sites):
+        scores = []
+        for item in np.arange(len(top_phenos)):
+            score = np.nansum(20-mx[
+                np.ix_(top_phenos, site)][item])/(20*len(site))
+            scores.append(score)
+        mx_scores[pos] = scores
+
+    ax = fig.add_subplot()
+    sns.heatmap(mx_scores, cmap=PurpOr_6.mpl_colormap,
+                cbar_kws={'shrink': 0.6}, vmax=0.6, vmin=0)
+    ax.set_xticks(np.arange(len(top_phenos))+0.5)
+    ax.set_xticklabels(top_phenos, fontweight='light')
+    ax.set_yticks(np.arange(0.5, 4.5))
+    ax.set_yticklabels(
+        ['warm & wet', 'cool & wet', 'warm & dry', 'mild'],
+        rotation=0, fontweight='light', fontsize=12)
+    fig.subplots_adjust(left=0.3)
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
+                    'heatmap_cspace_performance_present.png',
+                    format='png', dpi=800)
+
+
+def plot_strategies_performance_shift_cspace(save=None):
+    """
+    Plot performance shift of strategies within climate space.
+
+    Parameters
+    ----------
+    run_name : str
+    save : bool
+
+    """
+    # parameters
+    n_pheno = 20
+    w_yield = 1
+    w_disp = 1
+    future_run = 'f2100'
+    rank_limit = 5
+    n_clusters = 8
+
+    # fetch top phenos
+    phenos_topall = rank_top_phenos('present', n_pheno, w_yield, w_disp)
+    phenos_top20 = phenos_topall[:20]
+
+    # read in clustered data
+    df_clusters = pd.read_csv(
+        '/home/disk/eos8/ach315/ideotype/'
+        'ideotype/data/strategies_cluster/'
+        'phenos_strategies_phenomorph_cluster_8.csv')
+
+    # identify improved & declined phenos
+    (phenos_improved, phenos_declined,
+     pup_rc, pdown_rc) = identify_rankchanged_phenos(
+        n_pheno, w_yield, w_disp, future_run, rank_limit)
+
+    # identify target phenos & strategy groups
+    targeted_groups, pheno_groups = process_clusters(
+        df_clusters, n_clusters,
+        phenos_top20, phenos_improved, phenos_declined,
+        'top20', 0.5)
+
+    dict_top20 = {}
+    targeted_phenos = phenos_top20
+    for group in targeted_groups:
+        x = np.array(df_clusters.query(f'group=={group}').cvar)
+        y = np.array(targeted_phenos)
+        phenos = list(x[np.isin(x, y)])
+        dict_top20[group] = phenos
+
+    # identify improved target groups
+    targeted_groups_improved, pheno_groups_improved = process_clusters(
+        df_clusters, n_clusters,
+        phenos_top20, phenos_improved, phenos_declined,
+        'improved', 0.5)
+
+    dict_improved = {}
+    targeted_phenos = phenos_improved
+
+    for group in targeted_groups_improved:
+        x = np.array(df_clusters.query(f'group=={group}').cvar)
+        y = np.array(targeted_phenos)
+        phenos = list(x[np.isin(x, y)])
+        dict_improved[group] = phenos
+
+    # assemble top phenos for plotting
+    # manually ordering of strategies:
+    # 4 - Slow Aging
+    # 1 - Early Starting
+    # 6 - High Yielding
+    # 7 - Stress Averting
+    top_phenos = list(
+        itertools.chain(
+            *[dict_top20[4], dict_top20[1], dict_top20[6], dict_top20[7]]))
+    new_top_pheno_groups = list(
+        set(list(dict_improved.keys())) - set(list(dict_top20.keys())))
+
+    new_top_phenos = []
+    for top_group in new_top_pheno_groups:
+        new_top_phenos.append(dict_improved[top_group])
+
+    new_top_phenos = list(itertools.chain(*new_top_phenos))
+    top_phenos.extend(new_top_phenos)
+
+    # identify top pheno performance
+    df_pheno, mx_present = identify_top_phenos('present', 20, 1, 1)
+    df_pheno, mx_f2100 = identify_top_phenos('f2100', 20, 1, 1)
+
+    # set up clustered sites info
+    df_clustered_sites = pd.read_csv(
+        '/home/disk/eos8/ach315/ideotype/ideotype/'
+        'data/climate_cluster/sites_clusered.csv')
+
+    km0_sites = df_clustered_sites.query('group==0').index.tolist()
+    km1_sites = df_clustered_sites.query('group==1').index.tolist()
+    km2_sites = df_clustered_sites.query('group==2').index.tolist()
+    km3_sites = df_clustered_sites.query('group==3').index.tolist()
+    sites = [km0_sites, km1_sites, km2_sites, km3_sites]
+
+    # calculate present-day performance scores
+    mx_scores_present = np.zeros((4, len(top_phenos)))
+    for pos, site in enumerate(sites):
+        scores = []
+        for item in np.arange(len(top_phenos)):
+            score = np.nansum(20-mx_present[
+                np.ix_(top_phenos, site)][item])/(20*len(site))
+            scores.append(score)
+        mx_scores_present[pos] = scores
+
+    # calculate future performance scores
+    mx_scores_f2100 = np.zeros((4, len(top_phenos)))
+    for pos, site in enumerate(sites):
+        scores = []
+        for item in np.arange(len(top_phenos)):
+            score = np.nansum(20-mx_f2100[
+                np.ix_(top_phenos, site)][item])/(20*len(site))
+            scores.append(score)
+        mx_scores_f2100[pos] = scores
+
+    # visualization
+    fig = plt.figure(figsize=(12, 2))
+    ax = fig.add_subplot()
+    sns.heatmap(mx_scores_f2100 - mx_scores_present,
+                cmap=PuOr_7.mpl_colormap,
+                vmin=-0.4, vmax=0.4,
+                cbar_kws={'shrink': 0.6})
+    ax.set_xticks(np.arange(len(top_phenos))+0.5)
+    ax.set_xticklabels(top_phenos, fontweight='light')
+    ax.set_yticks(np.arange(0.5, 4.5))
+    ax.set_yticklabels(
+        ['warm & wet', 'cool & wet', 'warm & dry', 'mild'],
+        rotation=0, fontweight='light', fontsize=12)
+    fig.subplots_adjust(left=0.3)
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
+                    'heatmap_cspace_performance_diff.png',
+                    format='png', dpi=800)
