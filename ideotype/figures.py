@@ -20,6 +20,7 @@ from palettable.cartocolors.sequential import PurpOr_6
 from palettable.cartocolors.qualitative import Vivid_8
 from palettable.colorbrewer.sequential import YlGn_9
 from palettable.colorbrewer.sequential import BuPu_7
+from palettable.colorbrewer.qualitative import Dark2_4
 from palettable.cmocean.sequential import Tempo_10
 from palettable.wesanderson import Mendl_4
 
@@ -2368,3 +2369,129 @@ def plot_yield_sensitivity_heatmap(save=None):
         plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
                     'heatmap_cspace_yieldloss_temp_precip.png',
                     format='png', dpi=800)
+
+
+def plot_cspace_sites_map(run_name, save=None):
+    """
+    Plot clustered sites map.
+
+    Parameters
+    ----------
+    run_name : str
+        'present', 'f2100'
+    save : bool
+
+    """
+    # Read in present-day data
+    df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
+        f'/home/disk/eos8/ach315/ideotype/ideotype/'
+        f'data/files/filepaths_{run_name}.yml')
+
+    df_clustered_sites = pd.read_csv(
+        '/home/disk/eos8/ach315/ideotype/ideotype/'
+        'data/climate_cluster/sites_clusered.csv')
+
+    colors = [Dark2_4.mpl_colors[1], Dark2_4.mpl_colors[2],
+              Dark2_4.mpl_colors[3], Dark2_4.mpl_colors[0], ]
+    markers = ['o', 's', '^', 'D']
+    texts = ['warm & wet', 'cool & wet', 'warm & dry', 'mild']
+
+    patches = [
+        plt.plot([], [],
+                 marker=markers[item],
+                 ms=8, ls='', alpha=0.7,
+                 color=colors[item],
+                 label=texts[item])[0] for item in np.arange(4)]
+
+    fig = plt.figure(figsize=(8, 5))
+    extent = [-123, -72, 19, 53]
+
+    ax = fig.add_subplot(1, 1, 1, projection=ccrs.AlbersEqualArea(
+        central_latitude=39.5, central_longitude=-98.35))
+
+    for group in np.arange(4):
+        df = df_clustered_sites.query(f'group=={group}')
+        ax.scatter(df.lon, df.lat,
+                   color=colors[group],
+                   s=80, marker=markers[group], alpha=0.5,
+                   transform=ccrs.PlateCarree())
+
+    ax.set_extent(extent)
+    ax.add_feature(cfeature.COASTLINE, edgecolor='grey')
+    ax.add_feature(cfeature.BORDERS, edgecolor='grey')
+    ax.add_feature(cfeature.STATES, edgecolor='grey', linewidth=0.5)
+    ax.set_title('Clustered sites', fontweight='light', size=12)
+    ax.annotate('a)', xy=(0.03, 0.9), xycoords='axes fraction', fontsize=12)
+
+    fig.legend(handles=patches, loc='right', borderaxespad=0,
+               frameon=False, fontsize='medium', markerscale=1.2)
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/'
+                    'figs/map_clustered_sites.png',
+                    format='png', dpi=800)
+
+
+def plot_cspace_sites_scatter(run_name, save=None):
+    """
+    Plot clustered sites scatter plot.
+
+    Parameters
+    ----------
+    run_name : str
+        'present'
+        'f2100'
+    save : bool
+
+    """
+    df_sims, df_sites, df_wea, df_params, df_all, df_matured = read_data(
+        f'/home/disk/eos8/ach315/ideotype/ideotype/'
+        f'data/files/filepaths_{run_name}.yml')
+
+    df_clustered_sites = pd.read_csv(
+        '/home/disk/eos8/ach315/ideotype/ideotype/'
+        'data/climate_cluster/sites_clusered.csv')
+
+    colors = [Dark2_4.mpl_colors[1], Dark2_4.mpl_colors[2],
+              Dark2_4.mpl_colors[3], Dark2_4.mpl_colors[0], ]
+    markers = ['o', 's', '^', 'D']
+
+    # visualization
+    df_wea.site = df_wea.site.astype(int)
+
+    fig = plt.figure(figsize=(12, 5))
+    ax1 = fig.add_subplot(1, 2, 1)
+
+    for group in np.arange(4):
+        df = df_clustered_sites.query(f'group=={group}')
+        ax1.scatter(df_wea[df_wea.site.isin(df.site)].temp,
+                    df_wea[df_wea.site.isin(df.site)].vpd,
+                    color=colors[group], marker=markers[group],
+                    s=60, alpha=0.3)
+
+    ax1.set_xlabel('mean growing season temperature (˚C)',
+                   fontsize=12, fontweight='light')
+    ax1.set_ylabel('mean growing season VPD',
+                   fontsize=12, fontweight='light')
+    ax1.annotate('b)', xy=(0.05, 0.9), xycoords='axes fraction', fontsize=12)
+
+    ax2 = fig.add_subplot(1, 2, 2)
+
+    for group in np.arange(4):
+        df = df_clustered_sites.query(f'group=={group}')
+        ax2.scatter(df_wea[df_wea.site.isin(df.site)].precip,
+                    df_wea[df_wea.site.isin(df.site)].vpd,
+                    color=colors[group], marker=markers[group],
+                    s=60, alpha=0.3)
+
+    ax2.set_xlabel('total growing season precipitation (mm)',
+                   fontsize=12, fontweight='light')
+    ax2.set_ylabel('mean growing season VPD',
+                   fontsize=12, fontweight='light')
+    ax2.annotate('c)', xy=(0.05, 0.9), xycoords='axes fraction', fontsize=12)
+
+    fig.subplots_adjust(wspace=0.3)
+
+    if save is True:
+        plt.savefig('/home/disk/eos8/ach315/upscale/figs/'
+                    'scatter_climate_cspace.png', format='png', dpi=800)
